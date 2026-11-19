@@ -2134,8 +2134,9 @@ function renderWeek(){
     const es=day.map((e,j)=>[e,j]).filter(x=>wsl(x[0])===sk);
     h+='<div class="slot"><div class="sh"><h3>'+sl+'</h3><span>'+num(es.reduce((a,x)=>a+ent(x[0]).k,0),0)+' kcal</span></div>';
     es.forEach(([e,j])=>{const x=ent(e);h+='<div class="ent"><div class="en"><b>'+esc(x.n)+'</b><span>'+num(x.k,0)+' kcal · P '+num(x.p)+' · G '+num(x.g)+' · L '+num(x.l)+' · F '+num(x.f)+'</span></div><div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button><button type="button" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div></div>'});
-    h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button>'+(MEALS.length?'<button type="button" data-wmeal="'+sk+'">★ Repas type</button>':'')+'</div>';
+    h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button><button type="button" data-wfree="'+sk+'">+ Aliment</button>'+(MEALS.length?'<button type="button" data-wmeal="'+sk+'">★ Repas type</button>':'')+'</div>';
     if(state.wpick===sk)h+='<div class="pk"><input id="wqs" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.wq)+'" aria-label="Chercher une recette"><div id="wl"></div></div>';
+    if(state.wfree===sk){const I=(id,l)=>'<label>'+l+'<input id="'+id+'" inputmode="decimal" placeholder="0"></label>';h+='<div class="pf"><div class="nf"><h4>Ajouter un aliment</h4><input id="wfs" type="search" placeholder="🔍  Chercher dans mes aliments ou la base" autocomplete="off"><div id="wfsr" class="fsr"></div><input id="wfn" type="text" placeholder="Nom de l\'aliment" aria-label="Nom"><div class="g2"><label>Valeurs données<select id="wfm"><option value="100">pour 100 g/ml</option><option value="1">pour la portion</option></select></label>'+I('wfq','Quantité (g ou ml)')+'</div><div class="pfg nfm">'+I('wfk','kcal')+I('wfp','Prot')+I('wfg','Gluc')+I('wfl','Lip')+I('wff','Fibres')+'</div><div class="dact"><button type="button" class="pri" data-wfadd="'+sk+'">Ajouter</button></div></div></div>'}
     if(state.wmeal===sk)h+='<div class="pf">'+MEALS.map((m,i)=>'<div class="mealrow"><button type="button" class="mb2" data-wmuse="'+sk+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal</small></button></div>').join('')+'</div>';
     h+='</div>';
   });
@@ -2160,7 +2161,9 @@ function weekText(){
   WEEK.forEach((day,di)=>{if(!day.length)return;let k=0;day.forEach(e=>k+=ent(e).k);o.push('','== '+DN[di]+' ('+num(k,0)+' kcal) ==');day.forEach(e=>{const x=ent(e);o.push('- '+x.n+((e.q||1)!==1?' ×'+num(e.q):''))})});
   return o.join('\n');
 }
-document.addEventListener('input',e=>{if(e.target.id==='wqs'){state.wq=e.target.value;fillWeekPick()}});
+let WF={};
+document.addEventListener('input',e=>{if(e.target.id==='wqs'){state.wq=e.target.value;fillWeekPick()}
+  if(e.target.id==='wfs'){const q=nrm(e.target.value.trim()),box=$('wfsr');if(!q){box.innerHTML='';return}const mine=FOODS.map((f,i)=>[f,i]).filter(x=>nrm(x[0].n).includes(q)).map(x=>'<button type="button" data-wfpm="'+x[1]+'"><b>★ '+esc(x[0].n)+'</b><span>'+(x[0].per===100?'100 '+(x[0].un||'g'):'portion')+' : '+Math.round(x[0].k)+' kcal · P '+num(x[0].p,0)+'</span></button>');const r=F100.map((f,i)=>[f,i]).filter(x=>nrm(x[0][0]).includes(q)).slice(0,6).map(x=>'<button type="button" data-wfpb="'+x[1]+'"><b>'+esc(x[0][0])+'</b><span>pour 100 '+(x[0][6]||'g')+' : '+x[0][1]+' kcal · P '+x[0][2]+'</span></button>');box.innerHTML=mine.length+r.length?mine.join('')+r.join(''):'<small>Aucun résultat : saisis les valeurs toi-même.</small>'}});
 document.addEventListener('change',e=>{
   if(e.target.id==='wsugsel'){state.wsl=e.target.value;return}
   if(e.target.id==='wcp'&&e.target.value!==''){const to=+e.target.value;WEEK[to]=WEEK[to].concat(JSON.parse(JSON.stringify(WEEK[state.wd])));saveWeek();state.wd=to;state.wmsg='Jour copié vers '+DN[to]+'.';renderWeek();return}
@@ -2172,6 +2175,12 @@ document.addEventListener('change',e=>{
 document.addEventListener('click',e=>{
   if(state.view!=='sem')return;
   const b=e.target.closest('#week button');if(!b)return;const d=b.dataset;
+  if(d.wfree!==undefined){state.wfree=state.wfree===d.wfree?null:d.wfree;state.wpick=null;state.wmeal=null;renderWeek();return}
+  if(d.wfpm!==undefined){const f=FOODS[+d.wfpm];if(f){$('wfn').value=f.n;$('wfm').value=f.per===100?'100':'1';$('wfq').value=f.qty||'';[['wfk','k'],['wfp','p'],['wfg','g'],['wfl','l'],['wff','f']].forEach(([i,k])=>$(i).value=f[k]||'');WF={s:f.s,a:f.a,e:f.e};$('wfsr').innerHTML='';$('wfs').value=''}return}
+  if(d.wfpb!==undefined){const f=F100[+d.wfpb];if(f){$('wfn').value=f[0];$('wfm').value='100';$('wfq').value=(UN[f[0]]&&UN[f[0]][1])||'';[['wfk',1],['wfp',2],['wfg',3],['wfl',4],['wff',5]].forEach(([i,k])=>$(i).value=f[k]||'');WF={};$('wfsr').innerHTML='';$('wfs').value=''}return}
+  if(d.wfadd){const v=id=>parseFloat(String($(id).value).replace(',','.'))||0,per=$('wfm').value==='100',q=v('wfq');if(per&&!q){state.wmsg='Indique la quantité en g ou ml.';renderWeek();return}const m=per?q/100:1,n=($('wfn').value||'').trim()||'Saisie libre';if(!(v('wfk')||v('wfp'))){state.wmsg='Indique au moins les kcal ou les protéines.';renderWeek();return}
+    const it={x:n+(per?' ('+q+' g)':''),k:v('wfk')*m,p:v('wfp')*m,g:v('wfg')*m,l:v('wfl')*m,f:v('wff')*m,q:1,sl:d.wfadd};if(WF.s!==undefined||WF.a!==undefined||WF.e!==undefined){it.s=(WF.s||0)*m;it.a=(WF.a||0)*m;it.e=(WF.e||0)*m}
+    WEEK[state.wd].push(it);saveWeek();WF={};state.wfree=null;state.wmsg='';renderWeek();return}
   if(d.wd!==undefined){state.wd=+d.wd;state.wpick=null;state.wmeal=null;state.wmsg='';renderWeek();return}
   if(d.wpick!==undefined){state.wpick=state.wpick===d.wpick?null:d.wpick;state.wmeal=null;state.wq='';renderWeek();return}
   if(d.wmeal!==undefined){state.wmeal=state.wmeal===d.wmeal?null:d.wmeal;state.wpick=null;renderWeek();return}
@@ -2634,7 +2643,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 59 (semaine par onglets)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 61 (aliments dans la semaine)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
