@@ -342,7 +342,8 @@ input,select,textarea{font-size:16px !important}
 .fav2 .fv button:first-child:active{background:var(--line)}
 .pk,.pf{display:grid; gap:8px; border-top:1px solid var(--line); padding-top:10px}
 .pk input,.pf input,.sugsel{font:inherit; font-size:16px; min-height:42px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); width:100%; min-width:0}
-#pl{display:grid; gap:6px; max-height:320px; overflow-y:auto}
+#pl,#wl{display:flex; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto}
+#pl .pi,#wl .pi{flex:0 0 auto}.pi span{min-width:0}
 .pi{display:flex; justify-content:space-between; gap:10px; text-align:left; font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:transparent; color:var(--ink); cursor:pointer; min-height:44px; align-items:center}
 .pi small{font-family:var(--f-mono); font-size:12px; color:var(--muted); white-space:nowrap}
 .pfg{display:grid; grid-template-columns:repeat(5,1fr); gap:6px}
@@ -2643,7 +2644,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 63 (palier dans la semaine)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 64 (liste de recettes corrigée)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
