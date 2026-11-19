@@ -1707,6 +1707,7 @@ function recMedia(i){
   const u=VID[i]||'',n=NOTES[i]||'';
   let h='';
   if(u)h+='<a class="vbtn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">▶ Voir la vidéo</a>';
+  else h+='<a class="vbtn" href="https://www.youtube.com/results?search_query='+encodeURIComponent('recette '+R[i-1].n)+'" target="_blank" rel="noopener noreferrer">🔎 Chercher une vidéo</a>';
   if(n)h+='<h4>Mes notes</h4><p class="mynote">'+esc(n).replace(/\n/g,'<br>')+'</p>';
   h+='<details class="rvd rv" data-ri="'+i+'"'+((u||n)?'':'')+'><summary>'+((u||n)?'Modifier ma vidéo et mes notes':'Ajouter ma vidéo et mes notes')+'</summary><div class="rvf"><label>Lien de la vidéo (YouTube, TikTok, Instagram…)<input class="rvu" type="url" inputmode="url" placeholder="https://…" value="'+esc(u)+'"></label><label>Mes notes de confection<textarea class="rvn" rows="4" placeholder="ex. mélanger le riz avant le four, 30 g de mozzarella…">'+esc(n)+'</textarea></label><button type="button" data-rsave="'+i+'">Enregistrer</button></div></details>';
   return h}
@@ -2703,7 +2704,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 69 (toutes les recettes détaillées)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 70 (recherche vidéo)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
