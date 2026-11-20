@@ -309,6 +309,19 @@ input,select,textarea{font-size:16px !important}
 #dsum .kv{grid-template-columns:1fr 1fr}
 #dsum .kv b{font-size:17px;line-height:1.2}
 #dsum .kv span{font-size:12px;color:var(--muted)}
+
+.calh{display:flex; align-items:center; justify-content:space-between; margin:0 0 8px}
+.calh button{font:inherit; width:40px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:20px; line-height:1}
+.calw,.cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.calw span{text-align:center; font-size:11px; color:var(--muted); padding-bottom:2px}
+.cal button{font:inherit; aspect-ratio:1; min-width:0; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); display:grid; place-content:center; text-align:center; padding:0; gap:0}
+.cal button b{font-size:13px; line-height:1.1}
+.cal button small{font-size:9px; color:var(--muted); line-height:1.1}
+.cal .ok{background:rgba(60,90,230,.24)}
+.cal .lo{background:rgba(60,90,230,.09)}
+.cal .hi{background:rgba(238,140,60,.28)}
+.cal .td{border-color:var(--accent); border-width:2px}
+.cal .on{outline:2px solid var(--ink); outline-offset:1px}
 .sum{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:14px; display:grid; gap:14px}
 .big{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
 .big b{font-family:var(--f-display); font-size:44px; line-height:1}
@@ -3009,6 +3022,28 @@ document.addEventListener('click',e=>{
 });
 /* ===== Accueil, historique, frigo ===== */
 let LOG=ls('cp-log',{}),FR=new Set(ls('cp-frg',[]));
+/* ===== Clôture automatique de la journée à minuit : la journée est archivée à sa date dans l'historique ===== */
+let LOGD=ls('cp-logd',{}),DAYD='';try{DAYD=localStorage.getItem('cp-daydate')||''}catch(e){}
+function closeDay(){
+  const td=today();let st=DAYD,closed=null;
+  if(!st){const ks=Object.keys(LOG).sort();st=(dayTot().k>0&&ks.length&&ks[ks.length-1]<td)?ks[ks.length-1]:td}
+  if(st<td){
+    const t=dayTot();
+    if(t.k>0){
+      LOG[st]={k:Math.round(t.k),p:Math.round(t.p*10)/10,g:Math.round(t.g*10)/10,l:Math.round(t.l*10)/10,f:Math.round(t.f*10)/10};
+      LOGD[st]=JSON.parse(JSON.stringify(DAY));saveLog();lsw('cp-logd',LOGD);closed=st;
+    }
+    DAY={pdj:[],dej:[],col:[],din:[]};saveDay();
+  }
+  DAYD=td;try{localStorage.setItem('cp-daydate',td)}catch(e){}
+  return closed||(st<td?'vide':null);
+}
+closeDay();
+function midnightTick(){const c=closeDay();if(c){try{refreshAll()}catch(e){}if(c!=='vide'&&window.toast)toast('✓ Journée du '+fdate(c)+' enregistrée dans l\'historique')}}
+setInterval(midnightTick,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)midnightTick()});
+window.addEventListener('pageshow',midnightTick);window.addEventListener('focus',midnightTick);
+
 state.hmsg='';
 function saveLog(){lsw('cp-log',LOG)}
 const dAgo=ts=>Math.floor((Date.now()-ts)/864e5);
@@ -3060,6 +3095,44 @@ document.addEventListener('click',e=>{
   const q=e.target.closest('[data-hq]');
   if(q){const r=R.find(x=>x.i===+q.dataset.hq);if(r){state.q=r.n;$('q').value=r.n;state.cat='tous';state.view='rec';renderChips();render();renderViews();window.scrollTo(0,0)}}
 });
+
+/* ===== Calendrier et détail d'un jour ===== */
+const MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function calHTML(){
+  const td=today(),ym=state.cm||td.slice(0,7),[Y,M]=ym.split('-').map(Number),nd=new Date(Y,M,0).getDate(),off=(new Date(Y,M-1,1).getDay()+6)%7,T=targets();
+  let g='';for(let i=0;i<off;i++)g+='<span></span>';
+  for(let d=1;d<=nd;d++){
+    const ds=Y+'-'+String(M).padStart(2,'0')+'-'+String(d).padStart(2,'0'),l=ds===td?{k:Math.round(dayTot().k)}:LOG[ds],k=l&&l.k,
+      cls=!k?'':(k>T.k*1.05?'hi':k>=T.k*0.9?'ok':'lo');
+    g+='<button type="button" data-cd="'+ds+'" class="'+cls+(ds===td?' td':'')+(ds===state.cd?' on':'')+'" aria-label="'+d+' '+MOIS[M-1]+'"><b>'+d+'</b>'+(k?'<small>'+k+'</small>':'')+'</button>';
+  }
+  return '<div class="calh"><button type="button" data-cmn="-1" aria-label="Mois précédent">‹</button><b style="text-transform:capitalize">'+MOIS[M-1]+' '+Y+'</b><button type="button" data-cmn="1" aria-label="Mois suivant">›</button></div>'
+   +'<div class="calw"><span>lun</span><span>mar</span><span>mer</span><span>jeu</span><span>ven</span><span>sam</span><span>dim</span></div><div class="cal">'+g+'</div>'
+   +'<p class="note" style="margin:6px 0 0">Nombre sous le jour = kcal mangées. Bleu foncé : proche du palier · bleu clair : en dessous · orange : au-dessus. La journée se clôture à minuit.</p>'
+   +dayDetail(state.cd||td);
+}
+function dayDetail(d){
+  const td=today(),live=d===td,l=live?(()=>{const t=dayTot();return t.k>0?{k:Math.round(t.k),p:t.p,g:t.g,l:t.l,f:t.f}:null})():LOG[d],a=ACT[d],ws=WT.filter(x=>x.d===d),T=targets();
+  const lab=new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const tl=(v,s)=>'<div><b>'+v+'</b><span>'+s+'</span></div>';
+  let h='<h4 style="margin:14px 0 6px;text-transform:capitalize">'+lab+(live?' <small style="font-weight:500;color:var(--muted);text-transform:none">· en cours</small>':'')+'</h4>';
+  let tiles='';
+  if(l){tiles+=tl(fmtN(l.k)+' kcal','Mangées (palier '+T.k+')')+tl(num(l.p,0)+' g','Protéines')+tl(num(l.g,0)+' g','Glucides')+tl(num(l.l,0)+' g','Lipides')+tl(num(l.f,1)+' g','Fibres')}
+  if(a&&a.st){let c=null;try{c=actCalc(d)}catch(e){}tiles+=tl(fmtN(a.st)+' pas','Pas'+(c?' · ≈ '+fmtN(c.tot)+' kcal dépensées':''))}
+  if(a&&a.ses&&a.ses.length)tiles+=tl(a.ses.map(x=>esc(x.n)+' '+x.min+' min').join(', '),'Séance'+(a.ses.length>1?'s':''));
+  ws.forEach(w=>{tiles+=tl(num(w.w,1)+' kg','Pesée '+(w.s?'du soir':'du matin'));if(w.b)tiles+=tl(num(w.b,1)+' %','Graisse corporelle');if(w.mt)tiles+=tl(num(w.mt,1)+' kg','Masse musculaire');if(w.wa)tiles+=tl(num(w.wa,1)+' %','Eau')});
+  h+=tiles?'<div class="kv">'+tiles+'</div>':'<p class="note" style="margin:0">Rien d\'enregistré ce jour-là.</p>';
+  const dd=live?DAY:LOGD[d];
+  if(dd){const rows=[];SLOTS.forEach(([k,n])=>(dd[k]||[]).forEach(e=>{try{const x=ent(e);rows.push('<div class="rl"><span><b>'+esc(x.n)+'</b><br><small>'+n+' · '+fmtN(x.k)+' kcal · '+num(x.p,0)+' g prot</small></span></div>')}catch(er){}}));
+    if(rows.length)h+='<h4 style="margin:12px 0 6px">Repas</h4><div class="crs">'+rows.join('')+'</div>'}
+  return h;
+}
+document.addEventListener('click',e=>{
+  const n=e.target.closest('[data-cmn]');
+  if(n){const ym=state.cm||today().slice(0,7);let [Y,M]=ym.split('-').map(Number);M+=+n.dataset.cmn;if(M<1){M=12;Y--}if(M>12){M=1;Y++}state.cm=Y+'-'+String(M).padStart(2,'0');renderHist();return}
+  const c=e.target.closest('[data-cd]');
+  if(c){state.cd=c.dataset.cd;renderHist()}
+});
 function histRecap(rows){
   const v=k=>rows.map(r=>r[k]).filter(x=>x>0),m=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0,S=bodyStats();
   const l=['Récap des 7 derniers jours','Calories : '+(v('k').length?fmtN(m(v('k')))+' kcal/jour en moyenne ('+v('k').length+' jour'+(v('k').length>1?'s':'')+' enregistré'+(v('k').length>1?'s':'')+')':'—')+' | palier '+targets().k,
@@ -3073,7 +3146,8 @@ function renderHist(){
   const rows=days.map(d=>{const l=LOG[d]||{},a=ACT[d]||{},w=WT.find(x=>x.d===d&&!x.s);return{d,k:l.k||0,p:l.p||0,g:l.g||0,l:l.l||0,f:l.f||0,st:a.st||0,w:w?w.w:0}});
   const last7=rows.slice(0,7);
   const v=k=>last7.map(r=>r[k]).filter(x=>x>0),m=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
-  let h='<h2>Historique et récap</h2><p class="note">Enregistre ta journée depuis « Ma journée » (bouton « Enregistrer dans l\'historique »). Les pas et les pesées viennent de leurs pages.</p>';
+  let h='<h2>Historique et récap</h2><p class="note">Chaque journée est clôturée automatiquement à minuit et enregistrée ici à sa date. Les pas et les pesées viennent de leurs pages.</p>';
+  h+='<div class="sum" id="hcal" style="margin:0 0 12px"><h3 style="margin:0;font-family:var(--f-display)">Calendrier</h3>'+calHTML()+'</div>';
   h+=blk('h-sum','bars','Résumé des 7 derniers jours','moyennes','<div class="kv"><div><b>'+(v('k').length?fmtN(m(v('k'))):'—')+'</b><span>kcal / jour</span></div><div><b>'+(v('p').length?fmtN(m(v('p')))+' g':'—')+'</b><span>protéines / jour</span></div><div><b>'+(v('g').length?fmtN(m(v('g')))+' g':'—')+'</b><span>glucides / jour</span></div><div><b>'+(v('l').length?fmtN(m(v('l')))+' g':'—')+'</b><span>lipides / jour</span></div><div><b>'+(v('f').length?num(m(v('f')),1)+' g':'—')+'</b><span>fibres / jour</span></div><div><b>'+(v('st').length?fmtN(m(v('st'))):'—')+'</b><span>pas / jour</span></div><div><b>'+(v('w').length?num(m(v('w')),1)+' kg':'—')+'</b><span>poids moyen</span></div><div><b>'+last7.filter(r=>r.k&&Math.abs(r.k-T.k)<=100).length+'/7</b><span>jours à ±100 kcal du palier</span></div></div>',true);
   const bars=(key,unit,target)=>{const ds=rows.slice(0,7).reverse(),vs=ds.map(r=>r[key]),mx=Math.max(target,...vs,1);return '<div class="abars">'+ds.map((r,i)=>{const vv=vs[i];return '<div class="b'+(vv>=target?' ok':'')+'"><b>'+(vv?fmtN(vv):'')+'</b><i style="height:'+Math.round(vv/mx*80)+'px"></i>'+JRS[new Date(r.d+'T00:00:00').getDay()]+'</div>'}).join('')+'</div><p class="note" style="margin:0">Objectif : '+fmtN(target)+' '+unit+' (barre bleue = atteint)</p>'};
   h+=blk('h-kc','chart','Calories','7 derniers jours',bars('k','kcal',T.k),true);
@@ -3138,7 +3212,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== Sauvegarde ===== */
-const BKEYS=['cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
+const BKEYS=['cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
 state.bmsg='';state.bprev=null;
 const bObj=ph=>{const o={v:2,t:Date.now(),d:{}};BKEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)o.d[k]=JSON.parse(v)}catch(e){}});if(ph)o.ph=PH;return o};
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
@@ -3158,7 +3232,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 87 (séance sans double comptage)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 88 (calendrier et clôture à minuit)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
