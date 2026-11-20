@@ -174,6 +174,22 @@ h1{text-shadow:0 2px 12px rgba(30,30,110,.25)}
 .fgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; padding:4px 0 10px}
 .fgrid label{display:grid; gap:4px; font-size:12.5px; color:var(--muted)}
 .fgrid select,.flt .fclr{font:inherit; min-height:42px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); width:100%}
+
+#ckov{position:fixed;inset:0;z-index:80;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+#ckov .ckh{display:flex;justify-content:space-between;gap:10px;align-items:center}#ckov .ckh b{font-family:var(--f-display);font-size:17px;min-width:0}
+#ckov .ckh button{font:inherit;min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;cursor:pointer}
+#ckov .ckbar{height:6px;border-radius:99px;background:var(--line);margin:10px 0 6px;overflow:hidden}#ckov .ckbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+#ckov .ckn{margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+#ckov .ckb{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;justify-content:center}
+#ckov .ckst{font-size:23px;line-height:1.4;margin:0;font-weight:500}
+#ckov .cking{margin:0;padding-left:20px;font-size:18px;line-height:1.7}
+#ckov .cktms{display:flex;flex-wrap:wrap;gap:8px}#ckov .cktms button,#ckov .ckstop{font:inherit;min-height:48px;padding:8px 18px;border-radius:14px;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer}
+#ckov .ckcd{font-family:var(--f-display);font-size:56px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
+#ckov .ckf{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;padding-top:12px}
+#ckov .ckf button{font:inherit;min-height:56px;border-radius:14px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);font-weight:700;font-size:17px;cursor:pointer}
+#ckov .ckf button.pri{background:var(--accent);color:var(--on-accent,#fff)}#ckov .ckf button:disabled{opacity:.4}
+.ckbtn{margin-right:6px}
+#home .al button.pri,#home .dact button.pri{font:inherit;min-height:48px;padding:8px 18px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-weight:700;font-size:16px;cursor:pointer}#home .dact button.pri{width:100%}
 .fa-wrap{grid-column:1/-1}.fachips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fachip{font:inherit;font-size:13px;font-weight:600;min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--accent-soft);color:var(--ink);cursor:pointer}
 .flt .fclr{margin-bottom:12px; cursor:pointer; font-weight:600; font-size:14px}
 .fav{margin-left:auto; font:inherit; font-size:22px; line-height:1; min-width:40px; min-height:40px; border:0; background:transparent; color:var(--accent); cursor:pointer}
@@ -1745,7 +1761,7 @@ function dbPut(k,v){try{const s=DB.transaction('p','readwrite').objectStore('p')
 
 function recMedia(i){
   const u=VID[i]||'',n=NOTES[i]||'';
-  let h='';
+  let h='<button type="button" class="vbtn ckbtn" data-cook="'+i+'">👨‍🍳 Mode cuisine</button> ';
   if(u)h+='<a class="vbtn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">▶ Voir la vidéo</a>';
   else h+='<a class="vbtn" href="https://www.youtube.com/results?search_query='+encodeURIComponent('recette '+R[i-1].n)+'" target="_blank" rel="noopener noreferrer">🔎 Chercher une vidéo</a>';
   if(n)h+='<h4>Mes notes</h4><p class="mynote">'+esc(n).replace(/\n/g,'<br>')+'</p>';
@@ -1758,6 +1774,41 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-rsave]');i
   if(u)VID[i]=u;else delete VID[i];
   if(n)NOTES[i]=n;else delete NOTES[i];
   lsw('cp-vid',VID);lsw('cp-notes',NOTES);render();if(window.toast)toast('✓ Enregistré')});
+
+/* ===== Mode cuisine : plein écran, étape par étape, minuteurs ===== */
+let COOK=null,COOKI=0,COOKAU=null;
+function ckBeep(){try{COOKAU=COOKAU||new (window.AudioContext||window.webkitAudioContext)();const o=COOKAU.createOscillator(),g=COOKAU.createGain();o.connect(g);g.connect(COOKAU.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>o.stop(),500)}catch(e){}try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}}
+function ckTimes(t){const out=[],re=/(\d+)(?:\s*(?:à|-)\s*(\d+))?\s*(minutes?|min|secondes?)/gi;let m;while((m=re.exec(t))){const v=+(m[2]||m[1]),sec=/^s/i.test(m[3])?v:v*60;if(sec>=20&&!out.some(x=>x.s===sec))out.push({s:sec,l:v+(/^s/i.test(m[3])?' s':' min')})}return out.slice(0,3)}
+function ckFmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function ckRender(){
+  let el=document.getElementById('ckov');if(!COOK){if(el)el.remove();return}
+  if(!el){el=document.createElement('div');el.id='ckov';el.setAttribute('role','dialog');el.setAttribute('aria-label','Mode cuisine');document.body.appendChild(el)}
+  const r=COOK.r,n=r.st.length,i=COOK.s;
+  let b='';
+  if(i<0){b='<h3>Prépare tes ingrédients</h3><ul class="cking">'+r.ing.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul><p class="note">Sors tout avant de commencer : tu n\'auras plus à y revenir.</p>'}
+  else{
+    b='<p class="ckst">'+esc(r.st[i])+'</p>';
+    const ts=ckTimes(r.st[i]);
+    if(ts.length)b+='<div class="cktms">'+ts.map(x=>'<button type="button" data-cktm="'+x.s+'">⏱ '+x.l+'</button>').join('')+'</div>';
+    if(COOK.tm&&COOK.tm.step===i)b+='<div class="ckcd" id="ckcd">'+ckFmt((COOK.tm.end-Date.now())/1000)+'</div><button type="button" class="ckstop" data-ckstop>Arrêter le minuteur</button>';
+    if(i===n-1&&r.tip)b+='<p class="tip">💡 '+esc(r.tip)+'</p>';
+  }
+  const pct=Math.round((i+1)/(n+1)*100);
+  el.innerHTML='<div class="ckh"><b>'+esc(r.n)+'</b><button type="button" data-ckclose aria-label="Fermer">✕</button></div><div class="ckbar"><i style="width:'+pct+'%"></i></div><p class="ckn">'+(i<0?'Avant de commencer':'Étape '+(i+1)+' sur '+n)+'</p><div class="ckb">'+b+'</div><div class="ckf"><button type="button" data-ckprev'+(i<0?' disabled':'')+'>← Précédent</button><button type="button" class="pri" data-cknext>'+(i>=n-1?'Terminé ✓':'Suivant →')+'</button></div>';
+}
+function ckTick(){if(!COOK||!COOK.tm)return;const left=(COOK.tm.end-Date.now())/1000,e=document.getElementById('ckcd');if(e)e.textContent=ckFmt(left);if(left<=0){const st=COOK.tm.step;COOK.tm=null;ckBeep();if(window.toast)toast('⏰ Minuteur terminé',false);if(COOK.s===st)ckRender()}}
+function ckOpen(i){const r=R.find(x=>x.i===i);if(!r||!r.st||!r.st.length)return;COOK={r,s:-1,tm:null};ckRender();clearInterval(COOKI);COOKI=setInterval(ckTick,500);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{if(COOK)COOK.wl=w;else w.release()}).catch(()=>{})}catch(e){}}
+function ckClose(){if(COOK&&COOK.wl){try{COOK.wl.release()}catch(e){}}COOK=null;clearInterval(COOKI);ckRender()}
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-cook]');if(o){ckOpen(+o.dataset.cook);return}
+  if(!COOK)return;
+  if(e.target.closest('[data-ckclose]')){ckClose();return}
+  if(e.target.closest('[data-ckprev]')){if(COOK.s>-1){COOK.s--;ckRender()}return}
+  if(e.target.closest('[data-cknext]')){if(COOK.s>=COOK.r.st.length-1){ckClose();if(window.toast)toast('Bon appétit !');return}COOK.s++;ckRender();return}
+  const t=e.target.closest('[data-cktm]');if(t){COOK.tm={step:COOK.s,end:Date.now()+(+t.dataset.cktm)*1000};try{ckBeep.warm||(ckBeep.warm=1,COOKAU=COOKAU||new (window.AudioContext||window.webkitAudioContext)())}catch(x){}ckRender();return}
+  if(e.target.closest('[data-ckstop]')){COOK.tm=null;ckRender()}
+});
+document.addEventListener('keydown',e=>{if(COOK&&e.key==='Escape')ckClose()});
 function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=900,sc=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};im.onerror=()=>res(null);im.src=fr.result};fr.onerror=()=>res(null);fr.readAsDataURL(file)})}
 $('grid').addEventListener('click',e=>{
   const b=e.target.closest('.pdel');if(!b)return;const i=+b.dataset.i;
@@ -2643,7 +2694,11 @@ function renderHome(){
   const kp=Math.round(t.k/T.k*100);
   let h='<div class="hhead"><h2 style="text-transform:capitalize;margin:0">'+lab+'</h2><span class="chip2">Palier '+T.k+' kcal'+(PALAUTO?' · auto':'')+'</span></div>';
   const lb=ls('cp-lastbak',0),age=lb?dAgo(lb):null;
+  const nb=(ls('cp-w',[]).length||Object.keys(ls('cp-log',{})).length||ls('cp-foods',[]).length);
+  if(nb&&(!lb||age>=7))h+='<div class="al al-warn" style="margin:0 0 10px"><p style="margin:0 0 8px"><b>Sauvegarde :</b> '+(lb?'dernière il y a '+age+' jours.':'tu n\'en as encore jamais fait.')+' Fais-la maintenant pour protéger tes données et tes photos.</p><button type="button" class="pri" data-hbak>Sauvegarder</button></div>';
   h+='<button type="button" class="hero2" data-hgo="jr"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>Aujourd\'hui</h3>'+mrow('Calories',t.k,T.k,'kcal')+mrow('Protéines',t.p,T.p,'g')+'<small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+fmtN(Math.max(0,T.p-t.p))+' g de protéines.')+'</small></div></button>';
+  h+='<div class="dact" style="margin:10px 0"><button type="button" class="pri" data-hgo="jr">＋ Ajouter un repas</button></div>';
+  if(MEALS.length){const hr=new Date().getHours(),sl=hr<10?'pdj':hr<15?'dej':hr<18?'col':'din',sn=SLOTS.find(x=>x[0]===sl)[1];h+='<div class="grp"><h3>Mes repas types <small style="font-weight:500;color:var(--muted)">→ '+sn+'</small></h3><div class="crs">'+MEALS.slice(0,3).map((m,i)=>'<div class="rl"><span><b>'+esc(m.n)+'</b></span><button type="button" data-hmeal="'+i+':'+sl+'">Ajouter</button></div>').join('')+'</div></div>'}
   h+='<div class="hgrid">'
    +hcard('act','Pas',fmtN(a.st),'objectif '+fmtN(GOAL)+' · ≈ '+fmtN(c.kPas+c.kSes)+' kcal brûlées',Math.min(100,Math.round(a.st/GOAL*100)))
    +hcard('poids','Poids (moy. 7 j)',S?num(S.a7,1)+' kg':'—',S?(S.rate===null?'tendance en cours':'tendance '+(S.rate>0?'+':'')+num(S.rate,2)+' kg/sem'):'ajoute une pesée',null)+'</div>';
@@ -2658,6 +2713,10 @@ function renderHome(){
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-hgo]');
   if(g){state.view=g.dataset.hgo;$('more').hidden=true;renderViews();window.scrollTo(0,0);return}
+  const bk=e.target.closest('[data-hbak]');
+  if(bk){OPEN['s-new']=true;state.view='sav';$('more').hidden=true;renderViews();window.scrollTo(0,0);return}
+  const hm=e.target.closest('[data-hmeal]');
+  if(hm){const [i,sl]=hm.dataset.hmeal.split(':');const m=MEALS[+i];if(m){m.e.forEach(x=>DAY[sl].push(JSON.parse(JSON.stringify(x))));saveDay();if(window.toast)toast('✓ Repas ajouté à la journée');renderHome()}return}
   const q=e.target.closest('[data-hq]');
   if(q){const r=R.find(x=>x.i===+q.dataset.hq);if(r){state.q=r.n;$('q').value=r.n;state.cat='tous';state.view='rec';renderChips();render();renderViews();window.scrollTo(0,0)}}
 });
@@ -2759,7 +2818,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 74 (case photos visible)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 75 (mode cuisine, accueil simplifié)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
