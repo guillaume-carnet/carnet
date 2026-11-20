@@ -1824,10 +1824,10 @@ async function clipImport(){
   if(!okS&&!okW){if(window.toast)toast('Rien à importer : copie d\'abord le texte du raccourci (pas=… poids=…).',false);return}
   applyImport(d,okS?st:null,okW?w:null);
 }
-function applyImport(d,st,w){
+function applyImport(d,st,w,ex){
   const out=[];
   if(st!==null){actDay(d).st=st;saveAct();out.push(fmtN(st)+' pas')}
-  if(w!==null){const old=WT.find(x=>x.d===d&&!x.s)||{};WT=WT.filter(x=>!(x.d===d&&!x.s));WT.push(Object.assign({},old,{d,s:false,w}));lsw('cp-w',WT);out.push(String(w).replace('.',',')+' kg')}
+  if(w!==null){const old=WT.find(x=>x.d===d&&!x.s)||{};WT=WT.filter(x=>!(x.d===d&&!x.s));WT.push(Object.assign({},old,{d,s:false,w},ex?Object.fromEntries(Object.entries(ex).filter(e=>e[1]>0)):{}));lsw('cp-w',WT);out.push(String(w).replace('.',',')+' kg')}
   if(window.toast)toast('✓ Importé : '+out.join(' et '));
   renderHome();
 }
@@ -1847,7 +1847,7 @@ function ocrParse(t){
   else{
     const c=[],re=/(\d{1,3}(?:[ .,]\d{3})+|\d{3,5})(?!\d)(?!\s*(?:kg|kcal|km|min|%|m\b))/gi;let x;
     while((x=re.exec(n))){if(n.slice(Math.max(0,x.index-2),x.index).indexOf('/')>=0)continue;const v=num(x[1]);if(v>=100&&v<=60000){const ctx=n.slice(Math.max(0,x.index-40),x.index+x[0].length+40).toLowerCase();c.push({v,s:/\bpas\b|steps/.test(ctx)?2:0})}}
-    c.sort((a,b)=>b.s-a.s||b.v-a.v);if(c.length)st=c[0].v;
+    c.sort((a,b)=>b.s-a.s||b.v-a.v);if(c.length&&c[0].s===2)st=c[0].v;
   }
   /* date : « ven. 20 nov. » */
   const MO=['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
@@ -1883,24 +1883,57 @@ function fsApply(k,p,g,l,f){
   DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};saveDay();
   LOG[today()]={k:Math.round(k),p:Math.round(p*10)/10,g:Math.round(g*10)/10,l:Math.round(l*10)/10,f:Math.round(f*10)/10};saveLog();
 }
+/* ===== Huawei Santé « Données de mesure corporelle » : lecture par étiquette ===== */
+function bodyParse(t){
+  const n=String(t).replace(/[  ]/g,' ');
+  const F=[ /* champ, étiquette, forme de la valeur, min, max */
+    ['imc',/\bIMC\b/i,'d',10,50],
+    ['b',/graisse\s+corporelle/i,'d',3,60],
+    ['m',/musculai(?!re)/i,'kg',10,80],
+    ['mt',/masse\s+musculaire/i,'kg',10,100],
+    ['vf',/graisse\s+visc/i,'d',1,30],
+    ['bmr',/taux\s+m[ée]tabol/i,'k',800,4500],
+    ['wa',/masse\s+hydrique/i,'d',30,80],
+    ['pr',/prot[ée]ines/i,'d',5,40],
+    ['bn',/densit[ée]\s+min/i,'kg',1,6]];
+  const nums=[];let m;
+  const re=/(?<![\d.,])(\d{1,2}\s?\d{3}|\d{1,3}[.,]\d{1,2}(?![\d])|\d{1,3})(?![\d,.]*\d)(\s*(?:kg|kcal|%)?)/gi;
+  while((m=re.exec(n))){const raw=m[1],tok=raw.replace(/\s/g,'');const v=/\d\s\d{3}$/.test(raw)||/^\d{4,5}$/.test(tok)?parseInt(tok,10):parseFloat(tok.replace(',','.'));
+    const u=(m[2]||'').trim().toLowerCase();const dec=/[.,]\d$/.test(raw);
+    nums.push({i:m.index,v,u,dec,used:false})}
+  const pos=F.map(f=>{const mm=n.match(f[1]);return mm?{f,i:mm.index}:null}).filter(Boolean).sort((a,b)=>a.i-b.i);
+  const out={};
+  pos.forEach(({f,i})=>{
+    const c=nums.find(x=>!x.used&&x.i>i&&x.v>=f[3]&&x.v<=f[4]&&(f[2]==='kg'?x.u==='kg':f[2]==='k'?x.u==='kcal':x.dec));
+    if(c){c.used=true;out[f[0]]=c.v}});
+  const cnt=['b','m','mt','vf','bmr','wa','pr','bn'].filter(k=>out[k]!==undefined).length;
+  return cnt>=3?out:null;
+}
 function autoMerge(txts){
-  const R={st:null,w:null,d:null,fs:null};
+  const R={st:null,w:null,d:null,fs:null,body:null};
   txts.forEach(t=>{
     const kv=String(t).match(/pas\s*[=:]\s*(\d{1,6})/i),kw=String(t).match(/poids\s*[=:]\s*(\d{2,3}(?:[.,]\d{1,2})?)/i);
     if(kv&&R.st===null)R.st=+kv[1];if(kw&&R.w===null)R.w=parseFloat(kw[1].replace(',','.'));
-    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2);
+    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2),bd=isFs?null:bodyParse(t);
     if(isFs){if(!R.fs)R.fs=f}
+    else if(bd){const a=ocrParse(t);if(!R.body)R.body=bd;if(R.w===null&&a.w!==null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
     else{const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
   });
   return R;
 }
 function autoForm(r,raw){
-  const v=(x,d)=>x===null||x===undefined?'':String(d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
+  const v=(x,d)=>x===null||x===undefined?'':String(d===2?Math.round(x*100)/100:d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
   const f=(id,lab,x,d,ty)=>'<label>'+lab+'<input id="'+id+'" type="'+(ty||'text')+'" inputmode="decimal" value="'+(ty==='date'?x:v(x,d))+'"></label>';
-  const fs=r.fs||{};
-  return '<div class="fm" style="border:0;padding:0">'+f('aust','Pas',r.st,0)+f('aucw','Poids (kg)',r.w,1)+f('aucd','Date (pas et poids)',r.d||today(),0,'date')+'</div>'
-   +'<h4 style="margin:10px 0 4px">Journal FatSecret (aujourd\'hui)</h4><div class="fm" style="border:0;padding:0">'+f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)+'</div>'
-   +'<p class="note">Seuls les champs remplis sont enregistrés. Si les calories FatSecret sont remplies, elles remplacent « Ma journée » d\'aujourd\'hui.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
+  const fs=r.fs||{},bd=r.body||{};
+  const hasS=r.st!==null,hasW=r.w!==null||!!r.body,hasF=!!r.fs,none=!hasS&&!hasW&&!hasF;
+  const sec=(title,on,inner)=>on||none?(title?'<h4 style="margin:10px 0 4px">'+title+'</h4>':'')+inner:'<details class="flt" style="margin-top:8px"><summary>'+(title||'Autres champs')+' (non reconnu)</summary><div style="padding-top:6px">'+inner+'</div></details>';
+  const G=(x)=>'<div class="fm" style="border:0;padding:0">'+x+'</div>';
+  const sSt=sec('Pas',hasS,G(f('aust','Pas',r.st,0)));
+  const sW=sec('Pesée',hasW,G(f('aucw','Poids (kg)',r.w,1))+'<details class="flt"'+(r.body?' open':'')+'><summary>Impédancemètre (Huawei)</summary><div class="fm" style="border:0;padding:8px 0 0">'+f('aub','Graisse corporelle (%)',bd.b,1)+f('aum','Muscle squelettique (kg)',bd.m,1)+f('aumt','Masse musculaire (kg)',bd.mt,1)+f('auvf','Graisse viscérale',bd.vf,1)+f('aubmr','Taux métabolique (kcal)',bd.bmr,0)+f('auwa','Eau (%)',bd.wa,1)+f('aupr','Protéines (%)',bd.pr,1)+f('aubn','Densité minérale (kg)',bd.bn,2)+'</div></details>');
+  const sD='<div class="fm" style="border:0;padding:0;margin-top:8px">'+f('aucd','Date (pas et pesée)',r.d||today(),0,'date')+'</div>';
+  const sF=sec('Journal FatSecret (aujourd\'hui)',hasF,G(f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)));
+  return sSt+sW+sD+sF
+   +'<p class="note">Seuls les champs remplis sont enregistrés : le reste n\'est pas modifié.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
 async function autoRun(files){
   const n=files.length;
   ocrBox('<h3>Lecture '+(n>1?'des '+n+' captures':'de la capture')+'…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
@@ -1909,8 +1942,8 @@ async function autoRun(files){
     for(const f of files){const r=await wk.recognize(f);txts.push(r.data.text||'')}
     try{await wk.terminate()}catch(e){}}
   catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les valeurs à la main.</p>'+autoForm({st:null,w:null,d:null,fs:null}));return}
-  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs;
-  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
+  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs||r.body;
+  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.body?'impédancemètre':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
   ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+autoForm(r,txts.join('\n---\n')));
 }
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='autofile'){const fl=Array.from(e.target.files||[]).slice(0,6);e.target.value='';if(fl.length)autoRun(fl)}});
@@ -1923,15 +1956,16 @@ document.addEventListener('click',e=>{
     if(!okS&&!okW&&!okF){if(window.toast)toast('Saisis au moins une valeur.',false);return}
     const out=[];
     if(okF){fsApply(k,rd('aup'),rd('aug'),rd('aul'),rd('auf'));out.push('journal FatSecret')}
+    const ex={b:rd('aub'),m:rd('aum'),mt:rd('aumt'),vf:rd('auvf'),bmr:rd('aubmr'),wa:rd('auwa'),pr:rd('aupr'),bn:rd('aubn')};
     ocrClose();
-    if(okS||okW){applyImport(d,okS?st:null,okW?w:null)}
+    if(okS||okW){applyImport(d,okS?st:null,okW?w:null,okW?ex:null)}
     else{if(window.toast)toast('✓ Journal FatSecret importé');renderHome()}
     if(okF)try{renderViews()}catch(x){}
   }
 },true);
 function autoText(txts){
-  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs;
-  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
+  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs||r.body;
+  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.body?'impédancemètre':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
   ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Rien reconnu dans ce texte. Saisis les valeurs à la main.')+'</p>'+autoForm(r));
 }
 function autoPasteBox(msg){
@@ -3074,7 +3108,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 83 (lecture FatSecret corrigée)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 84 (impédancemètre complet)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
