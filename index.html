@@ -2867,9 +2867,12 @@ const LIVE={on:false,cnt:0,last:0,lp:9.8,prev:0,ev:0,wl:null};
 function actDay(d){return ACT[d]||(ACT[d]={st:0,ses:[]})}
 function saveAct(){lsw('cp-act',ACT)}
 function wNow(){const S=bodyStats();return S?S.a7:70}
+/* pas faits pendant une séance (déjà dans le compteur de la montre) : estimés si non saisis, pour ne pas les compter deux fois */
+const SPM={'Marche rapide':110,'Course à pied':160,'Foot':110,'Musculation':15,'Vélo':0,'Natation':0,'HIIT / circuit':70,'Autre sport':40};
+function sesSteps(x){return Math.round((x.min||0)*(SPM[x.n]||0))}
 function actCalc(d){
   const a=ACT[d]||{st:0,ses:[]},kg=wNow(),S=bodyStats(),stepM=BODY.h*0.415/100;
-  const spx=a.ses.reduce((t,x)=>t+(x.sp||0),0),walk=Math.max(0,a.st-spx);
+  const spx=Math.min(a.st,a.ses.reduce((t,x)=>t+(x.sp>0?x.sp:sesSteps(x)),0)),walk=Math.max(0,a.st-spx);
   const kPas=0.55*kg*(walk*stepM/1000),kSes=a.ses.reduce((t,x)=>t+Math.max(0,x.m-1)*kg*x.min/60,0);
   const bmr=(S&&S.bmr)||22*kg,base=bmr+kPas+kSes;
   return{kg,km:a.st*stepM/1000,kPas,kSes,bmr,tot:base*1.08,min:a.ses.reduce((t,x)=>t+x.min,0)};
@@ -2887,7 +2890,7 @@ function renderAct(){
    '<div class="dact">'+[-500,100,500,1000,2000].map(n=>'<button type="button" data-padd="'+n+'">'+(n>0?'+':'−')+Math.abs(n)+'</button>').join('')+'</div><div class="g2 fm"><label>Autre quantité<input id="aadd" inputmode="numeric" placeholder="ex. 3200"></label><button type="button" data-aact="addn" style="align-self:end">Ajouter</button></div>'
    +'<div class="g2 fm"><label>Total de pas du jour<input id="ast" inputmode="numeric" placeholder="ex. 12400" value="'+(a.st?Math.round(a.st):'')+'"></label><button type="button" data-aact="psave" style="align-self:end">Enregistrer le total</button></div>',true);
   h+=blk('a-ses','flame','Séances',a.ses.length?a.ses.length+' aujourd\'hui':'sport du jour',
-   '<form class="fm" id="sf"><div class="g2"><label>Séance<select id="sn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="smin" inputmode="numeric" placeholder="ex. 60"></label></div><div class="g2"><label>Dont pas (facultatif)<input id="ssp" inputmode="numeric" placeholder="déjà dans tes pas"></label><button type="submit" style="align-self:end">Ajouter la séance</button></div></form>'
+   '<form class="fm" id="sf"><div class="g2"><label>Séance<select id="sn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="smin" inputmode="numeric" placeholder="ex. 60"></label></div><div class="g2"><label>Dont pas (facultatif)<input id="ssp" inputmode="numeric" placeholder="vide = estimé automatiquement"></label><button type="submit" style="align-self:end">Ajouter la séance</button></div></form>'
    +(a.ses.length?'<div class="crs">'+a.ses.map((x,i)=>'<div class="rl"><span>'+esc(x.n)+' · '+x.min+' min · '+Math.round(Math.max(0,x.m-1)*c.kg*x.min/60)+' kcal'+(x.sp?' · '+x.sp+' pas inclus':'')+'</span><button type="button" data-asdel="'+i+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>':''),true);
   h+=blk('a-bil','bars','Bilan du jour',Math.round(c.tot)+' kcal brûlées',
    '<div class="kv"><div><b>'+Math.round(c.kPas)+'</b><span>kcal brûlées en marchant</span></div><div><b>'+Math.round(c.kSes)+'</b><span>kcal brûlées en séances ('+c.min+' min)</span></div><div><b>'+Math.round(c.bmr)+'</b><span>Métabolisme de base</span></div><div><b>'+Math.round(c.tot)+'</b><span>Dépense totale estimée</span></div><div><b>'+Math.round(kin)+'</b><span>Calories '+(hasEat?'mangées (Journée)':'visées (palier)')+'</span></div><div><b>'+(bal>0?'+':'')+Math.round(bal)+'</b><span>Bilan ('+(bal>150?'surplus':bal<-150?'déficit':'équilibre')+') · ≈ '+(bal>0?'+':'')+num(bal*7/7700,2)+' kg/sem</span></div></div><p class="note" style="margin:0">Total = (métabolisme + pas + séances) + 8 % pour la digestion. Si ta séance est déjà dans tes pas (foot, course), indique « dont pas » pour ne pas la compter deux fois.</p>',true);
@@ -3155,7 +3158,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 86 (résumé en un bloc)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 87 (séance sans double comptage)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
