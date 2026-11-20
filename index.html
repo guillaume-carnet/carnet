@@ -1838,6 +1838,8 @@ function ocrParse(t){
   /* poids : on prend la plus grande valeur en kg (le poids total dépasse toujours muscle, eau, os…) */
   const rk=/(?<![\d.,])(\d{2,3}(?:[.,]\d{1,2})?)\s*(?:kg|kgs)\b/gi;let m;
   while((m=rk.exec(n))){const v=parseFloat(m[1].replace(',','.'));if(v>=30&&v<=300&&(w===null||v>w))w=v}
+  /* secours : le « kg » est parfois mal lu ; le poids est le gros chiffre juste après l'heure de la mesure (« à 07:33 66,1 ») */
+  {const fb=n.match(/\d{1,2}[:h]\d{2}\s+(?<![\d.,])(\d{2,3}[.,]\d)(?![\d.,]*\s*(?:%|kcal))/);if(fb){const v=parseFloat(fb[1].replace(',','.'));if(v>=30&&v<=300)w=v}}
   /* pas : « 3 440/10 000 pas » -> 3 440 (le second nombre est l'objectif) */
   const num=s=>parseInt(String(s).replace(/[ .,]/g,''),10);
   const g=n.match(/(\d{1,3}(?:[ .,]\d{3})+|\d{1,6})\s*\/\s*(\d{1,3}(?:[ .,]\d{3})+|\d{1,6})\s*(?:pas|steps)/i);
@@ -1886,18 +1888,19 @@ function autoMerge(txts){
   txts.forEach(t=>{
     const kv=String(t).match(/pas\s*[=:]\s*(\d{1,6})/i),kw=String(t).match(/poids\s*[=:]\s*(\d{2,3}(?:[.,]\d{1,2})?)/i);
     if(kv&&R.st===null)R.st=+kv[1];if(kw&&R.w===null)R.w=parseFloat(kw[1].replace(',','.'));
-    const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d;
-    const f=fsParse(t);if(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2&&!R.fs)R.fs=f;
+    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2);
+    if(isFs){if(!R.fs)R.fs=f}
+    else{const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
   });
   return R;
 }
-function autoForm(r){
+function autoForm(r,raw){
   const v=(x,d)=>x===null||x===undefined?'':String(d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
   const f=(id,lab,x,d,ty)=>'<label>'+lab+'<input id="'+id+'" type="'+(ty||'text')+'" inputmode="decimal" value="'+(ty==='date'?x:v(x,d))+'"></label>';
   const fs=r.fs||{};
   return '<div class="fm" style="border:0;padding:0">'+f('aust','Pas',r.st,0)+f('aucw','Poids (kg)',r.w,1)+f('aucd','Date (pas et poids)',r.d||today(),0,'date')+'</div>'
    +'<h4 style="margin:10px 0 4px">Journal FatSecret (aujourd\'hui)</h4><div class="fm" style="border:0;padding:0">'+f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)+'</div>'
-   +'<p class="note">Seuls les champs remplis sont enregistrés. Si les calories FatSecret sont remplies, elles remplacent « Ma journée » d\'aujourd\'hui.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
+   +'<p class="note">Seuls les champs remplis sont enregistrés. Si les calories FatSecret sont remplies, elles remplacent « Ma journée » d\'aujourd\'hui.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
 async function autoRun(files){
   const n=files.length;
   ocrBox('<h3>Lecture '+(n>1?'des '+n+' captures':'de la capture')+'…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
@@ -1908,7 +1911,7 @@ async function autoRun(files){
   catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les valeurs à la main.</p>'+autoForm({st:null,w:null,d:null,fs:null}));return}
   const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs;
   const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
-  ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+autoForm(r));
+  ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+autoForm(r,txts.join('\n---\n')));
 }
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='autofile'){const fl=Array.from(e.target.files||[]).slice(0,6);e.target.value='';if(fl.length)autoRun(fl)}});
 document.addEventListener('click',e=>{
@@ -1965,15 +1968,21 @@ document.addEventListener('click',e=>{
 let OCRM='';
 function fsParse(t){
   const n=String(t).replace(/[  ]/g,' ');
-  const mx=(re,lo,hi)=>{let m,b=null;const r=new RegExp(re.source,'gi');while((m=r.exec(n))){const v=parseFloat(m[1].replace(',','.'));if(v>=lo&&v<=hi&&(b===null||v>b))b=v}return b};
-  /* le total du jour est toujours >= chaque repas : on garde la plus grande valeur lue */
-  const o={p:mx(/prot[a-zé]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,500),
-    g:mx(/glu[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,900),
-    l:mx(/lip[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,400),
-    f:mx(/fib[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,150)};
+  /* la lettre « g » est souvent lue « 9 » : « 126,27g » devient « 126,279 ». On le corrige. */
+  const grab=(lab,hi)=>{
+    const re=new RegExp(lab+'[a-z\\u00e9]*\\s*[:;.]?\\s*(\\d{1,3}(?:[.,]\\d{1,3})?)(\\s?[gq9]?)','gi');let m,best=null;
+    while((m=re.exec(n))){
+      let tok=m[1],suf=m[2]||'';const dec=(tok.split(/[.,]/)[1]||'').length;
+      const hasUnit=/^\s?[gq]$/i.test(suf);
+      if(!hasUnit&&(dec>2||(dec>=1&&/9$/.test(tok)&&!/[gq]/i.test(suf))))tok=tok.slice(0,-1);
+      const v=parseFloat(tok.replace(',','.'));
+      if(!isNaN(v)&&v>=0&&v<=hi&&(best===null||v>best))best=v;
+    }
+    return best};
+  const o={p:grab('prot',500),g:grab('glu',900),l:grab('lip',400),f:grab('fib',150)};
   let k=null;const kc=[];let m;
-  const a=/calories?\s*[:;]?\s*(\d{3,4})(?![\d,.]*\s*g)/gi,b=/(?<![\d.,])(\d{3,4})\s*calories?/gi;
-  while((m=a.exec(n)))kc.push(+m[1]);while((m=b.exec(n)))kc.push(+m[1]);
+  const a1=/calories?\s*[:;]?\s*(\d{3,4})(?![\d,.]*\s*[g9])/gi,b1=/(?<![\d.,])(\d{3,4})\s*calories?/gi;
+  while((m=a1.exec(n)))kc.push(+m[1]);while((m=b1.exec(n)))kc.push(+m[1]);
   const ok=kc.filter(v=>v>=200&&v<=6000);if(ok.length)k=Math.max(...ok);
   const est=(o.p!==null&&o.g!==null&&o.l!==null)?Math.round(o.p*4+o.g*4+o.l*9+(o.f||0)*2):null;
   if(est!==null){
@@ -3065,7 +3074,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 82 (option Coller)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 83 (lecture FatSecret corrigée)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
