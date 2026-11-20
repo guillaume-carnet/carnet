@@ -190,6 +190,7 @@ h1{text-shadow:0 2px 12px rgba(30,30,110,.25)}
 #ckov .ckf button.pri{background:var(--accent);color:var(--on-accent,#fff)}#ckov .ckf button:disabled{opacity:.4}
 .ckbtn{margin-right:6px}
 #home .al button.pri,#home .dact button.pri{font:inherit;min-height:48px;padding:8px 18px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-weight:700;font-size:16px;cursor:pointer}#home .dact button.pri{width:100%}
+ul.subs{margin:6px 0;padding-left:18px;font-size:13.5px;line-height:1.55}ul.subs li{margin-bottom:6px}ul.subs small{color:var(--muted)}
 .fa-wrap{grid-column:1/-1}.fachips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fachip{font:inherit;font-size:13px;font-weight:600;min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--accent-soft);color:var(--ink);cursor:pointer}
 .flt .fclr{margin-bottom:12px; cursor:pointer; font-weight:600; font-size:14px}
 .fav{margin-left:auto; font:inherit; font-size:22px; line-height:1; min-width:40px; min-height:40px; border:0; background:transparent; color:var(--accent); cursor:pointer}
@@ -1652,7 +1653,7 @@ function card(r){
     '<div class="brow"><button type="button" class="gbtn" data-medit="'+r.i+'">'+(ed?'Fermer':'✎ Mes macros')+'</button><button type="button" class="gbtn" data-mcalc="'+r.i+'">'+(state.mcalc===r.i?'Fermer':'⚖ Mes marques')+'</button>'+(r.cu?'<button type="button" class="gbtn" data-cdel="'+r.i+'">Supprimer ma recette</button>':'')+'</div>'+
     (state.mcalc===r.i?mcPanel(r):'')+
     (ed?'<div class="pf"><p class="note">Saisis les valeurs réelles (FatSecret) pour une portion.</p><div class="pfg"><label>kcal<input id="mk" inputmode="decimal" value="'+r.k+'"></label><label>Prot<input id="mp" inputmode="decimal" value="'+r.p+'"></label><label>Gluc<input id="mg" inputmode="decimal" value="'+r.g+'"></label><label>Lip<input id="ml" inputmode="decimal" value="'+r.l+'"></label><label>Fibres<input id="mf" inputmode="decimal" value="'+r.f+'"></label></div><div class="brow"><button type="button" data-msave="'+r.i+'">Enregistrer</button>'+(pers?'<button type="button" data-mreset="'+r.i+'">Rétablir mes valeurs d\'origine</button>':'')+'</div></div>':'')+
-    '<details data-i="'+r.i+'"><summary>Voir la recette</summary><div class="rec"><h4>Ingrédients'+(f!==1?' (portion ×'+String(f).replace('.',',')+')':'')+'</h4><ul>'+r.ing.map(x=>'<li>'+esc(scaleLine(x,f))+'</li>').join('')+'</ul><h4>Étapes</h4><ol>'+r.st.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'+(r.tip?'<p class="tip">💡 '+esc(r.tip)+'</p>':'')+recMedia(r.i)+'<h4>Batch cooking</h4><div class="seg bseg" data-bi="'+r.i+'">'+[2,3,4,5,6].map(n=>'<button type="button" data-bn="'+n+'" aria-pressed="false">×'+n+'</button>').join('')+'</div><div class="bout" data-bo="'+r.i+'" hidden></div></div></details>'+
+    '<details data-i="'+r.i+'"><summary>Voir la recette</summary><div class="rec"><h4>Ingrédients'+(f!==1?' (portion ×'+String(f).replace('.',',')+')':'')+'</h4><ul>'+r.ing.map(x=>'<li>'+esc(scaleLine(x,f))+'</li>').join('')+'</ul><h4>Étapes</h4><ol>'+r.st.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'+(r.tip?'<p class="tip">💡 '+esc(r.tip)+'</p>':'')+subsHTML(r)+recMedia(r.i)+'<h4>Batch cooking</h4><div class="seg bseg" data-bi="'+r.i+'">'+[2,3,4,5,6].map(n=>'<button type="button" data-bn="'+n+'" aria-pressed="false">×'+n+'</button>').join('')+'</div><div class="bout" data-bo="'+r.i+'" hidden></div></div></details>'+
     '</div></article>';
 }
 
@@ -1759,6 +1760,57 @@ function dbOpen(){return new Promise(res=>{try{const q=indexedDB.open('carnet-pr
 function dbAll(){return new Promise(res=>{try{const s=DB.transaction('p').objectStore('p');const ks=s.getAllKeys(),vs=s.getAll();vs.onsuccess=()=>{ks.result.forEach((k,i)=>{PH[k]=vs.result[i]});res()};vs.onerror=()=>res()}catch(e){res()}})}
 function dbPut(k,v){try{const s=DB.transaction('p','readwrite').objectStore('p');v?s.put(v,k):s.delete(k)}catch(e){}}
 
+/* ===== Remplacements possibles (même poids, écart indicatif) ===== */
+const SUBS={
+ poulet:[['Dinde','même poids, même cuisson (±5 kcal)'],['Blanc de dinde ou de poulet déjà cuit','plus rapide : réchauffe 2 min seulement']],
+ dinde:[['Poulet','même poids, même cuisson (±5 kcal)'],['Veau (escalope)','même poids, plus tendre, +0 à 10 kcal']],
+ blancpoulet:[['Blanc de dinde','même poids']],blancdinde:[['Blanc de poulet','même poids']],
+ dindeh:[['Steak haché 5 %','même poids, +5 kcal, cuire à cœur'],['Poulet haché','même poids, ±5 kcal']],
+ boeuf:[['Steak haché de dinde','même poids, ≈ −5 kcal, plus maigre'],['Bavette ou rumsteck en dés','même poids, +10 à 25 kcal/100 g, plus tendre']],
+ rumsteck:[['Bavette','+20 kcal/100 g, plus de lipides'],['Veau ou filet mignon de porc','−20 à −30 kcal/100 g, plus maigre'],['Steak haché 5 %','même poids, plus simple']],
+ veau:[['Filet mignon de porc','même poids, +10 kcal'],['Poulet ou dinde','même poids, +10 kcal']],
+ porc:[['Veau','même poids, −10 kcal'],['Poulet ou dinde','même poids, ≈ −5 kcal']],
+ cabillaud:[['Colin, merlu ou lieu noir','même poids, même cuisson (±5 kcal)'],['Saumon','−30 % de poids pour les mêmes kcal, plus de lipides']],
+ colin:[['Cabillaud, merlu ou lieu noir','même poids, même cuisson']],merlu:[['Cabillaud, colin ou lieu noir','même poids, même cuisson']],lieu:[['Cabillaud, colin ou merlu','même poids, même cuisson']],
+ saumon:[['Maquereau','même poids, ≈ égal'],['Cabillaud ou thon frais','−100 kcal/100 g, moins gras (ajoute 5 g d\'huile pour le moelleux)']],
+ maquereau:[['Saumon','même poids, ≈ égal'],['Sardines en boîte (égouttées)','même poids, un peu moins gras']],
+ thonfrais:[['Saumon','+100 kcal/100 g, plus gras'],['Cabillaud','même poids, cuisson 3 min par face']],
+ thon:[['Saumon en boîte (au naturel)','+60 kcal/100 g'],['Poulet cuit effiloché','même poids, ≈ −5 kcal'],['Sardines au naturel','+35 kcal/100 g']],
+ sardine:[['Thon au naturel','−45 kcal/100 g'],['Maquereau en boîte','même poids']],
+ crevettes:[['Poisson blanc cuit en dés','même poids, un peu plus de kcal'],['Poulet cuit en dés','même poids, +10 kcal/100 g']],
+ oeuf:[['2 blancs d\'œuf pour 1 œuf','−45 kcal, −5 g de lipides, −2 g de protéines']],
+ skyr:[['Fromage blanc 0 %','même poids, −3 g de protéines'],['Yaourt grec 0 %','même poids, ≈ égal']],
+ emmental:[['Mozzarella light','même poids, −150 kcal/100 g'],['Grana Padano','moitié moins : plus de goût pour moins de kcal']],
+ mozza:[['Emmental','moitié moins, plus de goût']],
+ riz:[['Pâtes complètes','même poids cru, +fibres, cuisson selon paquet'],['Semoule complète','même poids, 5 min à l\'eau chaude'],['Patate douce','pour 50 g de riz cru : 200 g de patate douce crue']],
+ pates:[['Riz','même poids cru, −fibres'],['Semoule complète','même poids']],
+ semoule:[['Riz','même poids cru'],['Pâtes complètes','même poids cru, +fibres']],
+ pdt:[['Patate douce','même poids, +fibres, cuit un peu plus vite'],['Riz','pour 250 g de pommes de terre : 60 g de riz cru']],
+ patate:[['Pommes de terre','même poids, −fibres'],['Carottes (en purée)','même poids, −50 kcal/100 g']],
+ lent:[['Pois chiches ou haricots blancs','même poids égoutté']],pc:[['Lentilles ou haricots','même poids égoutté']],rouge:[['Haricots blancs ou lentilles','même poids égoutté']],blancs:[['Pois chiches ou lentilles','même poids égoutté']],
+ vert:[['Brocoli','même poids, cuisson 4–5 min'],['Courgettes','même poids, cuisson 5 min'],['Petits pois','même poids, +40 kcal/100 g']],
+ brocoli:[['Chou-fleur','même poids, cuisson 4–5 min'],['Haricots verts','même poids']],
+ courgette:[['Aubergine','même poids, absorbe plus d\'huile'],['Poivrons','même poids, +10 kcal/100 g']],
+ poivron:[['Courgettes','même poids, −10 kcal/100 g'],['Tomates','même poids']],
+ epi:[['Épinards surgelés','même poids cru, égoutte bien'],['Salade ou chou','même poids, cuire plus longtemps']],
+ carotte:[['Courgettes','même poids, −25 kcal/100 g'],['Chou rouge','même poids']],
+ pois:[['Haricots verts','même poids, −40 kcal/100 g'],['Brocoli','même poids']],
+ pain:[['Pain de mie complet','même poids'],['Wrap ou pita complet','même poids']],
+ wrap:[['Pain pita complet','même poids'],['2 tranches de pain complet','≈ égal']],
+ pita:[['Wrap complet','même poids']],
+ banane:[['Pomme','même poids, −45 kcal/100 g'],['Framboises','même poids, −70 kcal/100 g']],
+ pomme:[['Banane','+45 kcal/100 g'],['Poire','même poids']],
+ miel:[['Édulcorant','0 kcal : retire ~20 kcal par cuillère à café']],
+ farine:[['Flocons d\'avoine mixés','même poids, +fibres']],flocons:[['Farine complète','même poids, −fibres']],
+ huile:[['Spray d\'huile','≈ 5 kcal au lieu de 90 par cuillère à soupe']],
+ lait:[['Boisson végétale non sucrée','−20 kcal/100 ml, moins de protéines']]
+};
+function subsHTML(r){
+  const seen=new Set(),rows=[];
+  (r.par||[]).forEach(x=>{const c=x[0];if(seen.has(c)||!SUBS[c])return;seen.add(c);const it=ITEMS.find(y=>y[0]===c)||[c,c];rows.push('<li><b>'+esc(it[1])+'</b> → '+SUBS[c].map(a=>esc(a[0])+' <small>('+esc(a[1])+')</small>').join(' · ')+'</li>')});
+  if(!rows.length)return '';
+  return '<details class="rvd"><summary>↔ Remplacer un ingrédient</summary><ul class="subs">'+rows.join('')+'</ul><p class="note">Écarts indicatifs, au même poids cru. Si tu changes beaucoup, ajuste ensuite dans Journée.</p></details>';
+}
 function recMedia(i){
   const u=VID[i]||'',n=NOTES[i]||'';
   let h='<button type="button" class="vbtn ckbtn" data-cook="'+i+'">👨‍🍳 Mode cuisine</button> ';
@@ -2818,7 +2870,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 75 (mode cuisine, accueil simplifié)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 76 (remplacements possibles)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
