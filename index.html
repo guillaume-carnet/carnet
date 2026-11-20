@@ -1980,7 +1980,7 @@ function autoForm(r,raw){
   const G=(x)=>'<div class="fm" style="border:0;padding:0">'+x+'</div>';
   const sSt=sec('Pas',hasS,G(f('aust','Pas',r.st,0)));
   const sW=sec('Pesée',hasW,G(f('aucw','Poids (kg)',r.w,1))+'<details class="flt"'+(r.body?' open':'')+'><summary>Impédancemètre (Huawei)</summary><div class="fm" style="border:0;padding:8px 0 0">'+f('aub','Graisse corporelle (%)',bd.b,1)+f('aum','Muscle squelettique (kg)',bd.m,1)+f('aumt','Masse musculaire (kg)',bd.mt,1)+f('auvf','Graisse viscérale',bd.vf,1)+f('aubmr','Taux métabolique (kcal)',bd.bmr,0)+f('auwa','Eau (%)',bd.wa,1)+f('aupr','Protéines (%)',bd.pr,1)+f('aubn','Densité minérale (kg)',bd.bn,2)+'</div></details>');
-  const sD='<div class="fm" style="border:0;padding:0;margin-top:8px">'+f('aucd','Date (pas et pesée)',r.d||today(),0,'date')+'</div>';
+  const sD='<div class="fm" style="border:0;padding:0;margin-top:8px">'+f('aucd','Date (pas, pesée et journal)',r.d||today(),0,'date')+'</div>';
   const sF=sec('Journal FatSecret (aujourd\'hui)',hasF,G(f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)));
   return sSt+sW+sD+sF
    +'<p class="note">Seuls les champs remplis sont enregistrés : le reste n\'est pas modifié.</p><div class="dact"><button type="button" class="pri" data-ausave>💾 Valider l\'import</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
@@ -2005,7 +2005,7 @@ document.addEventListener('click',e=>{
     const okS=st>0&&st<100000,okW=w>=30&&w<=300,okF=k>0;
     if(!okS&&!okW&&!okF){if(window.toast)toast('Saisis au moins une valeur.',false);return}
     const out=[];
-    if(okF){fsApply(k,rd('aup'),rd('aug'),rd('aul'),rd('auf'));out.push('journal FatSecret')}
+    if(okF){if(d===today())fsApply(k,rd('aup'),rd('aug'),rd('aul'),rd('auf'));else{const r1=x=>Math.round(rd(x)*10)/10;LOG[d]={k:Math.round(k),p:r1('aup'),g:r1('aug'),l:r1('aul'),f:r1('auf')};saveLog()}out.push('journal FatSecret')}
     const ex={b:rd('aub'),m:rd('aum'),mt:rd('aumt'),vf:rd('auvf'),bmr:rd('aubmr'),wa:rd('auwa'),pr:rd('aupr'),bn:rd('aubn')};
     ocrClose();
     if(okS||okW){applyImport(d,okS?st:null,okW?w:null,okW?ex:null)}
@@ -3026,7 +3026,9 @@ let LOG=ls('cp-log',{}),FR=new Set(ls('cp-frg',[]));
 let LOGD=ls('cp-logd',{}),DAYD='';try{DAYD=localStorage.getItem('cp-daydate')||''}catch(e){}
 function closeDay(){
   const td=today();let st=DAYD,closed=null;
-  if(!st){const ks=Object.keys(LOG).sort();st=(dayTot().k>0&&ks.length&&ks[ks.length-1]<td)?ks[ks.length-1]:td}
+  if(!st){if(dayTot().k>0){const y=new Date();y.setDate(y.getDate()-1);const yd=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0'),L=LOG[yd],t0=dayTot();
+    /* si la veille est déjà dans l'historique avec un total différent, ces repas sont ceux d'aujourd'hui : on n'y touche pas */
+    st=(L&&L.k>0&&Math.abs(L.k-t0.k)>Math.max(25,t0.k*0.02))?td:yd}else st=td}
   if(st<td){
     const t=dayTot();
     if(t.k>0){
@@ -3038,8 +3040,32 @@ function closeDay(){
   DAYD=td;try{localStorage.setItem('cp-daydate',td)}catch(e){}
   return closed||(st<td?'vide':null);
 }
-closeDay();
-function midnightTick(){const c=closeDay();if(c){try{refreshAll()}catch(e){}if(c!=='vide'&&window.toast)toast('✓ Journée du '+fdate(c)+' enregistrée dans l\'historique')}}
+/* totaux d'un jour archivé retrouvés à partir de ses repas si l'historique les a perdus */
+function repairLog(){
+  let ch=false;
+  Object.keys(LOGD).forEach(d=>{
+    if(LOG[d]&&LOG[d].k>0)return;
+    const t={k:0,p:0,g:0,l:0,f:0};
+    SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(e=>{try{const x=ent(e);t.k+=x.k;t.p+=x.p;t.g+=x.g;t.l+=x.l;t.f+=x.f}catch(er){}}));
+    if(t.k>0){LOG[d]={k:Math.round(t.k),p:Math.round(t.p*10)/10,g:Math.round(t.g*10)/10,l:Math.round(t.l*10)/10,f:Math.round(t.f*10)/10};ch=true}
+  });
+  if(ch)saveLog();return ch;
+}
+/* relit le stockage : une page restée ouverte en arrière-plan ne doit pas écraser des données plus récentes */
+function syncStore(){
+  let ch=false;const J=x=>JSON.stringify(x);
+  const nl=ls('cp-log',{}),nd=ls('cp-logd',{}),na=ls('cp-act',{}),nw=ls('cp-w',[]);
+  if(J(nl)!==J(LOG)){LOG=nl;ch=true}if(J(nd)!==J(LOGD)){LOGD=nd;ch=true}if(J(na)!==J(ACT)){ACT=na;ch=true}if(J(nw)!==J(WT)){WT=nw;ch=true}
+  try{
+    const d=JSON.parse(localStorage.getItem('cp-day')||'null'),nx={pdj:[],dej:[],col:[],din:[]};
+    if(d)SLOTS.forEach(([k])=>{nx[k]=(d[k]||[]).filter(e=>e.x!==undefined||R.some(r=>r.i===e.r))});
+    if(J(nx)!==J(DAY)){DAY=nx;ch=true}
+    DAYD=localStorage.getItem('cp-daydate')||DAYD;
+  }catch(e){}
+  return ch;
+}
+closeDay();repairLog();
+function midnightTick(){const ch=syncStore(),c=closeDay(),rp=repairLog();if(ch||c||rp){try{refreshAll()}catch(e){}}if(c&&c!=='vide'&&window.toast)toast('✓ Journée du '+fdate(c)+' enregistrée dans l\'historique')}
 setInterval(midnightTick,30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)midnightTick()});
 window.addEventListener('pageshow',midnightTick);window.addEventListener('focus',midnightTick);
@@ -3232,7 +3258,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 88 (calendrier et clôture à minuit)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 90 (historique protégé)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
