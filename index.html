@@ -306,6 +306,9 @@ button.ck-main{font:inherit; font-size:17px; font-weight:600; min-height:52px; b
 .msg{color:var(--accent); font-weight:600; font-size:14px; margin:0}
 input,select,textarea{font-size:16px !important}
 
+#dsum .kv{grid-template-columns:1fr 1fr}
+#dsum .kv b{font-size:17px;line-height:1.2}
+#dsum .kv span{font-size:12px;color:var(--muted)}
 .sum{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:14px; display:grid; gap:14px}
 .big{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
 .big b{font-family:var(--f-display); font-size:44px; line-height:1}
@@ -1824,12 +1827,13 @@ async function clipImport(){
   if(!okS&&!okW){if(window.toast)toast('Rien à importer : copie d\'abord le texte du raccourci (pas=… poids=…).',false);return}
   applyImport(d,okS?st:null,okW?w:null);
 }
+function refreshAll(){['renderHome','renderDay','renderWeight','renderAct','renderHist','renderWeek'].forEach(f=>{try{if(typeof window[f]==='function')window[f]()}catch(e){}})}
 function applyImport(d,st,w,ex){
   const out=[];
   if(st!==null){actDay(d).st=st;saveAct();out.push(fmtN(st)+' pas')}
   if(w!==null){const old=WT.find(x=>x.d===d&&!x.s)||{};WT=WT.filter(x=>!(x.d===d&&!x.s));WT.push(Object.assign({},old,{d,s:false,w},ex?Object.fromEntries(Object.entries(ex).filter(e=>e[1]>0)):{}));lsw('cp-w',WT);out.push(String(w).replace('.',',')+' kg')}
   if(window.toast)toast('✓ Importé : '+out.join(' et '));
-  renderHome();
+  refreshAll();
 }
 
 /* ===== Lire une capture d'écran (Huawei Santé, balance…) : OCR + confirmation ===== */
@@ -1880,6 +1884,7 @@ document.addEventListener('click',e=>{
 });
 /* ===== Import auto : une ou plusieurs captures (Huawei Santé, FatSecret), reconnues automatiquement ===== */
 function fsApply(k,p,g,l,f){
+  try{const dt=new Date();localStorage.setItem('cp-fs-at',String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'))}catch(e){}
   DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};saveDay();
   LOG[today()]={k:Math.round(k),p:Math.round(p*10)/10,g:Math.round(g*10)/10,l:Math.round(l*10)/10,f:Math.round(f*10)/10};saveLog();
 }
@@ -1965,7 +1970,7 @@ function autoForm(r,raw){
   const sD='<div class="fm" style="border:0;padding:0;margin-top:8px">'+f('aucd','Date (pas et pesée)',r.d||today(),0,'date')+'</div>';
   const sF=sec('Journal FatSecret (aujourd\'hui)',hasF,G(f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)));
   return sSt+sW+sD+sF
-   +'<p class="note">Seuls les champs remplis sont enregistrés : le reste n\'est pas modifié.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
+   +'<p class="note">Seuls les champs remplis sont enregistrés : le reste n\'est pas modifié.</p><div class="dact"><button type="button" class="pri" data-ausave>💾 Valider l\'import</button><button type="button" data-occlose>Annuler</button></div>'+(raw?'<details style="margin-top:8px"><summary class="note">Texte lu sur la capture</summary><pre style="white-space:pre-wrap;font-size:11px">'+esc(String(raw).slice(0,1800))+'</pre></details>':'')}
 async function autoRun(files){
   const n=files.length;
   ocrBox('<h3>Lecture '+(n>1?'des '+n+' captures':'de la capture')+'…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
@@ -1991,8 +1996,8 @@ document.addEventListener('click',e=>{
     const ex={b:rd('aub'),m:rd('aum'),mt:rd('aumt'),vf:rd('auvf'),bmr:rd('aubmr'),wa:rd('auwa'),pr:rd('aupr'),bn:rd('aubn')};
     ocrClose();
     if(okS||okW){applyImport(d,okS?st:null,okW?w:null,okW?ex:null)}
-    else{if(window.toast)toast('✓ Journal FatSecret importé');renderHome()}
-    if(okF)try{renderViews()}catch(x){}
+    else{if(window.toast)toast('✓ Journal FatSecret importé');refreshAll()}
+    if(okF)refreshAll();
   }
 },true);
 function autoText(txts){
@@ -2796,7 +2801,7 @@ function renderWeight(){
   let h='<h2>Corps et poids</h2><p class="note">Les calculs utilisent seulement les pesées du matin. Seul le poids est obligatoire, le reste vient de ton impédancemètre.</p>';
   if(o){
     h+=blk('w-res','bars','Résumé','moyenne, IMC, composition',
-     '<div class="kv"><div><b>'+num(o.S.a7,1)+' kg</b><span>Moyenne 7 jours ('+o.S.n7+' pesée'+(o.S.n7>1?'s':'')+')</span></div>'
+     '<div class="kv"><div><b>'+num(o.L.w,1)+' kg</b><span>Dernière pesée ('+fdate(o.L.d)+')</span></div><div><b>'+num(o.S.a7,1)+' kg</b><span>Moyenne 7 jours ('+o.S.n7+' pesée'+(o.S.n7>1?'s':'')+')</span></div>'
      +'<div><b>'+(o.S.rate===null?'—':(o.S.rate>0?'+':'')+num(o.S.rate,2)+' kg')+'</b><span>Tendance par semaine'+(o.S.span<13?' (provisoire)':'')+'</span></div>'
      +'<div><b>'+num(o.imc,1)+'</b><span>IMC · '+imcCat(o.imc)+'</span></div>'
      +(o.mg?'<div><b>'+num(o.mg,1)+' kg</b><span>Masse grasse ('+num(o.L.b,1)+' %)</span></div><div><b>'+num(o.maigre,1)+' kg</b><span>Masse maigre · FFMI '+num(o.ffmi,1)+'</span></div>':'')
@@ -3016,15 +3021,25 @@ function renderHome(){
   const lb=ls('cp-lastbak',0),age=lb?dAgo(lb):null;
   const nb=(ls('cp-w',[]).length||Object.keys(ls('cp-log',{})).length||ls('cp-foods',[]).length);
   if(nb&&(!lb||age>=7))h+='<div class="al al-warn" style="margin:0 0 10px"><p style="margin:0 0 8px"><b>Sauvegarde :</b> '+(lb?'dernière il y a '+age+' jours.':'tu n\'en as encore jamais fait.')+' Fais-la maintenant pour protéger tes données et tes photos.</p><button type="button" class="pri" data-hbak>Sauvegarder</button></div>';
-  h+='<button type="button" class="hero2" data-hgo="jr"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>Aujourd\'hui</h3>'+mrow('Calories',t.k,T.k,'kcal')+mrow('Protéines',t.p,T.p,'g')+'<small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+fmtN(Math.max(0,T.p-t.p))+' g de protéines.')+'</small></div></button>';
+  const heroH='<button type="button" class="hero2" data-hgo="jr" style="border:0;box-shadow:none;background:none;padding:0;margin:0"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>Aujourd\'hui</h3>'+mrow('Calories',t.k,T.k,'kcal')+mrow('Protéines',t.p,T.p,'g')+'<small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+fmtN(Math.max(0,T.p-t.p))+' g de protéines.')+'</small></div></button>';
+  {
+    const lw=(S&&S.last)||null,cb=WT.filter(x=>x.b>0).sort((x,y)=>x.d<y.d?-1:1).pop()||null,tl=(k,v,sub)=>'<div><b>'+v+'</b><span>'+sub+'</span></div>';
+    const bal=(t.k||BODY.kc||T.k)-c.tot,fa=ls('cp-fs-at','');
+    let tiles=tl('g',fmtN(t.g)+' / '+T.g+' g','Glucides')+tl('l',fmtN(t.l)+' / '+T.l+' g','Lipides')+tl('f',num(t.f,1)+' / '+T.f+' g','Fibres')
+      +tl('st',fmtN(a.st)+' pas','Objectif '+fmtN(GOAL)+' · ≈ '+fmtN(c.kPas+c.kSes)+' kcal brûlées');
+    if(lw)tiles+=tl('w',num(lw.w,1)+' kg','Dernière pesée ('+fdate(lw.d)+')'+(S&&S.n7>1?' · moy. 7 j '+num(S.a7,1):''));
+    else tiles+=tl('w','—','Pas encore de pesée du matin');
+    if(cb){tiles+=tl('b',num(cb.b,1)+' %','Graisse corporelle'+(cb.w?' ('+num(cb.w*cb.b/100,1)+' kg)':''));
+      if(cb.mt)tiles+=tl('mt',num(cb.mt,1)+' kg','Masse musculaire');
+      if(cb.wa)tiles+=tl('wa',num(cb.wa,1)+' %','Eau');
+      if(cb.vf)tiles+=tl('vf',num(cb.vf,1),'Graisse viscérale');
+      if(cb.bmr)tiles+=tl('bmr',fmtN(cb.bmr)+' kcal','Métabolisme de base')}
+    if(t.k>0||a.st>0)tiles+=tl('bal',(bal>0?'+':'')+fmtN(bal)+' kcal','Bilan : '+fmtN(t.k)+' mangées − '+fmtN(c.tot)+' brûlées');
+    h+='<div class="sum" id="dsum">'+heroH+'<div class="kv">'+tiles+'</div><small class="note" style="margin:0">Données du '+fdate(td)+(fa?' · journal FatSecret importé à '+esc(fa):'')+(cb&&cb.d!==td?' · impédancemètre du '+fdate(cb.d):'')+'</small></div>';
+  }
   h+='<div class="dact" style="margin:10px 0"><button type="button" class="pri" data-hgo="jr">＋ Ajouter un repas</button></div>';
   if(MEALS.length){const hr=new Date().getHours(),sl=hr<10?'pdj':hr<15?'dej':hr<18?'col':'din',sn=SLOTS.find(x=>x[0]===sl)[1];h+='<div class="grp"><h3>Mes repas types <small style="font-weight:500;color:var(--muted)">→ '+sn+'</small></h3><div class="crs">'+MEALS.slice(0,3).map((m,i)=>'<div class="rl"><span><b>'+esc(m.n)+'</b></span><button type="button" data-hmeal="'+i+':'+sl+'">Ajouter</button></div>').join('')+'</div></div>'}
-  h+='<div class="hgrid">'
-   +hcard('act','Pas',fmtN(a.st),'objectif '+fmtN(GOAL)+' · ≈ '+fmtN(c.kPas+c.kSes)+' kcal brûlées',Math.min(100,Math.round(a.st/GOAL*100)))
-   +hcard('poids','Poids (moy. 7 j)',S?num(S.a7,1)+' kg':'—',S?(S.rate===null?'tendance en cours':'tendance '+(S.rate>0?'+':'')+num(S.rate,2)+' kg/sem'):'ajoute une pesée',null)+'</div>';
   h+='<div class="dact" style="margin:8px 0"><button type="button" data-clipimp>📥 Importer mes pas et mon poids</button><button type="button" data-auto>📷 Importer des captures (Huawei, FatSecret)</button><button type="button" data-autoclip>📋 Coller</button><input type="file" id="autofile" accept="image/*" multiple hidden></div><details class="rvd"><summary>Comment l\'automatiser avec un raccourci iPhone</summary><ol class="subs"><li>Huawei Santé doit partager ses données avec l\'appli Santé d\'Apple (Santé > ton profil > Applis > Huawei Santé : tout autoriser).</li><li>Dans l\'appli Raccourcis, crée un raccourci « Carnet » : <b>Rechercher des échantillons de santé</b> (Pas, aujourd\'hui) puis <b>Calculer les statistiques</b> (somme).</li><li>Ajoute un second <b>Rechercher des échantillons de santé</b> : Poids, du plus récent, limite 1.</li><li>Ajoute <b>Texte</b> : <code>pas=[somme] poids=[poids]</code> puis <b>Copier dans le presse-papiers</b>.</li><li>Onglet Automatisation : lance-le chaque soir à une heure fixe, en exécution immédiate.</li><li>Ouvre le carnet et touche « Importer » : tout est rempli en un tap.</li></ol></details>';
-  if(!WT.some(x=>x.d===td&&!x.s))h+='<p class="note" style="margin:0 0 6px">Pas encore de pesée du matin aujourd\'hui.</p>';
-  if(t.k>0||a.st>0){const bal=(t.k||BODY.kc||T.k)-c.tot;h+='<div class="sum"><p style="margin:0"><b>Bilan du jour :</b> '+fmtN(t.k)+' kcal mangées, '+fmtN(c.tot)+' brûlées estimées, soit '+(bal>0?'+':'')+fmtN(bal)+' kcal.</p></div>'}
   if(rk>=150){const sg=suggestions(t,T,3);if(sg.length)h+='<div class="grp" style="margin-top:14px"><h3>Idées pour finir la journée</h3><div class="crs">'+sg.map(r=>'<div class="rl"><span><b>'+esc(r.n)+'</b><br><small>'+r.k+' kcal · '+r.p+' g prot</small></span><button type="button" data-hq="'+r.i+'">Voir</button></div>').join('')+'</div></div>'}
   const Q=[['jr','target','Ma journée'],['poids','chart','Me peser'],['act','steps','Mes pas'],['crs','cart','Courses'],['hist','cal','Historique'],['frg','bulb','Mon frigo']];
   const QI={target:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',chart:SIC.chart,steps:SIC.steps,cart:'M3 4h2l2 11h10l2-8H6M9 20h.01M17 20h.01',cal:SIC.cal,bulb:SIC.bulb};
@@ -3140,7 +3155,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 85 (lecture par position)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 86 (résumé en un bloc)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
