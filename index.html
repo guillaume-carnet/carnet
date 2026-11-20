@@ -218,7 +218,7 @@ button.ck-main{font:inherit; font-size:17px; font-weight:600; min-height:52px; b
 .fm input[type=date]::-webkit-date-and-time-value{text-align:left; min-height:1.2em}
 .fm input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
 .fm select{padding-right:34px; background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%; background-size:5px 5px; background-repeat:no-repeat}
-.fm input[type=checkbox]{height:22px}
+.fm input[type=checkbox],#bph{appearance:auto;-webkit-appearance:checkbox;accent-color:var(--accent);width:24px;height:24px;min-height:24px;flex:none;padding:0}
 .fm button,.bkb button,.rl button{font:inherit; font-size:14px; font-weight:600; min-height:42px; padding:8px 14px; border-radius:10px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer}
 .bkb{display:flex; gap:8px; flex-wrap:wrap}
 .al{background:var(--surface); border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:10px; padding:9px 12px; font-size:14px}
@@ -2759,7 +2759,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 73 (rappel de sauvegarde des photos)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 74 (case photos visible)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
