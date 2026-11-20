@@ -1909,12 +1909,44 @@ function bodyParse(t){
   const cnt=['b','m','mt','vf','bmr','wa','pr','bn'].filter(k=>out[k]!==undefined).length;
   return cnt>=3?out:null;
 }
-function autoMerge(txts){
+/* lecture par position : chaque valeur est la ligne alignée à gauche juste sous son nom */
+function layoutBody(words){
+  if(!Array.isArray(words)||words.length<10)return null;
+  const W=words.map(x=>({t:String(x.text||'').toLowerCase().replace(/[^a-zà-ÿ0-9.,%:\/'-]/g,''),raw:String(x.text||''),x0:x.bbox.x0,y0:x.bbox.y0,x1:x.bbox.x1,y1:x.bbox.y1}));
+  const L=[
+    ['imc',[/^imc$/],'d',10,50],
+    ['b',[/^graisse$/,/^corporelle/],'d',3,60],
+    ['m',[/^masse$/,/^musculai(?!re)/],'kg',10,80],
+    ['mt',[/^masse$/,/^musculaire/],'kg',10,100],
+    ['vf',[/^graisse$/,/^visc/],'d',1,30],
+    ['bmr',[/^taux$/,/^m[eé]tabol/],'k',800,4500],
+    ['wa',[/^masse$/,/^hydrique/],'d',30,80],
+    ['pr',[/^prot[eé]ines$/],'d',5,40],
+    ['bn',[/^densit[eé]$/,/^min/],'kg',1,6]];
+  const out={};
+  L.forEach(([k,seq,ty,lo,hi])=>{
+    for(let i=0;i+seq.length<=W.length;i++){
+      if(!seq.every((re,j)=>re.test(W[i+j].t)))continue;
+      const ws=W.slice(i,i+seq.length),lx=Math.min(...ws.map(x=>x.x0)),ly1=Math.max(...ws.map(x=>x.y1)),lh=Math.max(20,ly1-Math.min(...ws.map(x=>x.y0)));
+      const below=W.filter(x=>x.y0>=ly1-6&&x.y0-ly1<=Math.max(170,lh*5)&&Math.abs(x.x0-lx)<=45);
+      if(!below.length)continue;
+      const y=Math.min(...below.map(x=>x.y0)),first=below.filter(x=>Math.abs(x.y0-y)<=lh*0.6).sort((a,b)=>a.x0-b.x0)[0];
+      const line=W.filter(x=>Math.abs(x.y0-first.y0)<=lh*0.6&&x.x0>=first.x0-4&&x.x0<=first.x0+360).sort((a,b)=>a.x0-b.x0).map(x=>x.raw).join(' ');
+      let m,v=null;
+      if(ty==='k'){m=line.match(/(\d[\d ]{0,3}\d{3})/);if(m)v=parseInt(m[1].replace(/\s/g,''),10)}
+      else if(ty==='kg'){m=line.match(/^\s*(\d{1,3}[.,]\d{1,2})/);if(m)v=parseFloat(m[1].replace(',','.'))}
+      else{m=line.match(/^\s*(\d{1,3}[.,]\d)(?!\d)/);if(m)v=parseFloat(m[1].replace(',','.'))}
+      if(v!==null&&v>=lo&&v<=hi){out[k]=v;break}
+    }});
+  const cnt=['b','m','mt','vf','bmr','wa','pr','bn'].filter(k=>out[k]!==undefined).length;
+  return cnt>=3?out:null;
+}
+function autoMerge(txts,wds){
   const R={st:null,w:null,d:null,fs:null,body:null};
-  txts.forEach(t=>{
+  txts.forEach((t,ti)=>{
     const kv=String(t).match(/pas\s*[=:]\s*(\d{1,6})/i),kw=String(t).match(/poids\s*[=:]\s*(\d{2,3}(?:[.,]\d{1,2})?)/i);
     if(kv&&R.st===null)R.st=+kv[1];if(kw&&R.w===null)R.w=parseFloat(kw[1].replace(',','.'));
-    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2),bd=isFs?null:bodyParse(t);
+    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2),bd=isFs?null:(layoutBody(wds&&wds[ti])||bodyParse(t));
     if(isFs){if(!R.fs)R.fs=f}
     else if(bd){const a=ocrParse(t);if(!R.body)R.body=bd;if(R.w===null&&a.w!==null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
     else{const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
@@ -1937,12 +1969,12 @@ function autoForm(r,raw){
 async function autoRun(files){
   const n=files.length;
   ocrBox('<h3>Lecture '+(n>1?'des '+n+' captures':'de la capture')+'…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
-  const txts=[];let wk=null;
+  const txts=[],wds=[];let wk=null;
   try{await ocrLoad();wk=await Tesseract.createWorker('eng');
-    for(const f of files){const r=await wk.recognize(f);txts.push(r.data.text||'')}
+    for(const f of files){const r=await wk.recognize(f);txts.push(r.data.text||'');wds.push(r.data.words||null)}
     try{await wk.terminate()}catch(e){}}
   catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les valeurs à la main.</p>'+autoForm({st:null,w:null,d:null,fs:null}));return}
-  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs||r.body;
+  const r=autoMerge(txts,wds),any=r.st!==null||r.w!==null||r.fs||r.body;
   const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.body?'impédancemètre':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
   ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+autoForm(r,txts.join('\n---\n')));
 }
@@ -3108,7 +3140,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 84 (impédancemètre complet)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 85 (lecture par position)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
