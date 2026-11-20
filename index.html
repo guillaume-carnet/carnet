@@ -1884,6 +1884,8 @@ function fsApply(k,p,g,l,f){
 function autoMerge(txts){
   const R={st:null,w:null,d:null,fs:null};
   txts.forEach(t=>{
+    const kv=String(t).match(/pas\s*[=:]\s*(\d{1,6})/i),kw=String(t).match(/poids\s*[=:]\s*(\d{2,3}(?:[.,]\d{1,2})?)/i);
+    if(kv&&R.st===null)R.st=+kv[1];if(kw&&R.w===null)R.w=parseFloat(kw[1].replace(',','.'));
     const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d;
     const f=fsParse(t);if(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2&&!R.fs)R.fs=f;
   });
@@ -1923,6 +1925,41 @@ document.addEventListener('click',e=>{
     else{if(window.toast)toast('✓ Journal FatSecret importé');renderHome()}
     if(okF)try{renderViews()}catch(x){}
   }
+},true);
+function autoText(txts){
+  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs;
+  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
+  ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Rien reconnu dans ce texte. Saisis les valeurs à la main.')+'</p>'+autoForm(r));
+}
+function autoPasteBox(msg){
+  ocrBox('<h3>Coller</h3><p class="note">'+(msg||'')+'Touche longuement le cadre ci-dessous puis « Coller » : une capture d\'écran copiée ou du texte (ex. « pas=3440 poids=66,1 »).</p><textarea id="aupaste" rows="4" style="width:100%;box-sizing:border-box" placeholder="Touche longuement ici, puis Coller"></textarea><div class="dact"><button type="button" data-autotxt>Lire le texte</button><button type="button" data-occlose>Annuler</button></div>');
+  setTimeout(()=>{const t=document.getElementById('aupaste');if(t)t.focus()},50);
+}
+async function autoClip(){
+  try{
+    const items=await navigator.clipboard.read(),imgs=[],txt=[];
+    for(const it of items){
+      const ty=it.types.find(x=>x.indexOf('image/')===0);
+      if(ty){imgs.push(await it.getType(ty))}
+      else if(it.types.indexOf('text/plain')>=0){txt.push(await (await it.getType('text/plain')).text())}
+    }
+    if(imgs.length){autoRun(imgs);return}
+    if(txt.length&&txt.join('').trim()){autoText(txt);return}
+    autoPasteBox('Le presse-papiers est vide. ');
+  }catch(e){autoPasteBox('')}
+}
+document.addEventListener('paste',e=>{
+  const t=e.target,cd=e.clipboardData;if(!cd)return;
+  const inField=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable);
+  if(inField&&t.id!=='aupaste')return;
+  const imgs=Array.from(cd.files||[]).filter(f=>f.type.indexOf('image/')===0);
+  if(imgs.length){e.preventDefault();autoRun(imgs.slice(0,6));return}
+  const tx=cd.getData('text');
+  if(tx&&tx.trim()&&(t&&t.id==='aupaste'||document.getElementById('home')&&!document.getElementById('home').hidden&&!document.getElementById('ocrov'))){e.preventDefault();autoText([tx])}
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-autoclip]')){autoClip();return}
+  if(e.target.closest('[data-autotxt]')){const t=document.getElementById('aupaste');if(t&&t.value.trim())autoText([t.value]);return}
 },true);
 /* ===== Lire le journal FatSecret (capture) : total du jour -> Ma journée ===== */
 let OCRM='';
@@ -2910,7 +2947,7 @@ function renderHome(){
   h+='<div class="hgrid">'
    +hcard('act','Pas',fmtN(a.st),'objectif '+fmtN(GOAL)+' · ≈ '+fmtN(c.kPas+c.kSes)+' kcal brûlées',Math.min(100,Math.round(a.st/GOAL*100)))
    +hcard('poids','Poids (moy. 7 j)',S?num(S.a7,1)+' kg':'—',S?(S.rate===null?'tendance en cours':'tendance '+(S.rate>0?'+':'')+num(S.rate,2)+' kg/sem'):'ajoute une pesée',null)+'</div>';
-  h+='<div class="dact" style="margin:8px 0"><button type="button" data-clipimp>📥 Importer mes pas et mon poids</button><button type="button" data-auto>📷 Importer des captures (Huawei, FatSecret)</button><input type="file" id="autofile" accept="image/*" multiple hidden></div><details class="rvd"><summary>Comment l\'automatiser avec un raccourci iPhone</summary><ol class="subs"><li>Huawei Santé doit partager ses données avec l\'appli Santé d\'Apple (Santé > ton profil > Applis > Huawei Santé : tout autoriser).</li><li>Dans l\'appli Raccourcis, crée un raccourci « Carnet » : <b>Rechercher des échantillons de santé</b> (Pas, aujourd\'hui) puis <b>Calculer les statistiques</b> (somme).</li><li>Ajoute un second <b>Rechercher des échantillons de santé</b> : Poids, du plus récent, limite 1.</li><li>Ajoute <b>Texte</b> : <code>pas=[somme] poids=[poids]</code> puis <b>Copier dans le presse-papiers</b>.</li><li>Onglet Automatisation : lance-le chaque soir à une heure fixe, en exécution immédiate.</li><li>Ouvre le carnet et touche « Importer » : tout est rempli en un tap.</li></ol></details>';
+  h+='<div class="dact" style="margin:8px 0"><button type="button" data-clipimp>📥 Importer mes pas et mon poids</button><button type="button" data-auto>📷 Importer des captures (Huawei, FatSecret)</button><button type="button" data-autoclip>📋 Coller</button><input type="file" id="autofile" accept="image/*" multiple hidden></div><details class="rvd"><summary>Comment l\'automatiser avec un raccourci iPhone</summary><ol class="subs"><li>Huawei Santé doit partager ses données avec l\'appli Santé d\'Apple (Santé > ton profil > Applis > Huawei Santé : tout autoriser).</li><li>Dans l\'appli Raccourcis, crée un raccourci « Carnet » : <b>Rechercher des échantillons de santé</b> (Pas, aujourd\'hui) puis <b>Calculer les statistiques</b> (somme).</li><li>Ajoute un second <b>Rechercher des échantillons de santé</b> : Poids, du plus récent, limite 1.</li><li>Ajoute <b>Texte</b> : <code>pas=[somme] poids=[poids]</code> puis <b>Copier dans le presse-papiers</b>.</li><li>Onglet Automatisation : lance-le chaque soir à une heure fixe, en exécution immédiate.</li><li>Ouvre le carnet et touche « Importer » : tout est rempli en un tap.</li></ol></details>';
   if(!WT.some(x=>x.d===td&&!x.s))h+='<p class="note" style="margin:0 0 6px">Pas encore de pesée du matin aujourd\'hui.</p>';
   if(t.k>0||a.st>0){const bal=(t.k||BODY.kc||T.k)-c.tot;h+='<div class="sum"><p style="margin:0"><b>Bilan du jour :</b> '+fmtN(t.k)+' kcal mangées, '+fmtN(c.tot)+' brûlées estimées, soit '+(bal>0?'+':'')+fmtN(bal)+' kcal.</p></div>'}
   if(rk>=150){const sg=suggestions(t,T,3);if(sg.length)h+='<div class="grp" style="margin-top:14px"><h3>Idées pour finir la journée</h3><div class="crs">'+sg.map(r=>'<div class="rl"><span><b>'+esc(r.n)+'</b><br><small>'+r.k+' kcal · '+r.p+' g prot</small></span><button type="button" data-hq="'+r.i+'">Voir</button></div>').join('')+'</div></div>'}
@@ -3028,7 +3065,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 81 (import auto de captures)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 82 (option Coller)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
