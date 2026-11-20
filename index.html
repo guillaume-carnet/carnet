@@ -190,6 +190,7 @@ h1{text-shadow:0 2px 12px rgba(30,30,110,.25)}
 #ckov .ckf button.pri{background:var(--accent);color:var(--on-accent,#fff)}#ckov .ckf button:disabled{opacity:.4}
 .ckbtn{margin-right:6px}
 #home .al button.pri,#home .dact button.pri{font:inherit;min-height:48px;padding:8px 18px;border-radius:14px;border:0;background:var(--accent);color:#fff;font-weight:700;font-size:16px;cursor:pointer}#home .dact button.pri{width:100%}
+#ocrov{position:fixed;inset:0;z-index:90;background:rgba(10,15,30,.55);display:flex;align-items:flex-end;justify-content:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}.ocrc{background:var(--surface);color:var(--ink);border-radius:18px;padding:16px;width:100%;max-width:480px;max-height:90vh;overflow:auto}.ocrc h3{margin:0 0 8px}.ocrc .dact{display:flex;gap:8px;margin-top:10px}.ocrc .dact button{flex:1;min-height:48px;border-radius:14px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}.ocrc .dact button.pri{background:var(--accent);color:#fff}
 ul.subs{margin:6px 0;padding-left:18px;font-size:13.5px;line-height:1.55}ul.subs li{margin-bottom:6px}ul.subs small{color:var(--muted)}
 .fa-wrap{grid-column:1/-1}.fachips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.fachip{font:inherit;font-size:13px;font-weight:600;min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--accent-soft);color:var(--ink);cursor:pointer}
 .flt .fclr{margin-bottom:12px; cursor:pointer; font-weight:600; font-size:14px}
@@ -1811,6 +1812,161 @@ function subsHTML(r){
   if(!rows.length)return '';
   return '<details class="rvd"><summary>↔ Remplacer un ingrédient</summary><ul class="subs">'+rows.join('')+'</ul><p class="note">Écarts indicatifs, au même poids cru. Si tu changes beaucoup, ajuste ensuite dans Journée.</p></details>';
 }
+
+/* ===== Import pas + poids depuis le presse-papiers (raccourci iPhone) ===== */
+async function clipImport(){
+  let t='';
+  try{t=await navigator.clipboard.readText()}catch(e){if(window.toast)toast('Impossible de lire le presse-papiers : autorise « Coller » puis réessaie.',false);return}
+  const num=x=>parseFloat(String(x).replace(/[\s  ]/g,'').replace(',','.'));
+  const pm=t.match(/pas\s*[=:]\s*([\d][\d\s  .,]*)/i),wm=t.match(/poids\s*[=:]\s*(\d+(?:[.,]\d+)?)/i),dm=t.match(/date\s*[=:]\s*(\d{4}-\d{2}-\d{2})/i);
+  const d=dm?dm[1]:today(),st=pm?Math.round(num(pm[1])):null,w=wm?num(wm[1]):null;
+  const okS=st!==null&&st>=0&&st<100000,okW=w!==null&&w>=30&&w<=300;
+  if(!okS&&!okW){if(window.toast)toast('Rien à importer : copie d\'abord le texte du raccourci (pas=… poids=…).',false);return}
+  applyImport(d,okS?st:null,okW?w:null);
+}
+function applyImport(d,st,w){
+  const out=[];
+  if(st!==null){actDay(d).st=st;saveAct();out.push(fmtN(st)+' pas')}
+  if(w!==null){const old=WT.find(x=>x.d===d&&!x.s)||{};WT=WT.filter(x=>!(x.d===d&&!x.s));WT.push(Object.assign({},old,{d,s:false,w}));lsw('cp-w',WT);out.push(String(w).replace('.',',')+' kg')}
+  if(window.toast)toast('✓ Importé : '+out.join(' et '));
+  renderHome();
+}
+
+/* ===== Lire une capture d'écran (Huawei Santé, balance…) : OCR + confirmation ===== */
+function ocrParse(t){
+  const n=String(t).replace(/[\u00a0\u202f]/g,' ');let w=null,st=null,d=null;
+  /* poids : on prend la plus grande valeur en kg (le poids total dépasse toujours muscle, eau, os…) */
+  const rk=/(?<![\d.,])(\d{2,3}(?:[.,]\d{1,2})?)\s*(?:kg|kgs)\b/gi;let m;
+  while((m=rk.exec(n))){const v=parseFloat(m[1].replace(',','.'));if(v>=30&&v<=300&&(w===null||v>w))w=v}
+  /* pas : « 3 440/10 000 pas » -> 3 440 (le second nombre est l'objectif) */
+  const num=s=>parseInt(String(s).replace(/[ .,]/g,''),10);
+  const g=n.match(/(\d{1,3}(?:[ .,]\d{3})+|\d{1,6})\s*\/\s*(\d{1,3}(?:[ .,]\d{3})+|\d{1,6})\s*(?:pas|steps)/i);
+  if(g){const v=num(g[1]);if(v>=0&&v<100000)st=v}
+  else{
+    const c=[],re=/(\d{1,3}(?:[ .,]\d{3})+|\d{3,5})(?!\d)(?!\s*(?:kg|kcal|km|min|%|m\b))/gi;let x;
+    while((x=re.exec(n))){if(n.slice(Math.max(0,x.index-2),x.index).indexOf('/')>=0)continue;const v=num(x[1]);if(v>=100&&v<=60000){const ctx=n.slice(Math.max(0,x.index-40),x.index+x[0].length+40).toLowerCase();c.push({v,s:/\bpas\b|steps/.test(ctx)?2:0})}}
+    c.sort((a,b)=>b.s-a.s||b.v-a.v);if(c.length)st=c[0].v;
+  }
+  /* date : « ven. 20 nov. » */
+  const MO=['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+  const dm=n.toLowerCase().replace(/é/g,'é').match(/\b(\d{1,2})\s+(janv|f[ée]vr|mars|avr|mai|juin|juil|ao[uû]t|sept|oct|nov|d[ée]c)/);
+  if(dm){const mi=MO.findIndex(k=>dm[2].replace('é','e').replace('û','u').indexOf(k.replace('é','e').replace('û','u').slice(0,3))===0);
+    if(mi>=0){const now=new Date();let y=now.getFullYear();const dt=new Date(y,mi,+dm[1]);if(dt>new Date(now.getTime()+864e5))y--;d=y+'-'+String(mi+1).padStart(2,'0')+'-'+String(+dm[1]).padStart(2,'0')}}
+  return {w,st,d};
+}
+function ocrLoad(){return new Promise((ok,ko)=>{if(window.Tesseract)return ok();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ko(new Error('load'));document.head.appendChild(sc)})}
+function ocrBox(h){let e=document.getElementById('ocrov');if(!e){e=document.createElement('div');e.id='ocrov';e.setAttribute('role','dialog');document.body.appendChild(e)}e.innerHTML='<div class="ocrc">'+h+'</div>'}
+function ocrClose(){const e=document.getElementById('ocrov');if(e)e.remove()}
+async function ocrRun(file){
+  ocrBox('<h3>Lecture de la capture…</h3><p class="note">Un instant, la première fois c\'est un peu plus long (téléchargement du lecteur). Il faut une connexion.</p>');
+  let txt='';
+  try{await ocrLoad();const wk=await Tesseract.createWorker('eng');const r=await wk.recognize(file);txt=r.data.text||'';try{await wk.terminate()}catch(e){}}
+  catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les valeurs à la main.</p>'+ocrForm(null,null)+'');return}
+  const r=ocrParse(txt);
+  ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+((r.st!==null||r.w!==null)?'Voici ce que j\'ai lu. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+ocrForm(r.st,r.w,r.d));
+}
+function ocrForm(st,w,d){return '<div class="fm" style="border:0;padding:0"><label>Pas<input id="ocst" type="number" inputmode="numeric" value="'+(st===null?'':st)+'"></label><label>Poids (kg)<input id="ocw" type="text" inputmode="decimal" value="'+(w===null?'':String(w).replace('.',','))+'"></label><label>Date<input id="ocd" type="date" value="'+(d||today())+'"></label></div><div class="dact"><button type="button" class="pri" data-ocsave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='ocrfile'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f){if(OCRM==='fs')fsRun(f);else ocrRun(f)}}});
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-ocr]')){const i=document.getElementById('ocrfile');if(i)i.click();return}
+  if(e.target.closest('[data-occlose]')){ocrClose();return}
+  if(e.target.closest('[data-ocsave]')){
+    const st=parseInt(document.getElementById('ocst').value,10),w=parseFloat(String(document.getElementById('ocw').value).replace(',','.')),d=document.getElementById('ocd').value||today();
+    const okS=!isNaN(st)&&st>=0&&st<100000,okW=!isNaN(w)&&w>=30&&w<=300;
+    if(!okS&&!okW){if(window.toast)toast('Saisis au moins un pas ou un poids valide.',false);return}
+    ocrClose();applyImport(d,okS?st:null,okW?w:null)}
+});
+/* ===== Import auto : une ou plusieurs captures (Huawei Santé, FatSecret), reconnues automatiquement ===== */
+function fsApply(k,p,g,l,f){
+  DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};saveDay();
+  LOG[today()]={k:Math.round(k),p:Math.round(p*10)/10,g:Math.round(g*10)/10,l:Math.round(l*10)/10,f:Math.round(f*10)/10};saveLog();
+}
+function autoMerge(txts){
+  const R={st:null,w:null,d:null,fs:null};
+  txts.forEach(t=>{
+    const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d;
+    const f=fsParse(t);if(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2&&!R.fs)R.fs=f;
+  });
+  return R;
+}
+function autoForm(r){
+  const v=(x,d)=>x===null||x===undefined?'':String(d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
+  const f=(id,lab,x,d,ty)=>'<label>'+lab+'<input id="'+id+'" type="'+(ty||'text')+'" inputmode="decimal" value="'+(ty==='date'?x:v(x,d))+'"></label>';
+  const fs=r.fs||{};
+  return '<div class="fm" style="border:0;padding:0">'+f('aust','Pas',r.st,0)+f('aucw','Poids (kg)',r.w,1)+f('aucd','Date (pas et poids)',r.d||today(),0,'date')+'</div>'
+   +'<h4 style="margin:10px 0 4px">Journal FatSecret (aujourd\'hui)</h4><div class="fm" style="border:0;padding:0">'+f('auk','Calories',fs.k,0)+f('aup','Protéines (g)',fs.p,1)+f('aug','Glucides (g)',fs.g,1)+f('aul','Lipides (g)',fs.l,1)+f('auf','Fibres (g)',fs.f,1)+'</div>'
+   +'<p class="note">Seuls les champs remplis sont enregistrés. Si les calories FatSecret sont remplies, elles remplacent « Ma journée » d\'aujourd\'hui.</p><div class="dact"><button type="button" class="pri" data-ausave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
+async function autoRun(files){
+  const n=files.length;
+  ocrBox('<h3>Lecture '+(n>1?'des '+n+' captures':'de la capture')+'…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
+  const txts=[];let wk=null;
+  try{await ocrLoad();wk=await Tesseract.createWorker('eng');
+    for(const f of files){const r=await wk.recognize(f);txts.push(r.data.text||'')}
+    try{await wk.terminate()}catch(e){}}
+  catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les valeurs à la main.</p>'+autoForm({st:null,w:null,d:null,fs:null}));return}
+  const r=autoMerge(txts),any=r.st!==null||r.w!==null||r.fs;
+  const got=[r.st!==null?'pas':'',r.w!==null?'poids':'',r.fs?'journal FatSecret':''].filter(Boolean).join(', ');
+  ocrBox('<h3>Vérifie les valeurs</h3><p class="note">'+(any?'J\'ai reconnu : '+got+'. Corrige si besoin, puis enregistre.':'Je n\'ai rien reconnu. Saisis les valeurs ou réessaie avec une capture plus nette.')+'</p>'+autoForm(r));
+}
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='autofile'){const fl=Array.from(e.target.files||[]).slice(0,6);e.target.value='';if(fl.length)autoRun(fl)}});
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-auto]')){const i=document.getElementById('autofile');if(i)i.click();return}
+  if(e.target.closest('[data-ausave]')){
+    const rd=id=>{const x=parseFloat(String(document.getElementById(id).value).replace(',','.'));return isNaN(x)?0:x};
+    const st=Math.round(rd('aust')),w=rd('aucw'),d=document.getElementById('aucd').value||today(),k=rd('auk');
+    const okS=st>0&&st<100000,okW=w>=30&&w<=300,okF=k>0;
+    if(!okS&&!okW&&!okF){if(window.toast)toast('Saisis au moins une valeur.',false);return}
+    const out=[];
+    if(okF){fsApply(k,rd('aup'),rd('aug'),rd('aul'),rd('auf'));out.push('journal FatSecret')}
+    ocrClose();
+    if(okS||okW){applyImport(d,okS?st:null,okW?w:null)}
+    else{if(window.toast)toast('✓ Journal FatSecret importé');renderHome()}
+    if(okF)try{renderViews()}catch(x){}
+  }
+},true);
+/* ===== Lire le journal FatSecret (capture) : total du jour -> Ma journée ===== */
+let OCRM='';
+function fsParse(t){
+  const n=String(t).replace(/[  ]/g,' ');
+  const mx=(re,lo,hi)=>{let m,b=null;const r=new RegExp(re.source,'gi');while((m=r.exec(n))){const v=parseFloat(m[1].replace(',','.'));if(v>=lo&&v<=hi&&(b===null||v>b))b=v}return b};
+  /* le total du jour est toujours >= chaque repas : on garde la plus grande valeur lue */
+  const o={p:mx(/prot[a-zé]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,500),
+    g:mx(/glu[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,900),
+    l:mx(/lip[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,400),
+    f:mx(/fib[a-z]*\s*[:;.]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*g/,0,150)};
+  let k=null;const kc=[];let m;
+  const a=/calories?\s*[:;]?\s*(\d{3,4})(?![\d,.]*\s*g)/gi,b=/(?<![\d.,])(\d{3,4})\s*calories?/gi;
+  while((m=a.exec(n)))kc.push(+m[1]);while((m=b.exec(n)))kc.push(+m[1]);
+  const ok=kc.filter(v=>v>=200&&v<=6000);if(ok.length)k=Math.max(...ok);
+  const est=(o.p!==null&&o.g!==null&&o.l!==null)?Math.round(o.p*4+o.g*4+o.l*9+(o.f||0)*2):null;
+  if(est!==null){
+    /* contrôle de cohérence : on retient le nombre lu le plus proche de l'estimation par les macros (à 12 % près) */
+    const all=kc.slice(),sr=/(?<![\d.,])(\d{3,4})(?![\d.,]|\s*(?:g\b|kg|cal\b|%))/g;while((m=sr.exec(n)))all.push(+m[1]);
+    const c2=all.filter(v=>v>=200&&v<=6000&&Math.abs(v-est)<=est*0.12).sort((x,y)=>Math.abs(x-est)-Math.abs(y-est));
+    k=c2.length?c2[0]:est;
+  }
+  return o.p===null&&o.g===null&&o.l===null&&k===null?null:{k,p:o.p,g:o.g,l:o.l,f:o.f};
+}
+function fsForm(r){
+  r=r||{};const v=(x,d)=>x===null||x===undefined?'':String(d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
+  const f=(id,lab,x,d)=>'<label>'+lab+'<input id="'+id+'" type="text" inputmode="decimal" value="'+v(x,d)+'"></label>';
+  return '<div class="fm" style="border:0;padding:0">'+f('fsk','Calories',r.k,0)+f('fsp','Protéines (g)',r.p,1)+f('fsg','Glucides (g)',r.g,1)+f('fsl','Lipides (g)',r.l,1)+f('fsf','Fibres (g)',r.f,1)+'</div><p class="note">En enregistrant, ces totaux remplacent le contenu de « Ma journée » d\'aujourd\'hui et sont ajoutés à l\'historique.</p><div class="dact"><button type="button" class="pri" data-fssave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
+async function fsRun(file){
+  ocrBox('<h3>Lecture du journal…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
+  let txt='';
+  try{await ocrLoad();const wk=await Tesseract.createWorker('eng');const r=await wk.recognize(file);txt=r.data.text||'';try{await wk.terminate()}catch(e){}}
+  catch(e){ocrBox('<h3>Lecture impossible</h3><p class="note">Le lecteur n\'a pas pu se charger (connexion ?). Tu peux saisir les totaux à la main.</p>'+fsForm(null));return}
+  const r=fsParse(txt);
+  ocrBox('<h3>Vérifie les totaux</h3><p class="note">'+(r?'Voici le total du jour lu sur ta capture. Corrige si besoin.':'Je n\'ai rien reconnu. Saisis les totaux ou réessaie avec une capture du haut du Journal (là où s\'affiche « Journal alimentaire »).')+'</p>'+fsForm(r))}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-ocrfs]')){OCRM='fs';const i=document.getElementById('ocrfile');if(i)i.click();return}
+  if(e.target.closest('[data-ocr]')){OCRM=''}
+  if(e.target.closest('[data-fssave]')){
+    const rd=id=>{const x=parseFloat(String(document.getElementById(id).value).replace(',','.'));return isNaN(x)?0:x};
+    const k=rd('fsk'),p=rd('fsp'),g=rd('fsg'),l=rd('fsl'),f=rd('fsf');
+    if(!(k>0)){if(window.toast)toast('Indique au moins les calories.',false);return}
+    fsApply(k,p,g,l,f);ocrClose();if(window.toast)toast('✓ Journal FatSecret importé');renderHome();try{renderViews()}catch(x){}}
+},true);
 function recMedia(i){
   const u=VID[i]||'',n=NOTES[i]||'';
   let h='<button type="button" class="vbtn ckbtn" data-cook="'+i+'">👨‍🍳 Mode cuisine</button> ';
@@ -2754,6 +2910,7 @@ function renderHome(){
   h+='<div class="hgrid">'
    +hcard('act','Pas',fmtN(a.st),'objectif '+fmtN(GOAL)+' · ≈ '+fmtN(c.kPas+c.kSes)+' kcal brûlées',Math.min(100,Math.round(a.st/GOAL*100)))
    +hcard('poids','Poids (moy. 7 j)',S?num(S.a7,1)+' kg':'—',S?(S.rate===null?'tendance en cours':'tendance '+(S.rate>0?'+':'')+num(S.rate,2)+' kg/sem'):'ajoute une pesée',null)+'</div>';
+  h+='<div class="dact" style="margin:8px 0"><button type="button" data-clipimp>📥 Importer mes pas et mon poids</button><button type="button" data-auto>📷 Importer des captures (Huawei, FatSecret)</button><input type="file" id="autofile" accept="image/*" multiple hidden></div><details class="rvd"><summary>Comment l\'automatiser avec un raccourci iPhone</summary><ol class="subs"><li>Huawei Santé doit partager ses données avec l\'appli Santé d\'Apple (Santé > ton profil > Applis > Huawei Santé : tout autoriser).</li><li>Dans l\'appli Raccourcis, crée un raccourci « Carnet » : <b>Rechercher des échantillons de santé</b> (Pas, aujourd\'hui) puis <b>Calculer les statistiques</b> (somme).</li><li>Ajoute un second <b>Rechercher des échantillons de santé</b> : Poids, du plus récent, limite 1.</li><li>Ajoute <b>Texte</b> : <code>pas=[somme] poids=[poids]</code> puis <b>Copier dans le presse-papiers</b>.</li><li>Onglet Automatisation : lance-le chaque soir à une heure fixe, en exécution immédiate.</li><li>Ouvre le carnet et touche « Importer » : tout est rempli en un tap.</li></ol></details>';
   if(!WT.some(x=>x.d===td&&!x.s))h+='<p class="note" style="margin:0 0 6px">Pas encore de pesée du matin aujourd\'hui.</p>';
   if(t.k>0||a.st>0){const bal=(t.k||BODY.kc||T.k)-c.tot;h+='<div class="sum"><p style="margin:0"><b>Bilan du jour :</b> '+fmtN(t.k)+' kcal mangées, '+fmtN(c.tot)+' brûlées estimées, soit '+(bal>0?'+':'')+fmtN(bal)+' kcal.</p></div>'}
   if(rk>=150){const sg=suggestions(t,T,3);if(sg.length)h+='<div class="grp" style="margin-top:14px"><h3>Idées pour finir la journée</h3><div class="crs">'+sg.map(r=>'<div class="rl"><span><b>'+esc(r.n)+'</b><br><small>'+r.k+' kcal · '+r.p+' g prot</small></span><button type="button" data-hq="'+r.i+'">Voir</button></div>').join('')+'</div></div>'}
@@ -2765,6 +2922,7 @@ function renderHome(){
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-hgo]');
   if(g){state.view=g.dataset.hgo;$('more').hidden=true;renderViews();window.scrollTo(0,0);return}
+  if(e.target.closest('[data-clipimp]')){clipImport();return}
   const bk=e.target.closest('[data-hbak]');
   if(bk){OPEN['s-new']=true;state.view='sav';$('more').hidden=true;renderViews();window.scrollTo(0,0);return}
   const hm=e.target.closest('[data-hmeal]');
@@ -2870,7 +3028,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 76 (remplacements possibles)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 81 (import auto de captures)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
