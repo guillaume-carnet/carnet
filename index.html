@@ -972,6 +972,12 @@ details.palier .fm{background:transparent!important;border:0!important;padding:0
 #prog .pn span{font-size:13px;color:var(--muted)}
 #prog .pin{width:100%;box-sizing:border-box;margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink)}
 #prog .plist{margin:8px 0 0;padding-left:20px;display:grid;gap:7px;font-size:14px;line-height:1.45}
+
+#prog .hv{margin:0 0 12px}
+#prog .hv input[type=file]{width:100%;margin:0 0 8px;font:inherit;font-size:14px}
+#prog .hv textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);resize:vertical}
+#prog .hvb{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;padding:12px 14px;font-weight:800;font-size:14px;background:var(--accent)!important;color:var(--on-accent,#fff)!important}
+#prog .hvm{margin:10px 0 0;font-weight:600;color:var(--ink)}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -2999,11 +3005,111 @@ const PSEA=[
 ];
 let PG=ls('cp-prog',{});
 function savePG(){try{localStorage.setItem('cp-prog',JSON.stringify(PG))}catch(e){}}
+
+/* ===== Import Hevy (v145) ===== */
+const HMAP=[
+ ['Curl incliné haltères',/curl.*incline|incline.*curl/],
+ ['Développé incliné haltères',/incline.*(haltere|dumbbell)|(haltere|dumbbell).*incline/],
+ ['Développé couché barre',/(developpe couche|bench press).*(barre|barbell)|^(developpe couche|bench press)\s*$/],
+ ['Écartés haltères',/^(ecarte|fly|flye|dumbbell fly)|ecartes/],
+ ['Pompes',/pompe|push.?up/],
+ ['Barre au front',/barre au front|skull|lying triceps/],
+ ['Extension triceps haltère',/extension.*triceps|triceps extension|overhead triceps/],
+ ['Rowing haltère un bras',/(rowing|row).*(haltere|dumbbell)|(haltere|dumbbell).*(rowing|row)/],
+ ['Rowing barre',/(rowing|row).*(barre|barbell)|bent over row/],
+ ['Pull-over haltère',/pull.?over/],
+ ['Oiseau haltères',/oiseau|reverse fly|rear delt|face pull/],
+ ['Curl marteau',/marteau|hammer/],
+ ['Curl barre',/curl.*(barre|barbell)/],
+ ['Curl biceps',/curl/],
+ ['Squat barre',/squat/],
+ ['Fentes haltères',/fente|lunge/],
+ ['Soulevé de terre jambes tendues',/jambes tendues|romanian|stiff|souleve de terre/],
+ ['Hip thrust barre',/hip thrust|poussee de hanche/],
+ ['Mollets',/mollet|calf/],
+ ['Gainage',/gainage|plank/],
+ ['Développé militaire',/militaire|overhead press|shoulder press|military/],
+ ['Élévations latérales',/elevation.*laterale|lateral raise/],
+ ['Abdos',/crunch|abdo|sit.?up|releve de jambe|leg raise/]
+];
+const hnorm=t=>String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+function hMatch(title){const n=hnorm(title);const h=HMAP.find(m=>m[1].test(n));return h?h[0]:null}
+function hSets(sets){
+  const f=v=>String(Math.round(v*100)/100).replace('.',',');
+  const w=sets.map(x=>x.w);
+  if(w.every(v=>v===w[0]))return (w[0]?f(w[0])+' kg':'poids du corps')+' · '+sets.map(x=>x.r).join('-');
+  return sets.map(x=>(x.w?f(x.w):'PC')+'×'+x.r).join(' · ');
+}
+function hCsv(t){
+  const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===','||ch===';'){r.push(c);c=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';if(r.length>1||r[0]!=='')rows.push(r);r=[]}
+    else c+=ch}
+  if(c!==''||r.length){r.push(c);rows.push(r)}
+  return rows;
+}
+const HMO={jan:0,fev:1,feb:1,mar:2,avr:3,apr:3,mai:4,may:4,jun:5,juin:5,jul:6,juil:6,aou:7,aug:7,sep:8,oct:9,nov:10,dec:11};
+function hDate(s,i){
+  const iso=Date.parse(s);if(!isNaN(iso))return iso;
+  const m=String(s).match(/(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\.?\s+(\d{4}),?\s+(\d{1,2}):(\d{2})/);
+  if(m){const k=hnorm(m[2]).slice(0,4).replace(/\.$/,'');const mo=HMO[k]!==undefined?HMO[k]:HMO[k.slice(0,3)];if(mo!==undefined)return new Date(+m[3],mo,+m[1],+m[4],+m[5]).getTime()}
+  return i;
+}
+function hParse(t){
+  const out={};  // exercice -> {ts, sets}
+  const first=(t.split(/\r?\n/)[0]||'').toLowerCase();
+  if(/exercise_title|exercise|titre/.test(first)&&first.includes(',')||/exercise_title/.test(first)){
+    const rows=hCsv(t),hd=rows[0].map(x=>hnorm(x));
+    const ix=n=>hd.findIndex(x=>x.includes(n));
+    const iT=ix('exercise_title')>=0?ix('exercise_title'):ix('exercise'),iS=ix('start_time'),iW=ix('weight'),iR=ix('reps'),iY=ix('set_type');
+    if(iT<0||iW<0||iR<0)return null;
+    rows.slice(1).forEach((r,n)=>{
+      const nm=hMatch(r[iT]);if(!nm)return;
+      if(iY>=0&&/warm|echauf/i.test(r[iY]||''))return;
+      const reps=parseInt(r[iR]);if(!reps)return;
+      const w=parseFloat(String(r[iW]||'0').replace(',','.'))||0;
+      const ts=hDate(r[iS]||'',n);
+      const o=out[nm]||(out[nm]={ts:-1,sets:[]});
+      if(ts>o.ts){o.ts=ts;o.sets=[]}
+      if(ts===o.ts)o.sets.push({w:w,r:reps});
+    });
+  }else{
+    // texte copié depuis Hevy : titre d'exercice puis lignes « 22 kg x 10 »
+    let cur=null;
+    t.split(/\r?\n/).forEach(l=>{
+      l=l.trim();if(!l)return;
+      const m=l.match(/(\d+(?:[.,]\d+)?)\s*kg\s*[x×*]\s*(\d+)/i);
+      if(m){if(cur){const o=out[cur]||(out[cur]={ts:1,sets:[]});o.sets.push({w:parseFloat(m[1].replace(',','.')),r:+m[2]})}return}
+      const m2=l.match(/^(?:\d+\s+)?(\d+)\s*[x×]\s*(\d+)\s*$/);
+      if(m2){return}
+      if(/^(s[ée]rie|set|poids et r)/i.test(l)||/^\d+$/.test(l))return;
+      const nm=hMatch(l);cur=nm;
+    });
+  }
+  return out;
+}
+function hApply(t){
+  const o=hParse(t);
+  if(!o)return {n:0,msg:'Fichier non reconnu : prends le fichier CSV exporté depuis Hevy, ou colle le texte de ta séance.'};
+  const names=Object.keys(o).filter(k=>o[k].sets.length);
+  let n=0;const done=[];
+  names.forEach(nm=>{
+    const v=hSets(o[nm].sets);
+    PSEA.forEach(se=>se.x.forEach((e,i)=>{if(e[0]===nm){PG[se.k+i]=v;n++}}));
+    done.push(nm);
+  });
+  savePG();
+  return {n:done.length,msg:done.length?done.length+' exercice'+(done.length>1?'s':'')+' mis à jour : '+done.join(', ')+'.':'Aucun exercice reconnu. Vérifie que le texte contient les noms d\'exercices et des lignes comme « 22 kg x 10 ».'};
+}
 function renderProg(){
   const wd=new Date().getDay();
   if(!state.pk||!PSEA.some(x=>x.k===state.pk)){const t=PSEA.find(x=>x.d===wd);state.pk=t?t.k:(PSEA.find(x=>x.d>wd)||PSEA[0]).k}
   const cur=PSEA.find(x=>x.k===state.pk),isToday=cur.d===wd;
   let h='<h2>Programme</h2><p class="note">Musculation 4 séances par semaine. Note sous chaque exercice la charge et les répétitions de ta dernière séance.</p>';
+  h+='<details class="blk hv"'+(state.hopen?' open':'')+'><summary><span class="bi"></span><span>Mettre à jour depuis Hevy <small>charges de ta dernière séance</small></span></summary><div class="bb"><p class="note" style="margin:0 0 8px">Choisis le fichier CSV exporté d\'Hevy (Profil > Réglages > Exporter), ou colle ici le texte de ta séance (nom de l\'exercice puis « 22 kg x 10 »).</p><input type="file" id="hvf" accept=".csv,text/csv,text/plain"><textarea id="hvt" rows="4" placeholder="Développé Militaire (Barre)&#10;1  22 kg x 10&#10;2  22 kg x 10"></textarea><button type="button" class="hvb" data-hvgo="1">Mettre à jour mes charges</button>'+(state.hmsg?'<p class="note hvm">'+esc(state.hmsg)+'</p>':'')+'</div></details>';
   h+='<div class="seg2" style="flex-wrap:wrap">'+PSEA.map(x=>'<button type="button" data-pk="'+x.k+'" class="'+(x.k===cur.k?'on':'')+'" style="min-width:0;flex:1 1 30%">'+(x.k==='vac'?'Vac.':x.j.slice(0,3))+(x.d===wd?' •':'')+'</button>').join('')+'</div>';
   h+='<div class="pcard"><div class="ph"><b>'+cur.j+' — '+cur.t+'</b><small>'+(isToday?'Séance du jour · ':'')+cur.m+' (échauffement inclus)</small></div>';
   h+=cur.x.map((e,i)=>{const key=cur.k+i,v=PG[key]||'';return '<div class="pex"><div class="pn"><b>'+esc(e[0])+'</b><span>'+e[1]+' · récup '+e[2]+'</span></div><input class="pin" data-pg="'+key+'" inputmode="text" placeholder="Dernière charge (ex. 30 kg · 8-8-7)" value="'+esc(v)+'" aria-label="Dernière charge '+esc(e[0])+'"></div>'}).join('')+'</div>';
@@ -3018,6 +3124,15 @@ function renderProg(){
   $('prog').innerHTML=h;
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pk]');if(!b)return;state.pk=b.dataset.pk;renderProg()});
+document.addEventListener('toggle',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('hv'))state.hopen=e.target.open},true);
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-hvgo]');if(!b)return;
+  e.preventDefault();state.hopen=true;
+  const f=$('hvf').files&&$('hvf').files[0],tx=$('hvt').value;
+  const fin=t=>{if(!t||!t.trim()){state.hmsg='Rien à importer : choisis un fichier ou colle le texte.';renderProg();return}
+    const r=hApply(t);state.hmsg=r.msg;renderProg()};
+  if(f){const fr=new FileReader();fr.onload=()=>fin(String(fr.result));fr.onerror=()=>{state.hmsg='Lecture du fichier impossible.';renderProg()};fr.readAsText(f)}else fin(tx);
+});
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pg!==undefined){PG[t.dataset.pg]=t.value;savePG()}});
 function courseData(){
   const tot={};
@@ -4020,7 +4135,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 144 (programme) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 145 (import Hevy) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
