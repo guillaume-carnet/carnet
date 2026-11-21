@@ -850,6 +850,68 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .crec .crech em{font-style:normal;font-weight:700;font-size:13px;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:999px}
 .crec .crs{margin-top:8px}
 .crec .crs[hidden]{display:none}
+
+/* menu Plus en tuiles */
+#more{min-width:0!important;width:min(calc(100vw - 24px),340px);grid-template-columns:1fr 1fr;gap:8px;padding:12px!important;border-radius:26px!important}
+#more .mg{grid-column:span 2;margin:6px 4px 0!important;font-family:inherit!important;font-weight:800;font-size:11px!important;letter-spacing:.1em}
+#more .mt{display:grid!important;gap:8px;align-content:start;min-height:92px!important;padding:12px!important;border-radius:20px!important;color:#fff!important;text-align:left;background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))!important;box-shadow:0 8px 16px rgba(20,26,60,.16)}
+#more .mt i{width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-style:normal}
+#more .mt b{font-size:14.5px;font-weight:800;line-height:1.2;color:#fff}
+#more .mt small{display:block;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.9)}
+#more .mt-moi{grid-column:span 2;grid-template-columns:auto 1fr;align-items:center;min-height:0!important;background:linear-gradient(135deg,#2B3167,#4B55A8)!important}
+#more .mt-moi span{display:grid}
+#more .mt-hist{background:linear-gradient(135deg,#2F6FED,#5B8DEF)!important}
+#more .mt-poids{background:linear-gradient(135deg,#7C4DDB,#A66BF0)!important}
+#more .mt-act{background:linear-gradient(135deg,#F59F2B,#E8590C)!important;grid-column:span 2;grid-template-columns:auto 1fr;align-items:center;min-height:0!important}
+#more .mt-frg{background:linear-gradient(135deg,#0E87B8,#3FB4E0)!important}
+#more .mt-new{background:linear-gradient(135deg,#D6409F,#7C4DDB)!important}
+#more .mt-sav{background:linear-gradient(135deg,#3B4DB8,#2F6FED)!important;grid-column:span 2;grid-template-columns:auto 1fr;align-items:center;min-height:0!important}
+#more .mt[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--accent)}
+
+/* formulaires Corps et poids / Activité */
+:is(#weight,#activity) form.fm,:is(#weight,#activity) .fm{display:grid;gap:12px;border:0!important;padding:0!important}
+:is(#weight,#activity) .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+:is(#weight,#activity) .fm label,:is(#weight,#activity) .g2 label{display:grid;gap:5px;align-content:start;font-size:12.5px;font-weight:600;color:var(--muted)}
+:is(#weight,#activity) .fm input,:is(#weight,#activity) .fm select,:is(#weight,#activity) .fm textarea{background:var(--accent-soft)!important;border:0!important;border-radius:14px!important;min-height:48px;padding:0 14px;font:inherit;font-size:16px;font-weight:600;color:var(--ink)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important;width:100%;box-sizing:border-box}
+:is(#weight,#activity) .fm input::placeholder{color:var(--muted);font-weight:500;opacity:.8}
+:is(#weight,#activity) details.flt{border:0!important;border-radius:18px!important;background:color-mix(in srgb,var(--accent) 7%,var(--surface))!important;padding:4px 14px 12px}
+:is(#weight,#activity) details.flt>summary{min-height:46px;display:flex;align-items:center;font-weight:700;color:var(--accent)}
+:is(#weight,#activity) details.flt .g2{padding:6px 0 0!important;row-gap:12px}
+:is(#weight,#activity) .fm button[type=submit],:is(#weight,#activity) .fm>button{min-height:52px;border:0!important;border-radius:16px!important;font:inherit;font-weight:800;font-size:16px;color:#fff!important;background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))!important;box-shadow:0 10px 20px color-mix(in srgb,var(--accent) 32%,transparent)}
+:is(#weight,#activity) .g2.fm>button{min-height:48px;align-self:end}
+:is(#weight,#activity) .views2{display:flex;flex-wrap:wrap;gap:8px}
+:is(#weight,#activity) .views2 button{min-height:42px;padding:0 14px;border:0!important;border-radius:999px!important;background:var(--accent-soft)!important;color:var(--accent)!important;font-weight:700;font-size:13.5px}
+:is(#weight,#activity) .views2 button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))!important;color:#fff!important;box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 32%,transparent)}
+
+/* cartes recettes */
+.card .macros{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;align-items:stretch}
+.card .macros div{border:0!important;padding:9px 4px!important;border-radius:16px;text-align:center;justify-items:center;color:#fff;box-shadow:0 6px 12px rgba(20,26,60,.12)}
+.card .macros div b{color:#fff!important;font-family:inherit!important;font-size:19px!important;font-weight:800}
+.card .macros div span{color:rgba(255,255,255,.92)!important;font-size:10.5px;font-weight:700}
+.card .macros .kcal{grid-column:1/-1!important;grid-template-columns:auto auto;justify-content:center;align-items:baseline;gap:8px;padding:12px!important;background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))}
+.card .macros .kcal b{font-size:28px!important}
+.card .macros div:nth-child(2){background:linear-gradient(135deg,#2F6FED,#5B8DEF)}
+.card .macros div:nth-child(3){background:linear-gradient(135deg,#7C4DDB,#A66BF0)}
+.card .macros div:nth-child(4){background:linear-gradient(135deg,#D32F3F,#F0627A)}
+.card .macros div:nth-child(5){background:linear-gradient(135deg,#0E87B8,#3FB4E0)}
+.card .por button{border:0!important;background:var(--accent-soft)!important;color:var(--accent)!important;font-weight:700}
+.card .por button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))!important;color:#fff!important}
+.card .cbtn{border:0!important;border-radius:16px!important;background:var(--accent-soft)!important;color:var(--accent)!important;font-weight:800;min-height:50px}
+.card .cbtn.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface))!important}
+.card .gbtn{border:0!important;background:var(--accent-soft)!important;color:var(--accent)!important;border-radius:999px!important;font-weight:700}
+/* tuiles Corps et poids / Activité */
+:is(#weight,#activity) .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+:is(#weight,#activity) .kv>div{display:grid;gap:2px;padding:14px!important;border:0!important;border-radius:20px!important;color:#fff;box-shadow:0 8px 16px rgba(20,26,60,.14)!important;background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0))!important}
+:is(#weight,#activity) .kv>div b{font-size:22px!important;font-weight:800;color:#fff!important}
+:is(#weight,#activity) .kv>div span{font-size:12px;font-weight:600;color:rgba(255,255,255,.92)!important}
+:is(#weight,#activity) .kv>div:nth-child(2){background:linear-gradient(135deg,#2F6FED,#5B8DEF)!important}
+:is(#weight,#activity) .kv>div:nth-child(3){background:linear-gradient(135deg,#7C4DDB,#A66BF0)!important}
+:is(#weight,#activity) .kv>div:nth-child(4){background:linear-gradient(135deg,#D32F3F,#F0627A)!important}
+:is(#weight,#activity) .kv>div:nth-child(5){background:linear-gradient(135deg,#0E87B8,#3FB4E0)!important}
+:is(#weight,#activity) .kv>div:nth-child(6){background:linear-gradient(135deg,#F59F2B,#E8590C)!important}
+:is(#weight,#activity) .kv>div:nth-child(7){background:linear-gradient(135deg,#3B4DB8,#2F6FED)!important}
+:is(#weight,#activity) .kv>div:nth-child(8){background:linear-gradient(135deg,#2B3167,#4B55A8)!important}
+#activity .big{font-size:44px;font-weight:800;letter-spacing:-.02em;color:var(--accent)}
 </style>
 
 
@@ -858,7 +920,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
   <header class="top">
     <p class="eyebrow" id="eyebrow">200 recettes · macros par portion</p>
     <h1>Carnet protéiné</h1>
-    <p class="lead">Des plats où tout se mélange, sans champignons ni sauce, calés sur ton palier calorique. Tout est pesé cru, sauf les conserves et les produits déjà cuits, indiqués à chaque fois. Fibres incluses.</p>
+    <p class="lead">Des plats où tout se mélange, sans champignons ni sauce, calés sur ton palier. Pesés crus, sauf mention contraire. Fibres incluses.</p>
     <button type="button" id="thm" class="thm" aria-label="Changer le thème"></button>
   </header>
 
@@ -2659,7 +2721,8 @@ const fmt=(id,q,u)=>{if(u==='u')return q+' '+(id==='oeuf'?(q>1?'œufs':'œuf'):(
 const ICONS={"rec": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 8h6M9 12h6M9 16h3\"/></svg>", "jr": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></svg>", "sem": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/></svg>", "crs": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 4h2.5l2.2 10.5h10.6L20.5 8H6.4\"/><circle cx=\"9.5\" cy=\"19\" r=\"1.3\"/><circle cx=\"17\" cy=\"19\" r=\"1.3\"/></svg>", "more": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"5.5\" cy=\"12\" r=\"1.6\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/><circle cx=\"18.5\" cy=\"12\" r=\"1.6\"/></svg>"};
 const VIEWS=[['ajd','Accueil'],['rec','Recettes'],['jr','Journée'],['sem','Semaine'],['crs','Courses']];
 ICONS.ajd='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>';
-const MORE=[['moi','Moi : infos et objectifs'],['hist','Historique et récap'],['poids','Corps et poids'],['act','Activité et pas'],['frg','Dans mon frigo'],['frq','Aliments les plus utilisés'],['new','Ajouter une recette ou un aliment'],['sav','Sauvegarde']];
+const MI={"moi": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20c.8-3.8 3.6-5.6 7-5.6s6.2 1.8 7 5.6\"/></svg>", "hist": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4M12 8v4l3 2\"/></svg>", "poids": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"4\"/><path d=\"M8.5 10a4.5 3 0 0 1 7 0M12 10l1.6-1.8\"/></svg>", "act": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 20c-1.5 0-2-1.4-1.6-3l1.5-5c.5-1.7.8-3.5.6-5.3C7.4 4.6 8.6 3.5 10 4c1.2.5 1.6 2 1.4 3.6-.2 1.6-1 3.2-1 5 0 2.5 1.6 3.4 3.6 4.4\"/></svg>", "frg": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"6\" y=\"3\" width=\"12\" height=\"18\" rx=\"3\"/><path d=\"M6 10h12M9 6v2M9 13v3\"/></svg>", "new": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 8v8M8 12h8\"/></svg>", "sav": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v10M8 10l4 4 4-4M5 18h14\"/></svg>"},MLAB={moi:'Moi',hist:'Historique',poids:'Poids',act:'Pas',frg:'Frigo',new:'Mes recettes et aliments',sav:'Sauvegarde'},MSUB={moi:'Infos et objectifs'};
+const MORE=[['moi','Moi'],['hist','Historique'],['poids','Poids'],['act','Pas'],['frg','Frigo'],['new','Mes recettes et aliments'],['sav','Sauvegarde']];
 const MGRP={hist:'Suivi',frg:'Cuisine',sav:'Données'};
 const secT=(t,sm)=>'<div class="sech" style="margin:18px 0 8px"><h3>'+t+'</h3>'+(sm?'<small>'+sm+'</small>':'')+'</div>';
 const addSeg=v=>'<div class="seg2"><button type="button" data-hgo="new" class="'+(v==='new'?'on':'')+'">Une recette</button><button type="button" data-hgo="mes" class="'+(v==='mes'?'on':'')+'">Un aliment</button></div>';
@@ -2667,7 +2730,7 @@ function renderViews(){
   document.documentElement.dataset.tab=VIEWS.some(v=>v[0]===state.view)?state.view:'plus';
   const inMore=MORE.some(m=>m[0]===state.view)||state.view==='mes';
   $('views').innerHTML=VIEWS.map(([k,l])=>'<button type="button" data-v="'+k+'" aria-pressed="'+(state.view===k)+'">'+ICONS[k]+'<span>'+l+'</span></button>').join('')+'<button type="button" data-v="more" aria-pressed="'+inMore+'" aria-expanded="'+(!$('more').hidden)+'">'+ICONS.more+'<span>Plus</span></button>';
-  $('more').innerHTML=MORE.map(([k,l])=>(MGRP[k]?'<p class="mg">'+MGRP[k]+'</p>':'')+'<button type="button" data-v="'+k+'" aria-pressed="'+(state.view===k||(k==='new'&&state.view==='mes'))+'">'+l+'</button>').join('');
+  $('more').innerHTML=MORE.map(([k,l])=>(MGRP[k]?'<p class="mg">'+MGRP[k]+'</p>':'')+'<button type="button" class="mt mt-'+k+'" data-v="'+k+'" aria-pressed="'+(state.view===k||(k==='new'&&state.view==='mes'))+'"><i>'+MI[k]+'</i><span><b>'+MLAB[k]+'</b>'+(MSUB[k]?'<small>'+MSUB[k]+'</small>':'')+'</span></button>').join('');
   document.querySelector('header.top').hidden=state.view!=='rec';
   $('palier').hidden=state.view!=='moi';
   const rec=state.view==='rec';
@@ -3220,6 +3283,7 @@ function renderWeight(){
      '<div class="kv"><div><b>'+num(o.L.w,1)+' kg</b><span>Dernière pesée ('+fdate(o.L.d)+')</span></div><div><b>'+num(o.S.a7,1)+' kg</b><span>Moyenne 7 jours ('+o.S.n7+' pesée'+(o.S.n7>1?'s':'')+')</span></div>'
      +'<div><b>'+(o.S.rate===null?'—':(o.S.rate>0?'+':'')+num(o.S.rate,2)+' kg')+'</b><span>Tendance par semaine'+(o.S.span<13?' (provisoire)':'')+'</span></div>'
      +'<div><b>'+num(o.imc,1)+'</b><span>IMC · '+imcCat(o.imc)+'</span></div>'
+     +(o.S.t?(()=>{const tw=WT.filter(x=>x.t).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0),f=tw[0],dt=f&&f.d!==tw[tw.length-1].d?o.S.t-f.t:null;return '<div><b>'+num(o.S.t,1)+' cm</b><span>Tour de taille'+(dt===null?'':' · '+(dt>0?'+':dt<0?'−':'')+num(Math.abs(dt),1)+' cm depuis le '+fdate(f.d))+'</span></div>'})():'')
      +(o.mg?'<div><b>'+num(o.mg,1)+' kg</b><span>Masse grasse ('+num(o.L.b,1)+' %)</span></div><div><b>'+num(o.maigre,1)+' kg</b><span>Masse maigre · FFMI '+num(o.ffmi,1)+'</span></div>':'')
      +(o.whtr?'<div><b>'+num(o.whtr,2)+'</b><span>Taille / hauteur (repère 0,50)</span></div>':'')
      +'<div><b>'+num(o.pkg,2)+' g/kg</b><span>Protéines ('+o.T.p+' g)</span></div></div>',true);
@@ -3227,19 +3291,18 @@ function renderWeight(){
      '<div class="kv"><div><b>'+Math.round(o.S.bmr)+'</b><span>Métabolisme de base (balance)</span></div><div><b>'+Math.round(o.tdee)+'</b><span>Dépense estimée ×'+num(BODY.act,3)+'</span></div><div><b>'+o.kc+'</b><span>Calories mangées (palier)</span></div><div><b>'+(o.bal>0?'+':'')+Math.round(o.bal)+'</b><span>Écart estimé par jour</span></div>'
      +(o.real?'<div><b>'+Math.round(o.real)+'</b><span>Dépense réelle estimée par ta tendance</span></div>':'')+'</div><p class="note" style="margin:0">La balance surestime souvent le métabolisme : si ta dépense réelle est plus basse que l\'estimée, fie-toi à la réelle.</p>',false);
     h+=blk('w-al','bulb','Alertes et conseils',alerts(o).length+' points',
-     '<div class="crs">'+alerts(o).map(a=>'<div class="al al-'+a[0]+'">'+esc(a[1])+'</div>').join('')+'</div><div class="dact"><button type="button" data-brecap="1">Copier le récap corps</button></div>'+(state.brctx?'<textarea id="brctx" readonly rows="7" class="ctx">'+esc(state.brctx)+'</textarea>':''),true);
+     '<div class="crs">'+alerts(o).map(a=>'<div class="al al-'+a[0]+'">'+esc(a[1])+'</div>').join('')+'</div>',true);
   }
-  h+=blk('w-add','plus','Ajouter une mesure','pesée du jour',
-    '<form class="fm" id="wf"><div class="g2"><label>Date<input type="date" id="wd" value="'+today()+'"></label><label>Pesée<select id="ws"><option value="0">Matin (à jeun)</option><option value="1">Soir / autre</option></select></label></div><div class="g2">'+I('ww','Poids (kg)','ex. 66,8')+I('wt','Tour de taille (cm)')+'</div>'
-    +'<details class="flt"><summary>Mesures de l\'impédancemètre</summary><div class="g2" style="padding:8px 0 4px">'+I('wb','Graisse corporelle (%)')+I('wm2','Muscle squelettique (kg)')+I('wmt','Masse musculaire (kg)')+I('wvf','Graisse viscérale')+I('wbmr','Taux métabolique (kcal)')+I('wwa','Eau (%)')+I('wpr','Protéines (%)')+I('wbn','Densité minérale (kg)')+'</div></details>'
-    +'<button type="submit">Enregistrer la mesure</button></form>',!o);
-  let cb='<div class="views2">'+Object.keys(WM).map(k=>'<button type="button" data-wm="'+k+'" aria-pressed="'+(state.wm===k)+'">'+WM[k][0]+'</button>').join('')+'</div>';
+  const WMP=['w','b','m','t'],wall=state.wmore||WMP.indexOf(state.wm)<0;let cb='<div class="views2">'+Object.keys(WM).filter(k=>wall||WMP.indexOf(k)>=0).map(k=>'<button type="button" data-wm="'+k+'" aria-pressed="'+(state.wm===k)+'">'+WM[k][0]+'</button>').join('')+(wall?'':'<button type="button" data-wmore="1">Plus de courbes</button>')+'</div>';
   if(pts.length){const last=pts[pts.length-1].v,first=pts[0].v,prev=pts.length>1?pts[Math.max(0,pts.length-8)].v:last;const dl=x=>(x>0?'+':'')+num(x,dg)+' '+m[1];
     cb+='<div class="kv"><div><b>'+num(last,dg)+' '+m[1]+'</b><span>Dernière mesure</span></div><div><b>'+dl(last-first)+'</b><span>Depuis le début</span></div><div><b>'+dl(last-prev)+'</b><span>Sur les 7 dernières mesures</span></div></div>';}
   cb+='<div class="sum">'+chartSvg(pts,key==='w'?{avg:true,zone:[BODY.zmin,BODY.zmax]}:{avg:false})+'</div>';
   h+=blk('w-chart','chart','Courbes',m[0],cb,true);
   if(srt.length)h+=blk('w-list','list','Mesures enregistrées',srt.length+' au total','<div class="crs">'+srt.slice(-12).reverse().map(x=>'<div class="rl"><span>'+fdate(x.d)+(x.s?' soir':' matin')+' · '+(x.w?num(x.w,1)+' kg':'')+(x.b?' · '+num(x.b,1)+' % gras':'')+(x.m?' · muscle '+num(x.m,1):'')+(x.t?' · taille '+num(x.t,1):'')+'</span><button type="button" data-wdel="'+wkey(x)+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>',false);
-  h+=blk('w-imp','dl','Importer des pesées','coller depuis Huawei Santé','<div class="fm"><p class="note">Une mesure par ligne : la date, puis le poids, puis (facultatif) dans cet ordre : gras %, muscle squelettique kg, masse musculaire kg, viscérale, métabolisme, eau %, protéines %, densité minérale. Ajoute « soir » pour une pesée du soir. Exemples : « 19/11 66,5 » ou « 18/11 66,8 19,2 29,0 51,2 8,5 1486 56,5 20,1 2,80 ».</p><textarea id="wimp" rows="5" placeholder="10/11 80,2&#10;14/11 79,6"></textarea><button type="button" data-wclip="1">Coller depuis le presse-papiers et importer</button><button type="button" data-wimp="1">Importer</button><button type="button" data-wfill="1">Charger mes pesées du 10 au 18 novembre</button>'+(state.wimsg?'<p class="msg">'+esc(state.wimsg)+'</p>':'')+'</div>',!!state.wimsg);
+  h+=blk('w-add','plus','Saisir à la main','poids, taille, mesures',
+    '<form class="fm" id="wf"><div class="g2"><label>Date<input type="date" id="wd" value="'+today()+'"></label><label>Pesée<select id="ws"><option value="0">Matin (à jeun)</option><option value="1">Soir / autre</option></select></label></div><div class="g2">'+I('ww','Poids (kg)','ex. 66,8')+I('wt','Tour de taille (cm)')+'</div>'
+    +'<details class="flt"><summary>Mesures de l\'impédancemètre</summary><div class="g2" style="padding:8px 0 4px">'+I('wb','Graisse corporelle (%)')+I('wm2','Muscle squelettique (kg)')+I('wmt','Masse musculaire (kg)')+I('wvf','Graisse viscérale')+I('wbmr','Taux métabolique (kcal)')+I('wwa','Eau (%)')+I('wpr','Protéines (%)')+I('wbn','Densité minérale (kg)')+'</div></details>'
+    +'<button type="submit">Enregistrer la mesure</button></form>',!o);
   $('weight').innerHTML=h;
   if($('bh')){$('bh').value=BODY.h;$('bkc').value=BODY.kc||'';$('bz1').value=BODY.zmin;$('bz2').value=BODY.zmax;$('bact').value=String(BODY.act)}
   if(state.brctx&&$('brctx')){$('brctx').focus();$('brctx').select()}
@@ -3269,6 +3332,7 @@ document.addEventListener('click',e=>{
       if(d2&&w>=30&&w<=300&&!isNaN(dms(d2))){const old=WT.find(x=>x.d===d2&&!!x.s===!!sv)||{};WT=WT.filter(x=>!(x.d===d2&&!!x.s===!!sv));const en=Object.assign({},old,{d:d2,s:sv,w});['b','m','mt','vf','bmr','wa','pr','bn'].forEach((k,i)=>{if(nm[i+1]!==undefined)en[k]=nm[i+1]});if(en.b>0&&en.b<1)en.b=Math.round(en.b*1000)/10;WT.push(en);ok++}else ko++;
     });
     lsw('cp-w',WT);state.wimsg=ok+' mesure'+(ok>1?'s':'')+' importée'+(ok>1?'s':'')+(ko?' · '+ko+' ligne'+(ko>1?'s':'')+' ignorée'+(ko>1?'s':''):'');renderWeight();return}
+  if(d.wmore){state.wmore=true;renderWeight();return}
   if(d.wm){state.wm=d.wm;renderWeight();return}
   if(d.wdel){WT=WT.filter(x=>wkey(x)!==d.wdel);lsw('cp-w',WT);renderWeight();return}
 });
@@ -3302,7 +3366,6 @@ function renderMoi(){
   h+=secT('Mon palier calorique','profil, palier, mode auto')+'<div id="mepal"></div>';
   h+=secT('Mon corps','taille, poids cible, activité')+'<div class="sum"><div class="fm"><div class="g2">'+I('bh','Taille (cm)')+I('bkc','Calories moyennes mangées / jour')+I('bz1','Zone cible : min (kg)')+I('bz2','Plafond à ne pas dépasser (kg)')+'</div><label>Activité<select id="bact"><option value="1.2">Sédentaire (×1,2)</option><option value="1.375">Légère, 1 à 3 séances (×1,375)</option><option value="1.55">Modérée, 3 à 5 séances (×1,55)</option><option value="1.725">Intense, 6 à 7 séances (×1,725)</option></select></label><p class="note">Laisse les calories vides pour utiliser ton palier du jour ('+targets().k+' kcal). La taille sert à l\'IMC et aux ratios.</p><button type="button" class="pri" data-bset="1">Enregistrer mes infos</button></div></div>';
   h+=secT('Mes pas','objectif par jour')+'<div class="sum"><div class="fm"><label>Objectif de pas par jour<input id="agoal" inputmode="numeric"></label><button type="button" class="pri" data-aact="gsave">Enregistrer l\'objectif</button></div></div>';
-  h+=secT('Mes données','sauvegarde')+'<div class="sum"><div class="dact"><button type="button" data-hgo="sav">💾 Sauvegarde et restauration</button></div></div>';
   $('me').innerHTML=h;
   $('bh').value=BODY.h;$('bkc').value=BODY.kc||'';$('bz1').value=BODY.zmin;$('bz2').value=BODY.zmax;$('bact').value=String(BODY.act);$('agoal').value=GOAL;
   const pal=$('palier');$('mepal').appendChild(pal);pal.open=true;
@@ -3317,11 +3380,9 @@ function renderAct(){
   const d=state.adate=today(),a=ACT[d]||{st:0,ses:[]},c=actCalc(d),T=targets(),eaten=dayTot().k,hasEat=eaten>0,kin=hasEat?eaten:(BODY.kc||T.k);
   const bal=kin-c.tot,pct=Math.min(100,Math.round(a.st/GOAL*100));
   let h='<h2>Activité et pas</h2><p class="note">Les calories brûlées sont une estimation : pas × poids × longueur de foulée, séances en MET, métabolisme de ta balance. Précision réaliste : ±15 %.</p>';
-  h+=blk('a-day','steps','Pas du jour',pct+' % de l\'objectif','<div><span class="note">Pas aujourd\'hui</span><div class="big" id="livecnt">'+Math.round(a.st).toLocaleString('fr-FR')+'</div></div><div class="pbar" aria-label="Objectif de pas"><i style="width:'+pct+'%"></i></div><p class="note" style="margin:0">Objectif '+GOAL.toLocaleString('fr-FR')+' pas · '+num(c.km,1)+' km</p>'
-   +'<div class="dact">'+(LIVE.on?'<button type="button" class="pri" data-aact="lstop">Arrêter le compteur en direct</button>':'<button type="button" class="pri" data-aact="lstart">Compteur en direct (test)</button>')+(state.pconf?'<button type="button" class="pri" data-aact="pzero2">Oui, remettre à zéro</button><button type="button" data-aact="pno">Annuler</button>':'<button type="button" data-aact="pzero">Remettre les pas à zéro</button>')+'</div>'
-   +(state.lmsg?'<p class="msg">'+esc(state.lmsg)+'</p>':'')+'<p class="note" style="margin:0">Le compteur en direct utilise le capteur de mouvement : il peut être refusé dans Artifact ou selon l\'appli. La saisie des pas reste la méthode la plus fiable.</p>',true);
+  h+=blk('a-day','steps','Pas du jour',pct+' % de l\'objectif','<div><span class="note">Pas aujourd\'hui</span><div class="big" id="livecnt">'+Math.round(a.st).toLocaleString('fr-FR')+'</div></div><div class="pbar" aria-label="Objectif de pas"><i style="width:'+pct+'%"></i></div><p class="note" style="margin:0">Objectif '+GOAL.toLocaleString('fr-FR')+' pas · '+num(c.km,1)+' km</p>',true);
   h+=blk('a-add','plus','Ajouter des pas','à la main',
-   '<div class="dact">'+[-500,100,500,1000,2000].map(n=>'<button type="button" data-padd="'+n+'">'+(n>0?'+':'−')+Math.abs(n)+'</button>').join('')+'</div><div class="g2 fm"><label>Autre quantité<input id="aadd" inputmode="numeric" placeholder="ex. 3200"></label><button type="button" data-aact="addn" style="align-self:end">Ajouter</button></div>'
+   '<div class="g2 fm"><label>Pas à ajouter<input id="aadd" inputmode="numeric" placeholder="ex. 3200"></label><button type="button" data-aact="addn" style="align-self:end">Ajouter</button></div>'
    +'<div class="g2 fm"><label>Total de pas du jour<input id="ast" inputmode="numeric" placeholder="ex. 12400" value="'+(a.st?Math.round(a.st):'')+'"></label><button type="button" data-aact="psave" style="align-self:end">Enregistrer le total</button></div>',true);
   h+=blk('a-ses','flame','Séances',a.ses.length?a.ses.length+' aujourd\'hui':'sport du jour',
    '<form class="fm" id="sf"><div class="g2"><label>Séance<select id="sn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="smin" inputmode="numeric" placeholder="ex. 60"></label></div><div class="g2"><label>Dont pas (facultatif)<input id="ssp" inputmode="numeric" placeholder="vide = estimé automatiquement"></label><button type="submit" style="align-self:end">Ajouter la séance</button></div></form>'
@@ -3329,7 +3390,7 @@ function renderAct(){
   h+=blk('a-bil','bars','Bilan du jour',Math.round(c.tot)+' kcal brûlées',
    '<div class="kv"><div><b>'+Math.round(c.kPas)+'</b><span>kcal brûlées en marchant</span></div><div><b>'+Math.round(c.kSes)+'</b><span>kcal brûlées en séances ('+c.min+' min)</span></div><div><b>'+Math.round(c.bmr)+'</b><span>Métabolisme de base</span></div><div><b>'+Math.round(c.tot)+'</b><span>Dépense totale estimée</span></div><div><b>'+Math.round(kin)+'</b><span>Calories '+(hasEat?'mangées (Journée)':'visées (palier)')+'</span></div><div><b>'+(bal>0?'+':'')+Math.round(bal)+'</b><span>Bilan ('+(bal>150?'surplus':bal<-150?'déficit':'équilibre')+') · ≈ '+(bal>0?'+':'')+num(bal*7/7700,2)+' kg/sem</span></div></div><p class="note" style="margin:0">Total = (métabolisme + pas + séances) + 8 % pour la digestion. Si ta séance est déjà dans tes pas (foot, course), indique « dont pas » pour ne pas la compter deux fois.</p>',true);
   const days=lastDays(7),vals=days.map(x=>(ACT[x]||{}).st||0),mx=Math.max(GOAL,...vals),ds=days.filter(x=>(ACT[x]||{}).st);
-  h+=blk('a-7','cal','7 derniers jours','historique des pas','<div class="abars">'+days.map((x,i)=>{const v=vals[i];return '<div class="b'+(v>=GOAL?' ok':'')+'"><b>'+(v?(v>=1000?num(v/1000,1)+'k':v):'')+'</b><i style="height:'+Math.round(v/mx*80)+'px"></i>'+JRS[new Date(x+'T00:00:00').getDay()]+'</div>'}).join('')+'</div><p class="note" style="margin:0">Moyenne : '+(ds.length?Math.round(ds.reduce((t,x)=>t+ACT[x].st,0)/ds.length).toLocaleString('fr-FR')+' pas · '+Math.round(ds.reduce((t,x)=>t+actCalc(x).tot,0)/ds.length)+' kcal brûlées par jour':'pas encore de données')+' · '+days.filter((x,i)=>vals[i]>=GOAL).length+' jour(s) à l\'objectif</p><div class="dact"><button type="button" data-aact="recap">Copier le récap activité</button></div>'+(state.arctx?'<textarea id="arctx" readonly rows="6" class="ctx">'+esc(state.arctx)+'</textarea>':''),true);
+  h+=blk('a-7','cal','7 derniers jours','historique des pas','<div class="abars">'+days.map((x,i)=>{const v=vals[i];return '<div class="b'+(v>=GOAL?' ok':'')+'"><b>'+(v?(v>=1000?num(v/1000,1)+'k':v):'')+'</b><i style="height:'+Math.round(v/mx*80)+'px"></i>'+JRS[new Date(x+'T00:00:00').getDay()]+'</div>'}).join('')+'</div><p class="note" style="margin:0">Moyenne : '+(ds.length?Math.round(ds.reduce((t,x)=>t+ACT[x].st,0)/ds.length).toLocaleString('fr-FR')+' pas · '+Math.round(ds.reduce((t,x)=>t+actCalc(x).tot,0)/ds.length)+' kcal brûlées par jour':'pas encore de données')+' · '+days.filter((x,i)=>vals[i]>=GOAL).length+' jour(s) à l\'objectif</p>',true);
   $('activity').innerHTML=h;
   if(state.arctx&&$('arctx')){$('arctx').focus();$('arctx').select()}
 }
@@ -3604,7 +3665,6 @@ function renderHist(){
   h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',25),false);
   const any=rows.filter(r=>r.k||r.st||r.w);
   h+=blk('h-days','cal','Jour par jour','14 derniers jours','<div class="crs">'+(any.length?any.map(r=>{const dt=new Date(r.d+'T00:00:00');return '<div class="hrow"><b>'+JRS[dt.getDay()]+' '+fdate(r.d)+'</b><span>'+(r.k?fmtN(r.k)+' kcal · P '+fmtN(r.p)+' · G '+fmtN(r.g)+' · L '+fmtN(r.l)+' · F '+num(r.f,1):'<small>repas non enregistrés</small>')+'<small>'+(r.st?fmtN(r.st)+' pas':'')+(r.st&&r.w?' · ':'')+(r.w?num(r.w,1)+' kg':'')+'</small></span>'+(LOG[r.d]?'<button type="button" data-hldel="'+r.d+'" aria-label="Supprimer">✕</button>':'<span></span>')+'</div>'}).join(''):'<p class="note">Aucune donnée pour le moment.</p>')+'</div>',true);
-  h+=blk('h-rec','copy','Récap de la semaine','à copier','<div class="dact"><button type="button" class="pri" data-hact="recap">Copier le récap de la semaine</button></div>'+(state.hrctx?'<textarea id="hrctx" readonly rows="7" class="ctx">'+esc(state.hrctx)+'</textarea>':''),true);
   $('history').innerHTML=h;
   if(state.hrctx&&$('hrctx')){$('hrctx').focus();$('hrctx').select()}
 }
@@ -3681,13 +3741,13 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 125 (courses repliees)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 131 (tour de taille)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
   h+='<div class="'+(emp?'al al-warn':'sum')+'"><p style="margin:0"><b>Données sur cet appareil :</b> '+bsum(cur)+'.'+(emp?' <b>Rien à sauvegarder pour le moment</b> : cette version n\'a pas tes données. Si tu les avais dans l\'ancienne version, fais la sauvegarde là-bas.':'')+'</p></div>';
   if(state.bmsg)h+='<p class="msg">'+esc(state.bmsg)+'</p>';
-  h+=blk('s-new','dl','Faire une sauvegarde','copier dans tes notes','<div class="fm" style="border:0;padding:0"><label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="bph" style="width:22px;min-height:22px" checked> Inclure mes photos (recommandé, un peu plus lourd)</label><div class="bkb"><button type="button" class="pri" data-bk="copy">Générer et copier</button><button type="button" data-bk="share">Partager en fichier</button><button type="button" data-bk="gen">Afficher seulement</button></div><p class="note" id="bshm" style="margin:0">« Partager en fichier » ouvre le menu de ton téléphone (Fichiers, Notes, AirDrop, Drive…). S\'il ne s\'ouvre pas, utilise « Générer et copier ».</p><label>Sauvegarde<textarea id="bt" rows="5" placeholder="La sauvegarde apparaît ici"></textarea></label><p class="note" style="margin:0">Le texte est compressé : il est beaucoup plus court qu\'avant. Il commence par « CP1: ».</p></div>',true);
+  h+=blk('s-new','dl','Faire une sauvegarde','copier dans tes notes','<div class="fm" style="border:0;padding:0"><label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="bph" style="width:22px;min-height:22px" checked> Inclure mes photos (recommandé, un peu plus lourd)</label><div class="bkb"><button type="button" class="pri" data-bk="copy">Générer et copier</button><button type="button" data-bk="share">Partager en fichier</button></div><p class="note" id="bshm" style="margin:0">« Partager en fichier » ouvre le menu de ton téléphone (Fichiers, Notes, AirDrop, Drive…). S\'il ne s\'ouvre pas, utilise « Générer et copier ».</p><label>Sauvegarde<textarea id="bt" rows="5" placeholder="La sauvegarde apparaît ici"></textarea></label><p class="note" style="margin:0">Le texte est compressé : il est beaucoup plus court qu\'avant. Il commence par « CP1: ».</p></div>',true);
   h+=blk('s-res','copy','Restaurer','coller une sauvegarde','<div class="fm" style="border:0;padding:0"><p class="note" style="margin:0">Un fichier enregistré en pièce jointe dans Notes n\'est pas visible ici. Enregistre-le plutôt dans l\'appli Fichiers, ou copie son texte.</p><label>Choisir un fichier de sauvegarde<input type="file" id="bfile" accept="*/*"></label><label>Ou colle ta sauvegarde ici<textarea id="br" rows="4" placeholder="Colle le texte de ta sauvegarde"></textarea></label><div class="bkb"><button type="button" data-bk="check">Vérifier le contenu</button></div>'+(state.bprev?'<div class="sum"><p style="margin:0"><b>Sauvegarde du '+bdt(state.bprev.t)+' :</b> '+bsum(state.bprev)+'.</p><p class="note" style="margin:6px 0 0">La restauration remplace les données actuelles. Un point de retour est gardé automatiquement.</p></div><div class="bkb"><button type="button" class="pri" data-bk="confirm">Confirmer la restauration</button><button type="button" data-bk="cancel">Annuler</button></div>':'')+'</div>',!!state.bprev);
   h+=blk('s-auto','star','Points de retour automatiques','3 derniers jours','<p class="note" style="margin:0">L\'appli garde seule une copie par jour (sans photos), sur cet appareil. Utile si tu te trompes ; ne remplace pas la copie dans tes notes.</p><div class="crs">'+(S.length?S.map((x,i)=>'<div class="rl"><span>'+bdt(x.t)+'<br><small>'+bsum(x.o)+'</small></span><button type="button" data-bk="snap:'+i+'">Revenir</button></div>').join(''):'<p class="note">Aucune pour le moment.</p>')+(pr?'<div class="rl"><span>Avant la dernière restauration<br><small>'+bdt(pr.t)+' · '+bsum(pr.o)+'</small></span><button type="button" data-bk="pre">Revenir</button></div>':'')+'</div>',false);
   $('bak').innerHTML=h;
