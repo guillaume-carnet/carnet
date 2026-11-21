@@ -914,6 +914,17 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 #activity .big{font-size:44px;font-weight:800;letter-spacing:-.02em;color:var(--accent)}
 
 .cfm{background:#D32F3F!important;color:#fff!important;border-radius:14px!important;font-weight:800!important;font-size:13px!important;width:auto!important;min-width:104px;padding:0 12px!important;white-space:nowrap}
+
+#day .ent2{display:block!important;padding:12px 14px!important}
+#day .ent2 .eh{display:flex;align-items:center;gap:8px}
+#day .ent2 .eh b{flex:1;min-width:0;font-size:16px;font-weight:800;color:var(--ink)}
+#day .ent2 .tg{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:3px 7px}
+#day .ent2 .ex{width:30px!important;height:30px!important;min-width:0!important;padding:0!important;border-radius:10px!important;font-size:13px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--muted)!important}
+#day .ent2 .em{display:flex;flex-wrap:nowrap;gap:4px;margin-top:8px}
+#day .ent2 .em i{font-style:normal;font-size:12px;font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--accent) 9%,var(--surface));border-radius:9px;padding:5px 6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#day .ent2 .em i u{text-decoration:none;color:var(--muted);font-weight:800;margin-right:3px}
+#day .ent2 .em .mk{background:var(--accent)!important;color:#fff!important}
+#day .ent2 .stp{margin-top:10px;display:flex;justify-content:flex-end;align-items:center;gap:10px}
 </style>
 
 
@@ -2969,7 +2980,9 @@ function renderDay(){
   SLOTS.forEach(([s,l])=>{
     const es=DAY[s];
     h+='<div class="slot"><div class="sh"><i class="sic s-'+s+'">'+SLI[s]+'</i><div class="sht"><h3>'+l+'</h3><small>'+SLS[s]+'</small></div><span>'+num(es.reduce((a,e)=>a+ent(e).k,0),0)+' kcal</span></div>';
-    es.forEach((e,j)=>{const x=ent(e);h+='<div class="ent"><div class="en"><b>'+esc(x.n)+'</b><span>'+num(x.k,0)+' kcal · P '+num(x.p)+' · G '+num(x.g)+' · L '+num(x.l)+' · F '+num(x.f)+'</span></div><div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button><button type="button" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div></div>'});
+    es.forEach((e,j)=>{const x=ent(e);const fs=/^FatSecret/i.test(x.n)||/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
+      const stp=fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>';
+      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':'')+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
     h+='<div class="sa"><button type="button" data-pick="'+s+'">+ Recette</button><button type="button" data-free="'+s+'">+ Aliment</button><button type="button" data-meal="'+s+'">★ Repas type</button></div>';
     if(state.meal===s){h+='<div class="pf">'+(MEALS.length?MEALS.map((m,i)=>state.delc==='M'+i?'<div class="mealrow"><span style="flex:1;font-size:13.5px">Supprimer « '+esc(m.n)+' » ?</span><button type="button" data-mdelok="'+i+'">Oui</button><button type="button" data-mdelno="1">Non</button></div>':'<div class="mealrow"><button type="button" class="mb2" data-muse="'+s+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal · '+m.e.length+' élément'+(m.e.length>1?'s':'')+'</small></button><button type="button" data-mdel="'+i+'" aria-label="Supprimer">✕</button></div>').join(''):'<p class="note" style="margin:0">Aucun repas type pour l\'instant.</p>')+(es.length?'<div class="mealrow"><input id="mname" type="text" placeholder="Nom du repas type" style="flex:1;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0"><button type="button" data-msave="'+s+'">Enregistrer ce repas</button></div>':'<p class="note" style="margin:6px 0 0">Compose d\'abord un repas pour pouvoir l\'enregistrer.</p>')+'</div>'}
     if(state.pick===s)h+='<div class="pk"><input id="pq" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.pq)+'" aria-label="Chercher une recette"><div id="pl"></div></div>';
@@ -3790,7 +3803,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 135 (FatSecret par repas)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 136 (affichage repas)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
