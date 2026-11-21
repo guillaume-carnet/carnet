@@ -955,10 +955,26 @@ details.palier .fm{background:transparent!important;border:0!important;padding:0
 #more .mt-ref span{display:grid}
 #ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);transform:translate(-50%,0);z-index:60;padding:9px 16px;border-radius:999px;font-weight:800;font-size:13px;background:var(--surface,#fff);color:var(--ink,#1B1F3B);box-shadow:0 10px 26px rgba(20,26,60,.22);opacity:0;pointer-events:none;transition:opacity .15s;white-space:nowrap}
 #ptr.on{opacity:1}
-</style>
+
+.sgv{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;padding:11px 14px;font-weight:800;font-size:14px;background:var(--accent-soft,#E4E8FF)!important;color:var(--accent,#3D4FD6)!important;box-shadow:none!important}
+
+/* ===== programme (v144) ===== */
+#more .mt-prog{background:linear-gradient(135deg,#D6455D,#F0707A)!important;grid-column:span 2;grid-template-columns:auto 1fr;align-items:center;min-height:0!important}
+#more .mt-prog span{display:grid}
+#prog .pcard{background:var(--surface);border-radius:20px;padding:6px 14px;margin:0 0 12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#prog .ph{padding:10px 0 8px;border-bottom:1px solid var(--line)}
+#prog .ph b{display:block;font-size:16px}
+#prog .ph small{color:var(--muted);font-size:12.5px}
+#prog .pex{padding:10px 0;border-bottom:1px solid var(--line)}
+#prog .pex:last-child{border-bottom:0}
+#prog .pn{display:flex;flex-direction:column;gap:2px;min-width:0}
+#prog .pn b{font-size:15px;font-weight:700}
+#prog .pn span{font-size:13px;color:var(--muted)}
+#prog .pin{width:100%;box-sizing:border-box;margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink)}
+#prog .plist{margin:8px 0 0;padding-left:20px;display:grid;gap:7px;font-size:14px;line-height:1.45}
+</style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 <div class="wrap">
   <header class="top">
     <p class="eyebrow" id="eyebrow">200 recettes · macros par portion</p>
@@ -1003,6 +1019,7 @@ details.palier .fm{background:transparent!important;border:0!important;padding:0
   <section id="week" class="panel" hidden></section>
   <section id="weight" class="panel" hidden></section>
   <section id="activity" class="panel" hidden></section>
+  <section id="prog" class="panel" hidden></section>
   <section id="home" class="panel" hidden></section>
   <section id="history" class="panel" hidden></section>
   <section id="myfoods" class="panel" hidden></section>
@@ -2935,8 +2952,9 @@ const fmt=(id,q,u)=>{if(u==='u')return q+' '+(id==='oeuf'?(q>1?'œufs':'œuf'):(
 const ICONS={"rec": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 8h6M9 12h6M9 16h3\"/></svg>", "jr": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/></svg>", "sem": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/></svg>", "crs": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 4h2.5l2.2 10.5h10.6L20.5 8H6.4\"/><circle cx=\"9.5\" cy=\"19\" r=\"1.3\"/><circle cx=\"17\" cy=\"19\" r=\"1.3\"/></svg>", "more": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"5.5\" cy=\"12\" r=\"1.6\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/><circle cx=\"18.5\" cy=\"12\" r=\"1.6\"/></svg>"};
 const VIEWS=[['ajd','Accueil'],['rec','Recettes'],['jr','Journée'],['sem','Semaine'],['crs','Courses']];
 ICONS.ajd='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>';
-const MI={"moi": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20c.8-3.8 3.6-5.6 7-5.6s6.2 1.8 7 5.6\"/></svg>", "hist": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4M12 8v4l3 2\"/></svg>", "poids": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"4\"/><path d=\"M8.5 10a4.5 3 0 0 1 7 0M12 10l1.6-1.8\"/></svg>", "act": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 20c-1.5 0-2-1.4-1.6-3l1.5-5c.5-1.7.8-3.5.6-5.3C7.4 4.6 8.6 3.5 10 4c1.2.5 1.6 2 1.4 3.6-.2 1.6-1 3.2-1 5 0 2.5 1.6 3.4 3.6 4.4\"/></svg>", "frg": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"6\" y=\"3\" width=\"12\" height=\"18\" rx=\"3\"/><path d=\"M6 10h12M9 6v2M9 13v3\"/></svg>", "new": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 8v8M8 12h8\"/></svg>", "sav": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v10M8 10l4 4 4-4M5 18h14\"/></svg>"},MLAB={moi:'Moi',hist:'Historique',poids:'Poids',act:'Pas',frg:'Frigo',new:'Mes recettes et aliments',sav:'Sauvegarde'},MSUB={moi:'Infos et objectifs'};
-const MORE=[['moi','Moi'],['hist','Historique'],['poids','Poids'],['act','Pas'],['frg','Frigo'],['new','Mes recettes et aliments'],['sav','Sauvegarde']];
+const MI={"moi": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20c.8-3.8 3.6-5.6 7-5.6s6.2 1.8 7 5.6\"/></svg>", "hist": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4M12 8v4l3 2\"/></svg>", "poids": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"5\" width=\"16\" height=\"15\" rx=\"4\"/><path d=\"M8.5 10a4.5 3 0 0 1 7 0M12 10l1.6-1.8\"/></svg>", "act": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 20c-1.5 0-2-1.4-1.6-3l1.5-5c.5-1.7.8-3.5.6-5.3C7.4 4.6 8.6 3.5 10 4c1.2.5 1.6 2 1.4 3.6-.2 1.6-1 3.2-1 5 0 2.5 1.6 3.4 3.6 4.4\"/></svg>", "frg": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"6\" y=\"3\" width=\"12\" height=\"18\" rx=\"3\"/><path d=\"M6 10h12M9 6v2M9 13v3\"/></svg>", "new": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 8v8M8 12h8\"/></svg>", "sav": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4v10M8 10l4 4 4-4M5 18h14\"/></svg>"},MLAB={moi:'Moi',hist:'Historique',poids:'Poids',act:'Pas',prog:'Programme',frg:'Frigo',new:'Mes recettes et aliments',sav:'Sauvegarde'},MSUB={moi:'Infos et objectifs',prog:'Séances, charges, repères'};
+MI.prog='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/></svg>';
+const MORE=[['moi','Moi'],['hist','Historique'],['poids','Poids'],['act','Pas'],['prog','Programme'],['frg','Frigo'],['new','Mes recettes et aliments'],['sav','Sauvegarde']];
 const MGRP={hist:'Suivi',frg:'Cuisine',sav:'Données'};
 if(!VIEWS.some(v=>v[0]===state.view)&&!MORE.some(m=>m[0]===state.view)&&state.view!=='mes')state.view='ajd';
 const secT=(t,sm)=>'<div class="sech" style="margin:18px 0 8px"><h3>'+t+'</h3>'+(sm?'<small>'+sm+'</small>':'')+'</div>';
@@ -2953,13 +2971,14 @@ function renderViews(){
   if(rec&&state.mcalc!=null){state.mcrows=null;render()}
   $('chips').hidden=!rec;document.querySelector('.tools').hidden=!rec;$('count').hidden=!rec;$('grid').hidden=!rec;
   $('empty').hidden=!rec||document.querySelectorAll('#grid .card').length>0;
-  const map={ajd:'home',hist:'history',frg:'fridge',jr:'day',sem:'week',crs:'courses',act:'activity',poids:'weight',new:'addr',frq:'freq',sav:'bak',mes:'myfoods',moi:'me'};
+  const map={ajd:'home',hist:'history',frg:'fridge',jr:'day',sem:'week',crs:'courses',act:'activity',poids:'weight',new:'addr',frq:'freq',sav:'bak',mes:'myfoods',moi:'me',prog:'prog'};
   Object.keys(map).forEach(k=>{$(map[k]).hidden=state.view!==k});
   if(state.view==='jr')renderDay();
   if(state.view==='sem')renderWeek();
   if(state.view==='crs')renderCourses();
   if(state.view==='poids')renderWeight();
   if(state.view==='act')renderAct();
+  if(state.view==='prog')renderProg();
   if(state.view==='ajd')renderHome();
   if(state.view==='mes')renderMy();
   if(state.view==='hist')renderHist();
@@ -2969,6 +2988,37 @@ function renderViews(){
   if(state.view==='sav')renderBak();
   if(state.view==='moi')renderMoi();else palHome();
 }
+
+/* ===== Programme (v144) ===== */
+const PSEA=[
+ {k:'lun',d:1,j:'Lundi',t:'Pectoraux / Triceps',m:'55-65 min',x:[['Développé couché barre','4 x 8-10','2 min'],['Développé incliné haltères','4 x 8-12','90 s'],['Écartés haltères','3 x 12-15','60 s'],['Pompes','3 x max','60 s'],['Barre au front','3 x 10-12','60 s'],['Extension triceps haltère','3 x 12-15','45-60 s']]},
+ {k:'mar',d:2,j:'Mardi',t:'Dos / Biceps',m:'55-65 min',x:[['Rowing barre','4 x 8-10','2 min'],['Rowing haltère un bras','4 x 10-12','90 s'],['Pull-over haltère','3 x 12','60 s'],['Oiseau haltères','3 x 15','45-60 s'],['Curl barre','4 x 10','60 s'],['Curl marteau','3 x 12','45-60 s'],['Curl incliné haltères','3 x 10-12','60 s']]},
+ {k:'jeu',d:4,j:'Jeudi',t:'Jambes / Abdos',m:'65-75 min',x:[['Squat barre','4 x 8-12','2-3 min'],['Fentes haltères','3 x 10 / jambe','90 s'],['Soulevé de terre jambes tendues','4 x 10','2 min'],['Hip thrust barre','3 x 12','90 s'],['Mollets','4 x 15-20','45 s'],['Gainage','3 x 45-60 s','45 s']]},
+ {k:'sam',d:6,j:'Samedi',t:'Épaules / Full body',m:'55-65 min',x:[['Développé militaire','4 x 8-10','90-120 s'],['Élévations latérales','4 x 15','45-60 s'],['Développé couché léger','3 x 12','90 s'],['Rowing léger','3 x 12','60-90 s'],['Curl biceps','3 x 12','60 s'],['Abdos','3 séries','45 s']]},
+ {k:'vac',d:-1,j:'Vacances',t:'Maintien · 3 séances courtes',m:'25-30 min',x:[['Pompes','4 séries','60 s'],['Squats poids du corps','4 x 20','60 s'],['Fentes','3 x 15 / jambe','45-60 s'],['Gainage','3 x 45 s','45 s'],['Abdos','3 séries','45 s']]}
+];
+let PG=ls('cp-prog',{});
+function savePG(){try{localStorage.setItem('cp-prog',JSON.stringify(PG))}catch(e){}}
+function renderProg(){
+  const wd=new Date().getDay();
+  if(!state.pk||!PSEA.some(x=>x.k===state.pk)){const t=PSEA.find(x=>x.d===wd);state.pk=t?t.k:(PSEA.find(x=>x.d>wd)||PSEA[0]).k}
+  const cur=PSEA.find(x=>x.k===state.pk),isToday=cur.d===wd;
+  let h='<h2>Programme</h2><p class="note">Musculation 4 séances par semaine. Note sous chaque exercice la charge et les répétitions de ta dernière séance.</p>';
+  h+='<div class="seg2" style="flex-wrap:wrap">'+PSEA.map(x=>'<button type="button" data-pk="'+x.k+'" class="'+(x.k===cur.k?'on':'')+'" style="min-width:0;flex:1 1 30%">'+(x.k==='vac'?'Vac.':x.j.slice(0,3))+(x.d===wd?' •':'')+'</button>').join('')+'</div>';
+  h+='<div class="pcard"><div class="ph"><b>'+cur.j+' — '+cur.t+'</b><small>'+(isToday?'Séance du jour · ':'')+cur.m+' (échauffement inclus)</small></div>';
+  h+=cur.x.map((e,i)=>{const key=cur.k+i,v=PG[key]||'';return '<div class="pex"><div class="pn"><b>'+esc(e[0])+'</b><span>'+e[1]+' · récup '+e[2]+'</span></div><input class="pin" data-pg="'+key+'" inputmode="text" placeholder="Dernière charge (ex. 30 kg · 8-8-7)" value="'+esc(v)+'" aria-label="Dernière charge '+esc(e[0])+'"></div>'}).join('')+'</div>';
+  h+=secT('Avant chaque séance');
+  h+='<ul class="plist"><li>5-10 min de cardio léger (vélo, rameur, marche rapide).</li><li>Premier mouvement : 1 série à vide ou très légère x 10-12, puis 1-2 séries intermédiaires (50-70 %) x 5-6.</li><li>Mobilité rapide des articulations sollicitées.</li><li>« Récup » = pause entre les séries d\'un même exercice. Entre deux exercices : 1-2 min suffisent.</li></ul>';
+  h+=secT('Progresser','double progression');
+  h+='<ul class="plist"><li>Tant que le haut de la fourchette n\'est pas atteint sur toutes les séries : même poids, +1-2 répétitions à chaque séance.</li><li>Dès que le haut est atteint partout (ex. 4x10 pour un 4x8-10) : augmente le poids à la séance suivante, et on repart au bas de la fourchette.</li><li>Grosses barres bas du corps : +2,5 à 5 kg. Haut du corps : +1,25 à 2,5 kg. Haltères : +1 à 2 kg seulement si trop facile.</li><li>Limite matériel : 40 kg de disques + la barre. Au plafond : plus de reps (15-20), descente lente (3-4 s), moins de repos, une série en plus, ou variante plus dure (fentes bulgares…).</li><li>Ne pas augmenter si la technique se dégrade, s\'il y a une douleur articulaire, ou après une semaine fatigante / mal dormie.</li></ul>';
+  h+=secT('Ressenti','répétitions en réserve');
+  h+='<div class="pcard"><div class="pex"><div class="pn"><b>Semaines 1-2</b><span>2-3 reps encore possibles, focus technique</span></div></div><div class="pex"><div class="pn"><b>Semaines 3-4</b><span>2 reps de marge, montée en répétitions</span></div></div><div class="pex"><div class="pn"><b>Semaines 5-6</b><span>1-2 reps de marge, charges qui montent</span></div></div><div class="pex"><div class="pn"><b>Semaines 7-8</b><span>0-1 rep de marge sur la dernière série</span></div></div></div>';
+  h+=secT('Repères');
+  h+='<ul class="plist"><li>Protéines 160-180 g par jour, même si les calories changent : ça protège le muscle.</li><li>Ne jamais sauter les séances de muscu.</li><li>10 000 à 12 000 pas par jour, au moins 7 h de sommeil, 2 à 3 L d\'eau.</li><li>Whey : 2 prises de 30 g (une en collation, une après l\'entraînement).</li><li>Jambes une seule fois par semaine : tu peux ajouter 10-15 min de jambes légères en fin de séance du samedi.</li></ul>';
+  $('prog').innerHTML=h;
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pk]');if(!b)return;state.pk=b.dataset.pk;renderProg()});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pg!==undefined){PG[t.dataset.pg]=t.value;savePG()}});
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -3132,7 +3182,7 @@ function sugList(sg,key,attr,extra){
 }
 function sugCard(r,m,attr,extra){
   const mc=(c,l,v)=>'<span class="mc '+c+'"><b>'+num(v,0)+'</b>'+l+'</span>';
-  return '<div class="sugrow"><div class="sgh"><b>'+esc(r.n)+'</b><span class="sgk">'+Math.round(r.k*m)+' kcal</span></div><div class="mcs">'+mc('c-p','Prot',r.p*m)+mc('c-g','Gluc',r.g*m)+mc('c-l','Lip',r.l*m)+mc('c-f','Fibres',r.f*m)+'</div><div class="pmh">Ajouter avec la portion (★ = conseillée) :</div><span class="pm">'+[0.75,1,1.25,1.5].map(q=>'<button type="button" class="'+(q===m?'on':'')+'" '+attr+'="'+r.i+'" '+(extra||'')+' data-q="'+q+'"><b>'+(q===m?'★ ':'')+'×'+String(q).replace('.',',')+'</b><small>'+Math.round(r.k*q)+' kcal</small></button>').join('')+'</span></div>'
+  return '<div class="sugrow"><div class="sgh"><b>'+esc(r.n)+'</b><span class="sgk">'+Math.round(r.k*m)+' kcal</span></div><div class="mcs">'+mc('c-p','Prot',r.p*m)+mc('c-g','Gluc',r.g*m)+mc('c-l','Lip',r.l*m)+mc('c-f','Fibres',r.f*m)+'</div><div class="pmh">Ajouter avec la portion (★ = conseillée) :</div><span class="pm">'+[0.75,1,1.25,1.5].map(q=>'<button type="button" class="'+(q===m?'on':'')+'" '+attr+'="'+r.i+'" '+(extra||'')+' data-q="'+q+'"><b>'+(q===m?'★ ':'')+'×'+String(q).replace('.',',')+'</b><small>'+Math.round(r.k*q)+' kcal</small></button>').join('')+'</span><button type="button" class="sgv" data-seer="'+r.i+'">Voir la recette complète →</button></div>'
 }
 function renderDay(){
   const t=dayTot(),T=targets();
@@ -3950,7 +4000,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== Sauvegarde ===== */
-const BKEYS=['cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
+const BKEYS=['cp-prog','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
 state.bmsg='';state.bprev=null;
 const bObj=ph=>{const o={v:2,t:Date.now(),d:{}};BKEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)o.d[k]=JSON.parse(v)}catch(e){}});if(ph)o.ph=PH;return o};
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
@@ -3970,7 +4020,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 142 (Journee et Semaine liees) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 144 (programme) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -4101,6 +4151,12 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-refresh]')){e.p
   document.addEventListener('touchend',()=>{if(y0===null)return;const go=dy>110;y0=null;
     if(go){busy=true;P.textContent='Actualisation…';P.style.transform='translate(-50%,40px)';appRefresh()}else{P.classList.remove('on');P.style.transform=''}});
 })();
+
+/* « Voir la recette » depuis les suggestions (Journée, Semaine) */
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-seer]');if(!b)return;e.preventDefault();
+  const r=R.find(x=>x.i===+b.dataset.seer);if(!r)return;
+  state.q=r.n;$('q').value=r.n;state.cat='tous';state.view='rec';$('more').hidden=true;
+  renderChips();render();renderViews();window.scrollTo(0,0)});
 </script>
 <style>#scanov{overflow-y:auto}#scanres{display:grid;gap:6px;margin:8px 0}#scanres button{display:grid;gap:2px;text-align:left;min-height:48px;padding:8px 12px;border-radius:10px;border:1px solid #3a4468;background:#18203a;color:#fff;font:inherit}#scanres button span{font-size:12.5px;opacity:.8}#scanres .scl{font-size:12.5px;opacity:.8}</style>
 
