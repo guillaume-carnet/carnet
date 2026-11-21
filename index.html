@@ -4406,7 +4406,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 158 (page Plus nette) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 159 (mise à jour fiable) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -4517,11 +4517,12 @@ async function appRefresh(){
   if(!navigator.onLine||!location.protocol.startsWith('http')){
     if(location.protocol.startsWith('http')){try{refreshAll()}catch(e){try{renderViews()}catch(x){}}if(window.toast)toast('Hors ligne : affichage actualisé.');if(pt)pt.classList.remove('on');return}
     location.reload();return}
-  try{
-    const u=location.origin+location.pathname,r=await fetch(u,{cache:'no-store'});
-    if(r.ok&&window.caches){const c=await caches.open('carnet-v2');await c.put(u,r.clone());await c.put(u.endsWith('/')?u+'index.html':u,r.clone())}
-  }catch(e){}
-  try{const rg=await navigator.serviceWorker.getRegistrations();await Promise.all(rg.map(x=>x.update().catch(()=>0)))}catch(e){}
+  /* le service worker renvoie sa copie en mémoire même avec no-store : on le retire et on vide son cache, puis la page se recharge depuis le réseau */
+  let net=true;try{await fetch('https://github.com/favicon.ico',{mode:'no-cors',cache:'no-store'})}catch(e){net=false}
+  if(net){
+    try{const rg=await navigator.serviceWorker.getRegistrations();await Promise.all(rg.map(x=>x.unregister().catch(()=>0)))}catch(e){}
+    try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
+  }
   location.reload();
 }
 document.addEventListener('click',e=>{if(e.target.closest('[data-refresh]')){e.preventDefault();appRefresh()}});
