@@ -3212,7 +3212,7 @@ function bodyStats(){
   const last=am[am.length-1],lt=dms(last.d);
   const inR=(a,b)=>am.filter(x=>{const dd=(lt-dms(x.d))/DAYMS;return dd>=a&&dd<=b});
   const c7=inR(0,6),p7=inR(7,13),a7=mean(c7,x=>x.w),pa=mean(p7,x=>x.w);
-  const wd=am.filter(x=>x.t);
+  const wd=WT.filter(x=>x.t).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
   return{am,last,first:am[0],span:(lt-dms(am[0].d))/DAYMS,a7,n7:c7.length,pa,np:p7.length,rate:(p7.length>=2&&c7.length>=2)?a7-pa:null,
     bmr:mean(c7,x=>x.bmr)||last.bmr||0,t:wd.length?wd[wd.length-1].t:0};
 }
@@ -3277,7 +3277,7 @@ function renderWeight(){
   const pts=srt.filter(x=>!x.s&&ptVal(x,key)).map(x=>({d:x.d,t:dms(x.d),v:ptVal(x,key)}));
   const I=(id,lab,ph)=>'<label>'+lab+'<input id="'+id+'" inputmode="decimal"'+(ph?' placeholder="'+ph+'"':'')+'></label>';
   const dg=key==='bmr'?0:key==='mg'?2:1;
-  let h='<h2>Corps et poids</h2><p class="note">Les calculs utilisent seulement les pesées du matin. Seul le poids est obligatoire, le reste vient de ton impédancemètre.</p>';
+  let h='<h2>Corps et poids</h2><p class="note">Les calculs utilisent seulement les pesées du matin. Il suffit du poids ou du tour de taille, le reste vient de ton impédancemètre.</p>';
   if(o){
     h+=blk('w-res','bars','Résumé','moyenne, IMC, composition',
      '<div class="kv"><div><b>'+num(o.L.w,1)+' kg</b><span>Dernière pesée ('+fdate(o.L.d)+')</span></div><div><b>'+num(o.S.a7,1)+' kg</b><span>Moyenne 7 jours ('+o.S.n7+' pesée'+(o.S.n7>1?'s':'')+')</span></div>'
@@ -3298,7 +3298,7 @@ function renderWeight(){
     cb+='<div class="kv"><div><b>'+num(last,dg)+' '+m[1]+'</b><span>Dernière mesure</span></div><div><b>'+dl(last-first)+'</b><span>Depuis le début</span></div><div><b>'+dl(last-prev)+'</b><span>Sur les 7 dernières mesures</span></div></div>';}
   cb+='<div class="sum">'+chartSvg(pts,key==='w'?{avg:true,zone:[BODY.zmin,BODY.zmax]}:{avg:false})+'</div>';
   h+=blk('w-chart','chart','Courbes',m[0],cb,true);
-  if(srt.length)h+=blk('w-list','list','Mesures enregistrées',srt.length+' au total','<div class="crs">'+srt.slice(-12).reverse().map(x=>'<div class="rl"><span>'+fdate(x.d)+(x.s?' soir':' matin')+' · '+(x.w?num(x.w,1)+' kg':'')+(x.b?' · '+num(x.b,1)+' % gras':'')+(x.m?' · muscle '+num(x.m,1):'')+(x.t?' · taille '+num(x.t,1):'')+'</span><button type="button" data-wdel="'+wkey(x)+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>',false);
+  if(srt.length)h+=blk('w-list','list','Mesures enregistrées',srt.length+' au total','<div class="crs">'+srt.slice(-12).reverse().map(x=>'<div class="rl"><span>'+fdate(x.d)+(x.s?' soir':' matin')+' · '+[x.w?num(x.w,1)+' kg':'',x.t?'taille '+num(x.t,1)+' cm':'',x.b?num(x.b,1)+' % gras':'',x.m?'muscle '+num(x.m,1):''].filter(Boolean).join(' · ')+'</span><button type="button" data-wdel="'+wkey(x)+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>',false);
   h+=blk('w-add','plus','Saisir à la main','poids, taille, mesures',
     '<form class="fm" id="wf"><div class="g2"><label>Date<input type="date" id="wd" value="'+today()+'"></label><label>Pesée<select id="ws"><option value="0">Matin (à jeun)</option><option value="1">Soir / autre</option></select></label></div><div class="g2">'+I('ww','Poids (kg)','ex. 66,8')+I('wt','Tour de taille (cm)')+'</div>'
     +'<details class="flt"><summary>Mesures de l\'impédancemètre</summary><div class="g2" style="padding:8px 0 4px">'+I('wb','Graisse corporelle (%)')+I('wm2','Muscle squelettique (kg)')+I('wmt','Masse musculaire (kg)')+I('wvf','Graisse viscérale')+I('wbmr','Taux métabolique (kcal)')+I('wwa','Eau (%)')+I('wpr','Protéines (%)')+I('wbn','Densité minérale (kg)')+'</div></details>'
@@ -3309,10 +3309,11 @@ function renderWeight(){
 }
 document.addEventListener('submit',e=>{
   if(e.target.id!=='wf')return;e.preventDefault();
-  const w=pnum($('ww').value);if(!w){$('ww').focus();return}
-  const d=$('wd').value||today(),sv=$('ws').value==='1'?1:0,g=id=>pnum($(id).value)||0;
+  const w=pnum($('ww').value)||0,g=id=>pnum($(id).value)||0;if(!w&&!g('wt')&&!g('wb')&&!g('wm2')){$('ww').focus();if(window.toast)toast('Entre au moins le poids ou le tour de taille.');return}
+  const d=$('wd').value||today(),sv=$('ws').value==='1'?1:0;
   const en={d,s:sv,w,t:g('wt'),b:g('wb'),m:g('wm2'),mt:g('wmt'),vf:g('wvf'),bmr:g('wbmr'),wa:g('wwa'),pr:g('wpr'),bn:g('wbn')};
-  WT=WT.filter(x=>wkey(x)!==wkey(en));WT.push(en);lsw('cp-w',WT);renderWeight();
+  const old=WT.find(x=>wkey(x)===wkey(en));if(old)for(const k in en){if(!en[k]&&old[k])en[k]=old[k]}
+  WT=WT.filter(x=>wkey(x)!==wkey(en));WT.push(en);lsw('cp-w',WT);renderWeight();if(window.toast)toast('✓ Enregistré'+(w?'':' : tour de taille'));
 });
 document.addEventListener('click',e=>{
   if(state.view!=='poids')return;
@@ -3741,7 +3742,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 131 (tour de taille)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 132 (taille seule)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
