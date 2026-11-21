@@ -912,6 +912,8 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 :is(#weight,#activity) .kv>div:nth-child(7){background:linear-gradient(135deg,#3B4DB8,#2F6FED)!important}
 :is(#weight,#activity) .kv>div:nth-child(8){background:linear-gradient(135deg,#2B3167,#4B55A8)!important}
 #activity .big{font-size:44px;font-weight:800;letter-spacing:-.02em;color:var(--accent)}
+
+.cfm{background:#D32F3F!important;color:#fff!important;border-radius:14px!important;font-weight:800!important;font-size:13px!important;width:auto!important;min-width:104px;padding:0 12px!important;white-space:nowrap}
 </style>
 
 
@@ -2427,6 +2429,21 @@ document.addEventListener('input',e=>{
   box.classList.toggle('sgsearch',!!q);
   box.querySelectorAll('.sgr').forEach(r=>{r.hidden=!!q&&r.dataset.n.indexOf(q)<0})
 });
+
+/* sécurité : double appui pour supprimer */
+(function(){
+  const SEL='[data-wdel],[data-asdel],[data-hldel],[data-mdel],[data-cdel]';
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest(SEL);
+    if(!b)return;
+    if(b.dataset.armed==='1'){b.dataset.armed='0';return}   /* 2e appui : l'action normale se déroule */
+    e.stopImmediatePropagation();e.preventDefault();
+    document.querySelectorAll('[data-armed="1"]').forEach(x=>{x.dispatchEvent(new Event('disarm'))});
+    const old=b.innerHTML;b.dataset.armed='1';b.classList.add('cfm');b.innerHTML='Supprimer ?';
+    const off=()=>{if(b.dataset.armed==='1'){b.dataset.armed='0';b.classList.remove('cfm');b.innerHTML=old}};
+    b.addEventListener('disarm',off,{once:true});setTimeout(off,3500);
+  },true);
+})();
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='autofile'){const fl=Array.from(e.target.files||[]).slice(0,6);e.target.value='';if(fl.length)autoRun(fl)}});
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-auto]')){const i=document.getElementById('autofile');if(i)i.click();return}
@@ -3742,7 +3759,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 132 (taille seule)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 133 (securite suppression)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
