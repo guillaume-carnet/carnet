@@ -2290,7 +2290,13 @@ document.addEventListener('click',e=>{
 /* ===== Import auto : une ou plusieurs captures (Huawei Santé, FatSecret), reconnues automatiquement ===== */
 function fsApply(k,p,g,l,f){
   try{const dt=new Date();localStorage.setItem('cp-fs-at',String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'))}catch(e){}
-  DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};saveDay();
+  const M=window.FSM;window.FSM=null;
+  const sk=M?Object.values(M).reduce((a,x)=>a+(x.k||0),0):0;
+  if(M&&sk>0&&Math.abs(sk-k)<=k*0.1){
+    const NM={pdj:'Petit déjeuner',dej:'Déjeuner',din:'Dîner',col:'Snacks / autre'};DAY={pdj:[],dej:[],col:[],din:[]};
+    for(const sl in M){const x=M[sl];if(x&&x.k>0)DAY[sl].push({x:'FatSecret · '+NM[sl],k:x.k,p:x.p||0,g:x.g||0,l:x.l||0,f:x.f||0,q:1})}
+  }else DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};
+  saveDay();
   LOG[today()]={k:Math.round(k),p:Math.round(p*10)/10,g:Math.round(g*10)/10,l:Math.round(l*10)/10,f:Math.round(f*10)/10};saveLog();
 }
 /* ===== Huawei Santé « Données de mesure corporelle » : lecture par étiquette ===== */
@@ -2432,7 +2438,7 @@ document.addEventListener('input',e=>{
 
 /* sécurité : double appui pour supprimer */
 (function(){
-  const SEL='[data-wdel],[data-asdel],[data-hldel],[data-mdel],[data-cdel]';
+  const SEL='[data-wdel],[data-asdel],[data-hldel],[data-cdel]';
   document.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest(SEL);
     if(!b)return;
@@ -2498,6 +2504,26 @@ document.addEventListener('click',e=>{
 },true);
 /* ===== Lire le journal FatSecret (capture) : total du jour -> Ma journée ===== */
 let OCRM='';
+
+/* répartition par repas : « Petit Déjeuner 484 Calories … Fibre: 8,4g, Lipid: 14,92g, Glu: 59,6g, Prot: 23,8g » */
+function fsMeals(t){
+  const n=String(t).replace(/[  ]/g,' ');
+  const L=[['pdj',/petit\s*d[ée]j\w*/i],['dej',/(?<!petit\s)\bd[ée]jeuner/i],['din',/\bd[iîi]ner/i],['col',/\bsnacks?\b/i]];
+  const pos=L.map(([sl,re])=>{const m=re.exec(n);return m?{sl,i:m.index,e:m.index+m[0].length}:null}).filter(Boolean).sort((a,b)=>a.i-b.i);
+  if(pos.length<2)return null;
+  const grab=(seg,lab,hi)=>{const re=new RegExp(lab+'[a-zé]*\\s*[:;.]?\\s*(\\d{1,3}(?:[.,]\\d{1,3})?)(\\s?[gq9]?)','gi');let m,best=null;
+    while((m=re.exec(seg))){let tok=m[1],suf=m[2]||'';const dec=(tok.split(/[.,]/)[1]||'').length;const hu=/^\s?[gq]$/i.test(suf);
+      if(!hu&&(dec>2||(dec>=1&&/9$/.test(tok)&&!/[gq]/i.test(suf))))tok=tok.slice(0,-1);
+      const v=parseFloat(tok.replace(',','.'));if(!isNaN(v)&&v>=0&&v<=hi&&(best===null||v>best))best=v}
+    return best};
+  const out={};let cnt=0;
+  pos.forEach((q,j)=>{
+    const seg=n.slice(q.e,Math.min(j+1<pos.length?pos[j+1].i:n.length,q.e+260));
+    const km=/(?<![\d.,])(\d{2,4})\s*calories?/i.exec(seg);
+    const k=km?+km[1]:null;if(!k||k<20||k>4000)return;
+    out[q.sl]={k,p:grab(seg,'prot',300),g:grab(seg,'glu',500),l:grab(seg,'lip',250),f:grab(seg,'fib',100)};cnt++});
+  return cnt>=1?out:null;
+}
 function fsParse(t){
   const n=String(t).replace(/[  ]/g,' ');
   /* la lettre « g » est souvent lue « 9 » : « 126,27g » devient « 126,279 ». On le corrige. */
@@ -2523,12 +2549,13 @@ function fsParse(t){
     const c2=all.filter(v=>v>=200&&v<=6000&&Math.abs(v-est)<=est*0.12).sort((x,y)=>Math.abs(x-est)-Math.abs(y-est));
     k=c2.length?c2[0]:est;
   }
+  window.FSM=fsMeals(t);
   return o.p===null&&o.g===null&&o.l===null&&k===null?null:{k,p:o.p,g:o.g,l:o.l,f:o.f};
 }
 function fsForm(r){
   r=r||{};const v=(x,d)=>x===null||x===undefined?'':String(d?Math.round(x*10)/10:Math.round(x)).replace('.',',');
   const f=(id,lab,x,d)=>'<label>'+lab+'<input id="'+id+'" type="text" inputmode="decimal" value="'+v(x,d)+'"></label>';
-  return '<div class="fm" style="border:0;padding:0">'+f('fsk','Calories',r.k,0)+f('fsp','Protéines (g)',r.p,1)+f('fsg','Glucides (g)',r.g,1)+f('fsl','Lipides (g)',r.l,1)+f('fsf','Fibres (g)',r.f,1)+'</div><p class="note">En enregistrant, ces totaux remplacent le contenu de « Ma journée » d\'aujourd\'hui et sont ajoutés à l\'historique.</p><div class="dact"><button type="button" class="pri" data-fssave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
+  return '<div class="fm" style="border:0;padding:0">'+f('fsk','Calories',r.k,0)+f('fsp','Protéines (g)',r.p,1)+f('fsg','Glucides (g)',r.g,1)+f('fsl','Lipides (g)',r.l,1)+f('fsf','Fibres (g)',r.f,1)+'</div><p class="note">En enregistrant, ces totaux remplacent le contenu de « Ma journée » d\'aujourd\'hui et sont ajoutés à l\'historique.'+(window.FSM?' Les repas lus sur ta capture (petit déj, déjeuner, dîner, snacks) seront rangés chacun à sa place.':'')+'</p><div class="dact"><button type="button" class="pri" data-fssave>Enregistrer</button><button type="button" data-occlose>Annuler</button></div>'}
 async function fsRun(file){
   ocrBox('<h3>Lecture du journal…</h3><p class="note">Un instant, la première fois c\'est un peu plus long. Il faut une connexion.</p>');
   let txt='';
@@ -3759,7 +3786,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 133 (securite suppression)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 134 (FatSecret par repas)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
