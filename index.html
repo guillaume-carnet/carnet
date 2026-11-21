@@ -3073,7 +3073,15 @@ document.addEventListener('click',e=>{const m=e.target.closest('[data-fmy]');if(
   setU(f[6]);$('xs').value='';$('xa').value='';$('xe').value='';$('fn').value=f[0];$('fm').value='100';['xk','xp','xg','xl','xf'].forEach((id,i)=>$(id).value=f[i+1]);$('fsr').innerHTML='';$('fs').value='';CURU=UN[f[0]]||null;showUnit();fprev();$('fq').focus()});
 let FOODS=ls('cp-foods',[]);
 function saveFoods(){lsw('cp-foods',FOODS);state.mcrows=null;if(typeof render==='function'&&state.mcalc!=null&&state.view==='rec')render()}
-function saveDay(){try{localStorage.setItem('cp-day',JSON.stringify(DAY))}catch(e){}}
+function rawSaveDay(){try{localStorage.setItem('cp-day',JSON.stringify(DAY))}catch(e){}}
+function saveDay(){rawSaveDay();dayToWeek()}
+/* Journée et Semaine (aujourd'hui) partagent les mêmes repas */
+function dayToWeek(){try{const fl=SLOTS.reduce((a,[k])=>a.concat((DAY[k]||[]).map(e=>Object.assign({},e,{sl:k}))),[]);
+  const mk=wMonISO(0);let wk=WEEKS[mk];if(!Array.isArray(wk)||wk.length!==7)wk=[[],[],[],[],[],[],[]];
+  wk[wToday()]=fl;WEEKS[mk]=wk;if(WOFF===0)WEEK=wk;const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}catch(e){}}
+function weekToDay(){try{if(WOFF!==0)return;const nd={pdj:[],dej:[],col:[],din:[]};
+  (WEEK[wToday()]||[]).forEach(e=>{const sl=SLOTS.some(x=>x[0]===e.sl)?e.sl:'dej';const c=Object.assign({},e);delete c.sl;nd[sl].push(c)});DAY=nd;rawSaveDay()}catch(e){}}
+function reconcileDay(){try{const has=SLOTS.some(([k])=>(DAY[k]||[]).length);if(has)dayToWeek();else if(WOFF===0&&(WEEK[wToday()]||[]).length)weekToDay()}catch(e){}}
 state.pick=null;state.free=null;state.pq='';state.sug='din';state.conf=false;
 const num=(v,d=1)=>String(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).replace('.',',');
 function ent(e){const q=e.q||1;if(e.x!==undefined)return{n:e.x,k:e.k*q,p:e.p*q,g:e.g*q,l:e.l*q,f:e.f*q,s:(e.s||0)*q,a:(e.a||0)*q,e:(e.e||0)*q,d:(e.s!==undefined||e.a!==undefined||e.e!==undefined)?e.k*q:0};const r=R.find(r=>r.i===e.r);return{n:r.n,k:r.k*q,p:r.p*q,g:r.g*q,l:r.l*q,f:r.f*q,s:0,a:0,e:0,d:0}}
@@ -3300,7 +3308,7 @@ $('grid').addEventListener('click',e=>{
 /* ===== Semaine ===== */
 const DN=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 state.wpick=null;state.wq='';state.wconf=false;
-function saveWeek(){WEEKS[wMonISO(WOFF)]=WEEK;const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}
+function saveWeek(){WEEKS[wMonISO(WOFF)]=WEEK;const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o);if(WOFF===0)weekToDay()}
 const DS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const wToday=()=>(new Date().getDay()+6)%7;
 const wDate=i=>{const d=new Date();d.setDate(d.getDate()+i-wToday()+7*WOFF);return d};
@@ -3761,13 +3769,13 @@ function syncStore(){
   try{
     const d=JSON.parse(localStorage.getItem('cp-day')||'null'),nx={pdj:[],dej:[],col:[],din:[]};
     if(d)SLOTS.forEach(([k])=>{nx[k]=(d[k]||[]).filter(e=>e.x!==undefined||R.some(r=>r.i===e.r))});
-    if(J(nx)!==J(DAY)){DAY=nx;ch=true}
+    if(J(nx)!==J(DAY)){DAY=nx;dayToWeek();ch=true}
     DAYD=localStorage.getItem('cp-daydate')||DAYD;
   }catch(e){}
   return ch;
 }
 closeDay();repairLog();
-function midnightTick(){const ch=syncStore(),c=closeDay(),rp=repairLog();if(ch||c||rp){try{refreshAll()}catch(e){}}if(c&&c!=='vide'&&window.toast)toast('✓ Journée du '+fdate(c)+' enregistrée dans l\'historique')}
+function midnightTick(){const ch=syncStore(),c=closeDay(),rp=repairLog();reconcileDay();if(ch||c||rp){try{refreshAll()}catch(e){}}if(c&&c!=='vide'&&window.toast)toast('✓ Journée du '+fdate(c)+' enregistrée dans l\'historique')}
 setInterval(midnightTick,30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)midnightTick()});
 window.addEventListener('pageshow',midnightTick);window.addEventListener('focus',midnightTick);
@@ -3962,7 +3970,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 140 (actualisation) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 142 (Journee et Semaine liees) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -4030,6 +4038,7 @@ $('cook').addEventListener('click',e=>{
   if(a==='rst'){CK.t=0;CK.fin=false;CK.run=false;clearInterval(CKT);cookRender();return}
 });
 PALAUTO=ls('cp-palauto',true);if(PALAUTO)state.pal=autoPal();
+reconcileDay();
 renderChips();renderSex();renderPalier();render();renderViews();
 $('eyebrow').textContent=R.length+' recettes · macros par portion';
 dbOpen().then(async d=>{DB=d;if(!d)return;await dbAll();render()});
