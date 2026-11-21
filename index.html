@@ -2409,24 +2409,113 @@ async function autoRun(files){
 /* ===== Photo d'étiquette nutritionnelle ===== */
 function nutriParse(t){
   const L=String(t).replace(/[  ]/g,' ').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().split(/\n+/);
-  const N=/(?<![\d.,])(\d{1,4}(?:[.,]\d{1,2})?)/;
-  const val=(ok,no)=>{for(let i=0;i<L.length;i++){const l=L[i];if(!ok.test(l)||(no&&no.test(l)))continue;let r=l.replace(ok,' ').replace(/\bkj\b/g,' ');
-      let m=N.exec(r);if(!m&&L[i+1]&&!/[a-z]{4,}/.test(L[i+1]))m=N.exec(L[i+1]);if(m){let v=parseFloat(m[1].replace(',','.'));if(/\bmg\b/.test(r.slice(m.index+m[0].length,m.index+m[0].length+4)))v/=1000;return v}}return null};
-  let k=null;for(const l of L){const m=/(\d{2,4}(?:[.,]\d)?)\s*kcal/.exec(l);if(m){k=parseFloat(m[1].replace(',','.'));break}}
-  if(k===null){const kj=val(/energie|energy|valeur energetique/);if(kj)k=Math.round(kj/4.184)}
-  return {k,p:val(/prot[a-z]*/),g:val(/glucides|hydrates de carbone|carbohydrat[a-z]*/,/sucre|dont/),l:val(/matieres? grasses?|lipides|fat\b/,/satur|dont/),f:val(/fibres?[a-z ]*|fibre/),s:val(/sucres/),a:val(/satur[a-z]*/),e:val(/\bsel\b|salt/)};
+  const LAB={p:[/prot[a-z]*/],g:[/glucides|hydrates? de carbone|carbohydrat[a-z]*/,/sucre|dont/],l:[/matieres? grasses?|lipides|\bfat\b/,/satur|dont/],f:[/fibres?/],s:[/sucres?/],a:[/satur[a-z]*/],e:[/\bsel\b|salt/]};
+  const cands=(num,unit)=>{
+    const sep=/[.,]/.test(num),n=parseFloat(num.replace(',','.'));if(isNaN(n))return [];
+    if(/^(mg)$/.test(unit))return [n/1000];
+    const out=[];
+    if(/^(g|9|q|8)$/.test(unit))return n<=100?[n]:[];
+    const add=v=>{if(!isNaN(v)&&v>=0&&v<=100&&out.indexOf(v)<0)out.push(v)};
+    if(/9$/.test(num)&&num.replace(/[.,]/g,'').length>=2){
+      let st=num.slice(0,-1).replace(/[.,]$/,'');const sv=parseFloat(st.replace(',','.'));
+      if(n>100||(sep&&/[.,]\d{2}$/.test(num)))add(sv);else{add(n);add(sv)}
+      if(!sep&&st.length>=2)add(parseFloat(st.slice(0,-1)+'.'+st.slice(-1)));
+      else if(!sep&&st.length===1&&n>100)0;
+    }else add(n);
+    return out;
+  };
+  const grab=key=>{
+    const [ok,no]=LAB[key];
+    for(let i=0;i<L.length;i++){const l=L[i];const m=ok.exec(l);if(!m||(no&&no.test(l)))continue;
+      let r=l.slice(m.index+m[0].length).replace(/\bkj\b|k\)/g,' ');
+      const re=/(?<![\d.,])(\d{1,4}(?:[.,]\d{1,3})?)\s?([a-z9]{0,2})(?![\d,.])/;
+      let t=re.exec(r);
+      if(!t&&L[i+1]&&!/[a-z]{4,}/.test(L[i+1]))t=re.exec(L[i+1]);
+      if(t){const c=cands(t[1],t[2]);if(c.length)return c}}
+    return null};
+  /* calories */
+  let k=null;
+  for(const l of L){const m=/(\d{2,4})\s*(?:kcal|keal|kcai|k cal|kca)/.exec(l);if(m){const v=+m[1];if(v>=5&&v<=950){k=v;break}}}
+  if(k===null){for(const l of L){if(!/energi|energy|valeur/.test(l))continue;const m=/(\d[\d ]{2,5})\s*(?:kj|k\)|kl|ki)/.exec(l);if(m){const v=Math.round(parseInt(m[1].replace(/ /g,''),10)/4.184);if(v>=5&&v<=950){k=v;break}}}}
+  const C={p:grab('p'),g:grab('g'),l:grab('l'),f:grab('f'),s:grab('s'),a:grab('a'),e:grab('e')};
+  /* choix cohérent avec les calories */
+  const M=['p','g','l','f'].filter(x=>C[x]);let best=null,bestErr=1e9;
+  const walk=(i,cur)=>{if(i===M.length){const v=x=>cur[x]===undefined?0:cur[x];const est=4*v('p')+4*v('g')+9*v('l')+2*v('f');
+      const err=k?Math.abs(est-k)/k:0;if(err<bestErr-1e-9){bestErr=err;best=Object.assign({},cur)}return}
+    C[M[i]].forEach(c=>{cur[M[i]]=c;walk(i+1,cur)})};
+  if(M.length)walk(0,{});
+  const out={k,p:null,g:null,l:null,f:null,s:null,a:null,e:null,_C:C};
+  if(best)for(const x of M)out[x]=best[x];
+  if(C.s){const c=C.s.find(v=>out.g===null||v<=out.g+0.01);out.s=c===undefined?C.s[0]:c}
+  if(C.a){const c=C.a.find(v=>out.l===null||v<=out.l+0.01);out.a=c===undefined?C.a[0]:c}
+  if(C.e){const c=C.e.find(v=>v<=15);out.e=c===undefined?null:c}
+  out._err=k&&M.length>=3?bestErr:null;
+  return out;
+}
+
+function nutriMerge(texts){
+  const R=texts.map(nutriParse);
+  const mode=a=>{const m={};a.forEach(v=>m[v]=(m[v]||0)+1);let b=null,bc=0;for(const v in m)if(m[v]>bc){b=+v;bc=m[v]}return b};
+  const kl=R.map(r=>r.k).filter(v=>v!==null&&v>=5&&v<=950);
+  const kc={};kl.forEach(v=>kc[v]=(kc[v]||0)+1);const kmax=Math.max(1,...Object.values(kc));
+  const T={};
+  ['p','g','l','f','s','a','e'].forEach(x=>{const m={};R.forEach(r=>{const c=r._C[x];if(c)c.forEach((v,i)=>{m[v]=(m[v]||0)+(i===0?1:0.6)+((x==='e'||x==='s'||x==='a')&&v%1!==0?0.1:0)})});
+    T[x]=Object.keys(m).map(v=>({v:+v,w:m[v]})).sort((a,b)=>b.w-a.w).slice(0,3)});
+  const M=['p','g','l','f'].filter(x=>T[x].length);let best=null,bs=1e9,K=null;
+  const kopts=Object.keys(kc).length?Object.keys(kc).map(v=>({k:+v,pen:0.1*(1-kc[v]/kmax)})):[{k:null,pen:0}];
+  kopts.forEach(ko=>{
+    const walk=(i,cur,pen)=>{if(i===M.length){const v=x=>cur[x]===undefined?0:cur[x];const est=4*v('p')+4*v('g')+9*v('l')+2*v('f');
+        const sc=(ko.k?Math.abs(est-ko.k)/ko.k:0)+pen+ko.pen;if(sc<bs-1e-9){bs=sc;best=Object.assign({},cur);K=ko.k}return}
+      const mx=T[M[i]][0].w;T[M[i]].forEach(c=>{cur[M[i]]=c.v;walk(i+1,cur,pen+0.1*(1-c.w/mx))})};
+    if(M.length)walk(0,{},0);else K=ko.k});
+  const out={k:K,p:null,g:null,l:null,f:null,s:null,a:null,e:null};
+  if(best)for(const x of M)out[x]=best[x];
+  if(T.s.length){const c=T.s.find(o=>out.g===null||o.v<=out.g+0.01);out.s=(c||T.s[0]).v}
+  if(T.a.length){const c=T.a.find(o=>out.l===null||o.v<=out.l+0.01);out.a=(c||T.a[0]).v}
+  if(T.e.length){const c=T.e.find(o=>o.v<=15);out.e=c?c.v:null}
+  if(out.k===null&&M.length>=3)out.k=Math.round(4*(out.p||0)+4*(out.g||0)+9*(out.l||0)+2*(out.f||0));
+  const est=4*(out.p||0)+4*(out.g||0)+9*(out.l||0)+2*(out.f||0);
+  out._err=out.k&&M.length>=3?Math.abs(est-out.k)/out.k:null;
+  return out;
+}
+
+/* prépare la photo : redimensionne, niveaux de gris, puis 3 versions (brute, fond égalisé, noir et blanc) */
+async function nutriImgs(file){
+  let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){bmp=await new Promise((ok,ko)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=ko;im.src=URL.createObjectURL(file)})}
+  const sw=bmp.width,sh=bmp.height,W=Math.max(1400,Math.min(1800,sw)),H=Math.round(sh*W/sw);
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(bmp,0,0,W,H);
+  const id=cx.getImageData(0,0,W,H),d=id.data,n=W*H,gray=new Float32Array(n);
+  for(let i=0;i<n;i++)gray[i]=0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2];
+  const put=f=>{for(let i=0;i<n;i++){const v=f(i);d[i*4]=d[i*4+1]=d[i*4+2]=v;d[i*4+3]=255}cx.putImageData(id,0,0);return new Promise(ok=>cv.toBlob(ok,'image/png'))};
+  const A=await put(i=>gray[i]);
+  /* moyenne locale (image intégrale) pour supprimer les ombres et l'éclairage inégal */
+  const S=new Float64Array((W+1)*(H+1));
+  for(let y=0;y<H;y++){let row=0;for(let x=0;x<W;x++){row+=gray[y*W+x];S[(y+1)*(W+1)+x+1]=S[y*(W+1)+x+1]+row}}
+  const r=22,mean=new Float32Array(n);
+  for(let y=0;y<H;y++){const y0=Math.max(0,y-r),y1=Math.min(H,y+r+1);for(let x=0;x<W;x++){const x0=Math.max(0,x-r),x1=Math.min(W,x+r+1);
+    mean[y*W+x]=(S[y1*(W+1)+x1]-S[y0*(W+1)+x1]-S[y1*(W+1)+x0]+S[y0*(W+1)+x0])/((y1-y0)*(x1-x0))}}
+  const B=await put(i=>Math.max(0,Math.min(255,gray[i]/Math.max(mean[i],1)*215)));
+  const C=await put(i=>gray[i]<mean[i]*0.88?0:255);
+  try{bmp.close&&bmp.close()}catch(e){}
+  return [[A,3],[B,4],[C,6]];
 }
 async function nutriScan(file,mode){
   const st=document.getElementById('nphs');const say=h=>{if(st){st.hidden=false;st.innerHTML=h}};
   say('Lecture de l\'étiquette… un instant (la première fois, le lecteur se télécharge).');
-  let txt='';
-  try{await ocrLoad();const wk=await Tesseract.createWorker('fra');const r=await wk.recognize(file);txt=r.data.text||'';try{await wk.terminate()}catch(e){}}
-  catch(e){say('Lecture impossible (connexion ?). Saisis les valeurs à la main.');return}
-  const r=nutriParse(txt),ID=mode==='w'?{k:'wfk',p:'wfp',g:'wfg',l:'wfl',f:'wff'}:{k:'xk',p:'xp',g:'xg',l:'xl',f:'xf',s:'xs',a:'xa',e:'xe'};
-  let n=0;for(const key in ID){const el=document.getElementById(ID[key]);if(el&&r[key]!==null&&r[key]!==undefined){el.value=String(Math.round(r[key]*10)/10).replace('.',',');el.dispatchEvent(new Event('input',{bubbles:true}));n++}}
+  const texts=[];
+  try{
+    await ocrLoad();const imgs=await nutriImgs(file);const wk=await Tesseract.createWorker('fra');
+    for(let i=0;i<imgs.length;i++){say('Lecture de l\'étiquette… '+(i+1)+'/'+imgs.length);
+      try{await wk.setParameters({tessedit_pageseg_mode:String(imgs[i][1])})}catch(e){}
+      const r=await wk.recognize(imgs[i][0]);texts.push(r.data.text||'')}
+    try{await wk.terminate()}catch(e){}
+  }catch(e){if(!texts.length){say('Lecture impossible (connexion ?). Saisis les valeurs à la main.');return}}
+  const r=nutriMerge(texts),ID=mode==='w'?{k:'wfk',p:'wfp',g:'wfg',l:'wfl',f:'wff'}:{k:'xk',p:'xp',g:'xg',l:'xl',f:'xf',s:'xs',a:'xa',e:'xe'};
+  let n=0;for(const key in ID){const el=document.getElementById(ID[key]);if(el&&r[key]!==null&&r[key]!==undefined){el.value=String(Math.round(r[key]*(key==='e'?100:10))/(key==='e'?100:10)).replace('.',',');el.dispatchEvent(new Event('input',{bubbles:true}));n++}}
   const fm=document.getElementById(mode==='w'?'wfm':'fm');if(fm&&n){fm.value='100';fm.dispatchEvent(new Event('change',{bubbles:true}))}
   const lab=document.querySelector('.lab');if(lab&&(r.s!==null||r.a!==null||r.e!==null))lab.open=true;
-  say(n>=3?'✓ Valeurs lues (pour 100 g). Vérifie-les, puis donne un nom et la quantité.':'Je n\'ai pas bien lu l\'étiquette. Recadre sur le tableau des valeurs nutritionnelles, bien net, ou saisis à la main.');
+  const bad=r._err!==null&&r._err>0.25;
+  say(n>=3?(bad?'⚠ Valeurs lues (pour 100 g), mais elles ne collent pas bien avec les calories : vérifie chaque chiffre avant d\'enregistrer.':'✓ Valeurs lues (pour 100 g). Vérifie-les, puis donne un nom et la quantité.'):'Je n\'ai pas bien lu l\'étiquette. Recadre sur le tableau des valeurs nutritionnelles, bien net, ou saisis à la main.');
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nphoto]');if(!b)return;const i=document.getElementById('nphf');if(i){i.dataset.mode=b.dataset.nphoto;i.click()}});
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='nphf'){const f=e.target.files&&e.target.files[0],m=e.target.dataset.mode;e.target.value='';if(f)nutriScan(f,m)}});
@@ -3803,7 +3892,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 136 (affichage repas)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 137 (lecture etiquette)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
