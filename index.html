@@ -2373,10 +2373,13 @@ function fsApply(k,p,g,l,f){
   try{const dt=new Date();localStorage.setItem('cp-fs-at',String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'))}catch(e){}
   const M=window.FSM;window.FSM=null;
   const sk=M?Object.values(M).reduce((a,x)=>a+(x.k||0),0):0;
-  if(M&&sk>0&&Math.abs(sk-k)<=k*0.1){
+  if(M&&sk>0&&sk<=k*1.1){
     const NM={pdj:'Petit déjeuner',dej:'Déjeuner',din:'Dîner',col:'Snacks / autre'};DAY={pdj:[],dej:[],col:[],din:[]};
-    for(const sl in M){const x=M[sl];if(x&&x.k>0)DAY[sl].push({x:'FatSecret · '+NM[sl],k:x.k,p:x.p||0,g:x.g||0,l:x.l||0,f:x.f||0,q:1})}
-  }else DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret (total du jour)',k,p,g,l,f,q:1}]};
+    const sm={p:0,g:0,l:0,f:0};
+    for(const sl in M){const x=M[sl];if(x&&x.k>0){DAY[sl].push({x:'FatSecret · '+NM[sl],k:x.k,p:x.p||0,g:x.g||0,l:x.l||0,f:x.f||0,q:1});sm.p+=x.p||0;sm.g+=x.g||0;sm.l+=x.l||0;sm.f+=x.f||0}}
+    const rk=k-sk;
+    if(rk>Math.max(30,k*0.05))DAY.col.push({x:'FatSecret · reste du jour (repas non lu)',k:rk,p:Math.max(0,p-sm.p),g:Math.max(0,g-sm.g),l:Math.max(0,l-sm.l),f:Math.max(0,f-sm.f),q:1});
+  }else DAY={pdj:[],dej:[],col:[],din:[{x:'Journal FatSecret',k,p,g,l,f,q:1}]};
   saveDay();
   LOG[today()]={k:Math.round(k),p:Math.round(p*10)/10,g:Math.round(g*10)/10,l:Math.round(l*10)/10,f:Math.round(f*10)/10};saveLog();
 }
@@ -2443,11 +2446,12 @@ function autoMerge(txts,wds){
   txts.forEach((t,ti)=>{
     const kv=String(t).match(/pas\s*[=:]\s*(\d{1,6})/i),kw=String(t).match(/poids\s*[=:]\s*(\d{2,3}(?:[.,]\d{1,2})?)/i);
     if(kv&&R.st===null)R.st=+kv[1];if(kw&&R.w===null)R.w=parseFloat(kw[1].replace(',','.'));
-    const f=fsParse(t),isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2),bd=isFs?null:(layoutBody(wds&&wds[ti])||bodyParse(t));
-    if(isFs){if(!R.fs)R.fs=f}
+    const f=fsParse(t),fm=window.FSM,isFs=!!(f&&[f.p,f.g,f.l].filter(x=>x!==null).length>=2),bd=isFs?null:(layoutBody(wds&&wds[ti])||bodyParse(t));
+    if(isFs){if(!R.fs){R.fs=f;R.fsm=fm}else if(!R.fsm&&fm)R.fsm=fm}
     else if(bd){const a=ocrParse(t);if(!R.body)R.body=bd;if(R.w===null&&a.w!==null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
     else{const a=ocrParse(t);if(a.st!==null&&R.st===null)R.st=a.st;if(a.w!==null&&R.w===null)R.w=a.w;if(a.d&&!R.d)R.d=a.d}
   });
+  window.FSM=R.fsm||null;
   return R;
 }
 function autoForm(r,raw){
@@ -4218,7 +4222,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 150 (choix de la marque par ingrédient) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 151 (import FatSecret par repas corrigé) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
