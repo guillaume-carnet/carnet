@@ -978,6 +978,19 @@ details.palier .fm{background:transparent!important;border:0!important;padding:0
 #prog .hv textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);resize:vertical}
 #prog .hvb{display:block;width:100%;margin-top:10px;border:0;border-radius:14px;padding:12px 14px;font-weight:800;font-size:14px;background:var(--accent)!important;color:var(--on-accent,#fff)!important}
 #prog .hvm{margin:10px 0 0;font-weight:600;color:var(--ink)}
+
+/* ===== ajuster (v147) ===== */
+.adjb{display:block;margin:8px 0 0;border:0;border-radius:12px;padding:8px 12px;font-weight:700;font-size:13px;background:var(--accent-soft,#E4E8FF)!important;color:var(--accent,#3D4FD6)!important;box-shadow:none!important}
+.adjp{margin-top:10px;padding:12px;border-radius:16px;background:var(--bg);border:1px solid var(--line)}
+.adjr{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.adjr span{flex:1;min-width:0}
+.adjr input{width:76px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:8px;font:inherit;font-size:15px;text-align:right;background:var(--surface);color:var(--ink)}
+.adjr u{text-decoration:none;color:var(--muted);font-size:13px}
+.adjt{margin-top:10px;font-size:13.5px;line-height:1.5}
+.adjt small{color:var(--muted)}
+.adja{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.adjok{flex:1 1 auto;border:0;border-radius:12px;padding:11px 14px;font-weight:800;font-size:14px;background:var(--accent)!important;color:var(--on-accent,#fff)!important}
+.adjrs{border:0;border-radius:12px;padding:11px 14px;font-weight:700;font-size:13px;background:var(--accent-soft,#E4E8FF)!important;color:var(--accent,#3D4FD6)!important;box-shadow:none!important}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -3058,51 +3071,65 @@ function hDate(s,i){
   if(m){const k=hnorm(m[2]).slice(0,4).replace(/\.$/,'');const mo=HMO[k]!==undefined?HMO[k]:HMO[k.slice(0,3)];if(mo!==undefined)return new Date(+m[3],mo,+m[1],+m[4],+m[5]).getTime()}
   return i;
 }
+const HJ={dimanche:0,lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6,sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};
 function hParse(t){
-  const out={};  // exercice -> {ts, sets}
+  const out=[];  // {t:titre normalisé, sets:[], day:0-6|null}
   const first=(t.split(/\r?\n/)[0]||'').toLowerCase();
-  if(/exercise_title|exercise|titre/.test(first)&&first.includes(',')||/exercise_title/.test(first)){
+  if(/exercise_title/.test(first)||(/exercise|titre/.test(first)&&first.includes(','))){
     const rows=hCsv(t),hd=rows[0].map(x=>hnorm(x));
     const ix=n=>hd.findIndex(x=>x.includes(n));
     const iT=ix('exercise_title')>=0?ix('exercise_title'):ix('exercise'),iS=ix('start_time'),iW=ix('weight'),iR=ix('reps'),iY=ix('set_type');
     if(iT<0||iW<0||iR<0)return null;
+    const best={};
     rows.slice(1).forEach((r,n)=>{
-      const nm=hMatch(r[iT]);if(!nm)return;
+      const ti=hnorm(r[iT]);if(!ti)return;
       if(iY>=0&&/warm|echauf/i.test(r[iY]||''))return;
       const reps=parseInt(r[iR]);if(!reps)return;
       const w=parseFloat(String(r[iW]||'0').replace(',','.'))||0;
       const ts=hDate(r[iS]||'',n);
-      const o=out[nm]||(out[nm]={ts:-1,sets:[]});
-      if(ts>o.ts){o.ts=ts;o.sets=[]}
+      const o=best[ti]||(best[ti]={t:ti,ts:-1,sets:[],day:null});
+      if(ts>o.ts){o.ts=ts;o.sets=[];o.day=ts>1e11?new Date(ts).getDay():null}
       if(ts===o.ts)o.sets.push({w:w,r:reps});
     });
+    Object.keys(best).forEach(k=>out.push(best[k]));
   }else{
-    // texte copié depuis Hevy : titre d'exercice puis lignes « 22 kg x 10 »
-    let cur=null;
+    // texte copié depuis Hevy : jour, puis titre d'exercice et lignes « Série 1: 22 kg x 10 »
+    let cur=null,day=null;
     t.split(/\r?\n/).forEach(l=>{
       l=l.trim();if(!l)return;
       const m=l.match(/(\d+(?:[.,]\d+)?)\s*kg\s*[x×*]\s*(\d+)/i);
-      if(m){if(cur){const o=out[cur]||(out[cur]={ts:1,sets:[]});o.sets.push({w:parseFloat(m[1].replace(',','.')),r:+m[2]})}return}
-      const m2=l.match(/^(?:\d+\s+)?(\d+)\s*[x×]\s*(\d+)\s*$/);
-      if(m2){return}
-      if(/^(s[ée]rie|set|poids et r)/i.test(l)||/^\d+$/.test(l))return;
-      const nm=hMatch(l);cur=nm;
+      if(m){if(cur)cur.sets.push({w:parseFloat(m[1].replace(',','.')),r:+m[2]});return}
+      const n=hnorm(l);
+      if(!out.length&&!cur){const wk=n.match(/\b(dimanche|lundi|mardi|mercredi|jeudi|vendredi|samedi|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);if(wk&&day===null){day=HJ[wk[1]];return}}
+      if(/^(serie|set|poids et r|duree|volume)/.test(n)||/^\d+$/.test(n)||/\b20\d\d\b/.test(n))return;
+      cur={t:n,sets:[],day:day};out.push(cur);
     });
   }
-  return out;
+  return out.filter(o=>o.sets.length);
+}
+function hSlotRe(name){
+  if(name==='Développé couché léger')return /(developpe couche|bench press)/;
+  if(name==='Rowing léger')return /rowing|row\b/;
+  const h=HMAP.find(m=>m[0]===name);return h?h[1]:null;
 }
 function hApply(t){
-  const o=hParse(t);
-  if(!o)return {n:0,msg:'Fichier non reconnu : prends le fichier CSV exporté depuis Hevy, ou colle le texte de ta séance.'};
-  const names=Object.keys(o).filter(k=>o[k].sets.length);
-  let n=0;const done=[];
-  names.forEach(nm=>{
-    const v=hSets(o[nm].sets);
-    PSEA.forEach(se=>se.x.forEach((e,i)=>{if(e[0]===nm){PG[se.k+i]=v;n++}}));
-    done.push(nm);
+  const list=hParse(t);
+  if(!list)return {n:0,msg:'Fichier non reconnu : prends le fichier CSV exporté depuis Hevy, ou colle le texte de ta séance.'};
+  const done=[],skip=[],used={};let sess=null;
+  list.forEach(o=>{
+    const se=(o.day!=null&&PSEA.find(x=>x.d===o.day))||PSEA.find(x=>x.k===state.pk);
+    let hit=-1;
+    se.x.forEach((e,i)=>{if(hit<0&&!used[se.k+i]){const re=hSlotRe(e[0]);if(re&&re.test(o.t))hit=i}});
+    if(hit>=0){PG[se.k+hit]=hSets(o.sets);used[se.k+hit]=1;done.push(se.x[hit][0]);if(!sess)sess=se.k;return}
+    const nm=hMatch(o.t);
+    if(nm){let ok=0;PSEA.forEach(s2=>s2.x.forEach((e,i)=>{if(e[0]===nm&&s2.k!==se.k&&!used[s2.k+i]){PG[s2.k+i]=hSets(o.sets);used[s2.k+i]=1;ok=1}}));if(ok){done.push(nm);return}}
+    skip.push(o.t);
   });
   savePG();
-  return {n:done.length,msg:done.length?done.length+' exercice'+(done.length>1?'s':'')+' mis à jour : '+done.join(', ')+'.':'Aucun exercice reconnu. Vérifie que le texte contient les noms d\'exercices et des lignes comme « 22 kg x 10 ».'};
+  if(sess)state.pk=sess;
+  let msg=done.length?done.length+' exercice'+(done.length>1?'s':'')+' mis à jour dans '+PSEA.find(x=>x.k===state.pk).j.toLowerCase()+' : '+done.join(', ')+'.':'Aucun exercice reconnu dans cette séance.';
+  if(skip.length)msg+=' Non reconnu : '+skip.join(', ')+'.';
+  return {n:done.length,msg:msg};
 }
 function renderProg(){
   const wd=new Date().getDay();
@@ -3134,6 +3161,49 @@ document.addEventListener('click',e=>{
   if(f){const fr=new FileReader();fr.onload=()=>fin(String(fr.result));fr.onerror=()=>{state.hmsg='Lecture du fichier impossible.';renderProg()};fr.readAsText(f)}else fin(tx);
 });
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.pg!==undefined){PG[t.dataset.pg]=t.value;savePG()}});
+
+/* ===== Ajuster les quantités d'une recette dans un repas (v147) ===== */
+function adjEntry(key){const [t,a,b]=key.split(':');return t==='d'?(DAY[a]||[])[+b]:(WEEK[+a]||[])[+b]}
+function adjBuild(key){
+  const e=adjEntry(key);if(!e||e.r===undefined||e.x!==undefined)return null;
+  const r=R.find(x=>x.i===e.r);if(!r)return null;
+  const rows=mcParse(r).map(w=>({t:w.t,sel:w.sel,g0:w.g,g:w.g}));
+  if(Array.isArray(e.gr)&&e.gr.length===rows.length)rows.forEach((w,i)=>{w.g=+e.gr[i]||0});
+  return {key:key,r:r,rows:rows};
+}
+function adjMac(A){
+  const T0=mcTot(A.rows.map(w=>({sel:w.sel,g:w.g0}))),T1=mcTot(A.rows);
+  const f=(b,i,d)=>Math.max(0,Math.round((b+T1[i]-T0[i])*Math.pow(10,d))/Math.pow(10,d));
+  return {k:f(A.r.k,0,0),p:f(A.r.p,1,1),g:f(A.r.g,2,1),l:f(A.r.l,3,1),f:f(A.r.f,4,1)};
+}
+function adjTot(A){const m=adjMac(A);return '<b>'+m.k+'</b> kcal · P '+num(m.p)+' · G '+num(m.g)+' · L '+num(m.l)+' · F '+num(m.f)+'<small> (pour 1 portion)</small>'}
+function adjUI(kind,a,b,e){
+  if(e.r===undefined||e.x!==undefined)return '';
+  const key=kind+':'+a+':'+b,open=state.adj&&state.adj.key===key;
+  let h='<button type="button" class="adjb" data-adj="'+key+'">'+(open?'Fermer':'⚖ Ajuster les quantités')+'</button>';
+  if(open){
+    const A=state.adj;
+    h+='<div class="adjp"><p class="note" style="margin:0 0 6px">Mets les grammes que tu as vraiment utilisés. Les calories et macros se recalculent.</p>'
+      +A.rows.map((w,i)=>mcVals(w.sel)?'<div class="adjr"><span>'+esc(w.t)+'</span><input data-adg="'+i+'" inputmode="decimal" value="'+w.g+'" aria-label="Grammes"><u>g</u></div>':'').join('')
+      +'<div class="adjt" id="adjt">'+adjTot(A)+'</div>'
+      +'<div class="adja"><button type="button" class="adjok" data-adok="'+key+'">Valider les quantités</button>'+(e.o?'<button type="button" class="adjrs" data-adrs="'+key+'">Recette d\'origine</button>':'')+'</div></div>';
+  }
+  return h;
+}
+function adjRender(key){if(key[0]==='d')renderDay();else renderWeek()}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-adj],[data-adok],[data-adrs]');if(!b)return;
+  e.preventDefault();
+  if(b.dataset.adj){const k=b.dataset.adj;if(state.adj&&state.adj.key===k)state.adj=null;else state.adj=adjBuild(k);adjRender(k);return}
+  if(b.dataset.adrs){const k=b.dataset.adrs,en=adjEntry(k);if(en){delete en.o;delete en.gr}state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Recette d\'origine rétablie');return}
+  if(b.dataset.adok){const k=b.dataset.adok,en=adjEntry(k),A=state.adj;if(!en||!A||A.key!==k)return;
+    if(A.rows.every(w=>w.g===w.g0)){delete en.o;delete en.gr}
+    else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g)}
+    state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Quantités enregistrées');return}
+});
+document.addEventListener('input',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.adg!==undefined)||!state.adj)return;
+  state.adj.rows[+t.dataset.adg].g=Math.max(0,parseFloat(String(t.value).replace(',','.'))||0);
+  const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -3249,7 +3319,7 @@ function weekToDay(){try{if(WOFF!==0)return;const nd={pdj:[],dej:[],col:[],din:[
 function reconcileDay(){try{const has=SLOTS.some(([k])=>(DAY[k]||[]).length);if(has)dayToWeek();else if(WOFF===0&&(WEEK[wToday()]||[]).length)weekToDay()}catch(e){}}
 state.pick=null;state.free=null;state.pq='';state.sug='din';state.conf=false;
 const num=(v,d=1)=>String(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).replace('.',',');
-function ent(e){const q=e.q||1;if(e.x!==undefined)return{n:e.x,k:e.k*q,p:e.p*q,g:e.g*q,l:e.l*q,f:e.f*q,s:(e.s||0)*q,a:(e.a||0)*q,e:(e.e||0)*q,d:(e.s!==undefined||e.a!==undefined||e.e!==undefined)?e.k*q:0};const r=R.find(r=>r.i===e.r);return{n:r.n,k:r.k*q,p:r.p*q,g:r.g*q,l:r.l*q,f:r.f*q,s:0,a:0,e:0,d:0}}
+function ent(e){const q=e.q||1;if(e.x!==undefined)return{n:e.x,k:e.k*q,p:e.p*q,g:e.g*q,l:e.l*q,f:e.f*q,s:(e.s||0)*q,a:(e.a||0)*q,e:(e.e||0)*q,d:(e.s!==undefined||e.a!==undefined||e.e!==undefined)?e.k*q:0};const r=R.find(r=>r.i===e.r),b=e.o||r;return{n:r.n,k:b.k*q,p:b.p*q,g:b.g*q,l:b.l*q,f:b.f*q,s:0,a:0,e:0,d:0}}
 function parseNutri(t,q){
   t=String(t).toLowerCase().replace(/ /g,' ').replace(/(\d),(\d)/g,'$1.$2');
   const N='(\\d+(?:\\.\\d+)?)',pick=(re)=>{const m=t.match(re);return m?parseFloat(m[1]):null};
@@ -3311,8 +3381,8 @@ function renderDay(){
     const es=DAY[s];
     h+='<div class="slot"><div class="sh"><i class="sic s-'+s+'">'+SLI[s]+'</i><div class="sht"><h3>'+l+'</h3><small>'+SLS[s]+'</small></div><span>'+num(es.reduce((a,e)=>a+ent(e).k,0),0)+' kcal</span></div>';
     es.forEach((e,j)=>{const x=ent(e);const fs=/^FatSecret/i.test(x.n)||/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      const stp=fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>';
-      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':'')+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
+      const stp=fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('d',s,j,e);
+      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
     h+='<div class="sa"><button type="button" data-pick="'+s+'">+ Recette</button><button type="button" data-free="'+s+'">+ Aliment</button><button type="button" data-meal="'+s+'">★ Repas type</button></div>';
     if(state.meal===s){h+='<div class="pf">'+(MEALS.length?MEALS.map((m,i)=>state.delc==='M'+i?'<div class="mealrow"><span style="flex:1;font-size:13.5px">Supprimer « '+esc(m.n)+' » ?</span><button type="button" data-mdelok="'+i+'">Oui</button><button type="button" data-mdelno="1">Non</button></div>':'<div class="mealrow"><button type="button" class="mb2" data-muse="'+s+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal · '+m.e.length+' élément'+(m.e.length>1?'s':'')+'</small></button><button type="button" data-mdel="'+i+'" aria-label="Supprimer">✕</button></div>').join(''):'<p class="note" style="margin:0">Aucun repas type pour l\'instant.</p>')+(es.length?'<div class="mealrow"><input id="mname" type="text" placeholder="Nom du repas type" style="flex:1;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0"><button type="button" data-msave="'+s+'">Enregistrer ce repas</button></div>':'<p class="note" style="margin:6px 0 0">Compose d\'abord un repas pour pouvoir l\'enregistrer.</p>')+'</div>'}
     if(state.pick===s)h+='<div class="pk"><input id="pq" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.pq)+'" aria-label="Chercher une recette"><div id="pl"></div></div>';
@@ -3495,8 +3565,8 @@ function renderWeek(){
     const es=day.map((e,j)=>[e,j]).filter(x=>wsl(x[0])===sk);
     h+='<div class="slot"><div class="sh"><i class="sic s-'+sk+'">'+SLI[sk]+'</i><div class="sht"><h3>'+sl+'</h3><small>'+SLS[sk]+'</small></div><span>'+num(es.reduce((a,x)=>a+ent(x[0]).k,0),0)+' kcal</span></div>';
     es.forEach(([e,j])=>{const x=ent(e);const fs=/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      const stp=fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>';
-      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':'')+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
+      const stp=fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('w',di,j,e);
+      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
     h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button><button type="button" data-wfree="'+sk+'">+ Aliment</button>'+(MEALS.length?'<button type="button" data-wmeal="'+sk+'">★ Repas type</button>':'')+'</div>';
     if(state.wpick===sk)h+='<div class="pk"><input id="wqs" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.wq)+'" aria-label="Chercher une recette"><div id="wl"></div></div>';
     if(state.wfree===sk){const I=(id,l)=>'<label>'+l+'<input id="'+id+'" inputmode="decimal" placeholder="0"></label>';h+='<div class="pf"><div class="nf"><h4>Ajouter un aliment</h4><button type="button" class="nfph" data-nphoto="w"><span>📷</span><b>Photographier l\'étiquette</b><small>Remplit les valeurs automatiquement</small></button><input type="file" id="nphf" accept="image/*" capture="environment" hidden><div id="nphs" class="note nphs" hidden></div><button type="button" class="nfscan" data-scan="wk">📷 Scanner un code-barres</button><input id="wfs" type="search" placeholder="🔍  Chercher dans mes aliments ou la base" autocomplete="off"><div id="wfsr" class="fsr"></div><input id="wfn" type="text" placeholder="Nom de l\'aliment" aria-label="Nom"><div class="g2"><label>Valeurs données<select id="wfm"><option value="100">pour 100 g/ml</option><option value="1">pour la portion</option></select></label>'+I('wfq','Quantité (g ou ml)')+'</div><div class="pfg nfm">'+I('wfk','kcal')+I('wfp','Prot')+I('wfg','Gluc')+I('wfl','Lip')+I('wff','Fibres')+'</div><div class="dact"><button type="button" class="pri" data-wfadd="'+sk+'">Ajouter</button></div></div></div>'}
@@ -4135,7 +4205,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 145 (import Hevy) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 147 (quantités ajustables) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
