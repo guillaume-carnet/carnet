@@ -4386,6 +4386,8 @@ const bsum=o=>{const d=o.d||{},n=k=>Array.isArray(d[k])?d[k].length:(d[k]&&typeo
 const bdt=t=>t?new Date(t).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'date inconnue';
 function applyBak(o){const cur=bObj(false);try{lsw('cp-prerestore',{t:Date.now(),o:cur})}catch(e){}
   BKEYS.forEach(k=>{if(o.d[k]!==undefined)localStorage.setItem(k,JSON.stringify(o.d[k]))});
+  /* sauvegarde sans date du journal : on prend le jour où elle a été faite, sinon les repas de ce jour se retrouvent sur aujourd'hui */
+  if(o.d['cp-daydate']===undefined&&o.t){const bd=new Date(o.t);try{localStorage.setItem('cp-daydate',bd.getFullYear()+'-'+String(bd.getMonth()+1).padStart(2,'0')+'-'+String(bd.getDate()).padStart(2,'0'))}catch(e){}}
   if(o.ph)Object.keys(o.ph).forEach(k=>dbPut(+k,o.ph[k]));
   state.bmsg='Sauvegarde restaurée. La page se recharge.';state.bprev=null;renderBak();setTimeout(()=>{try{location.reload()}catch(x){}},700)}
 try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(v=>{if(v){state.pers=1}else navigator.storage.persist().then(r=>{state.pers=r?1:2;if(typeof renderBak==='function'&&state.view==='sav')renderBak()})}).then(()=>{if(state.pers===1&&state.view==='sav')renderBak()}).catch(()=>{})}}catch(x){}
@@ -4394,7 +4396,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 153 (importer, historique, mise à jour) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 154 (restauration corrigée) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
