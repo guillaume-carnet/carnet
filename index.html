@@ -2519,9 +2519,13 @@ function fsMeals(t){
   const out={};let cnt=0;
   pos.forEach((q,j)=>{
     const seg=n.slice(q.e,Math.min(j+1<pos.length?pos[j+1].i:n.length,q.e+260));
-    const km=/(?<![\d.,])(\d{2,4})\s*calories?/i.exec(seg);
-    const k=km?+km[1]:null;if(!k||k<20||k>4000)return;
-    out[q.sl]={k,p:grab(seg,'prot',300),g:grab(seg,'glu',500),l:grab(seg,'lip',250),f:grab(seg,'fib',100)};cnt++});
+    const P=grab(seg,'prot',300),G=grab(seg,'glu',500),Lp=grab(seg,'lip',250),F=grab(seg,'fib',100);
+    if(P===null||G===null||Lp===null)return;
+    const est=Math.round(P*4+G*4+Lp*9+(F||0)*2);
+    const cs=[];let mm;const rn=/(?<![\d.,])(\d{2,4})(?![\d.,]|\s*g\b)/g;while((mm=rn.exec(seg)))cs.push(+mm[1]);
+    const near=cs.filter(v=>Math.abs(v-est)<=est*0.08).sort((x,y)=>Math.abs(x-est)-Math.abs(y-est));
+    const k=near.length?near[0]:est;if(k<20||k>4000)return;
+    out[q.sl]={k,p:P,g:G,l:Lp,f:F};cnt++});
   return cnt>=1?out:null;
 }
 function fsParse(t){
@@ -3786,7 +3790,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 134 (FatSecret par repas)</p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 135 (FatSecret par repas)</p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
