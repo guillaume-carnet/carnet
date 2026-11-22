@@ -2241,12 +2241,12 @@ function mcParse(r){const rows=[];
     if(!g){if(!/(^|[^a-z])(sel|poivre|epices?|paprika|curry|herbes?|persil|basilic|cumin|ail|origan|thym|cannelle|vanille|muscade|piment|coriandre|ciboulette|curcuma|romarin|laurier|citron|vinaigre|eau|facultatif|gout|assaisonnement|ras el hanout|harissa|aneth|menthe|estragon|sauge)([^a-z]|$)/.test(n)&&n.length>2)rows.push({t:part.trim(),g:0,sel:'',u:1});return}
     const rule=MCR.find(x=>x[0].test(n));
     let sel='';
-    if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const mi=FOODS.findIndex(f=>f.per===100&&nrm(f.n).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
+    if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const mi=FOODS.findIndex(f=>f&&f.per===100&&nrm(String(f.n||'')).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
     rows.push({t:part.trim(),g,sel})})});
   return rows}
 function mcVals(sel){if(!sel)return null;const [t,i]=sel.split(':'),x=t==='m'?FOODS[+i]:null;if(t==='m'&&x)return [x.k,x.p,x.g,x.l,x.f];if(t==='b'){const f=F100[+i];return f?[f[1],f[2],f[3],f[4],f[5]]:null}return null}
 function mcTot(rows){const T=[0,0,0,0,0];rows.forEach(w=>{const v=mcVals(w.sel);if(v)v.forEach((a,k)=>T[k]+=a*w.g/100)});return T}
-function mcOpts(sel){return '<option value="">— ignorer —</option>'+(FOODS.some(f=>f.per===100)?'<optgroup label="Mes aliments">'+FOODS.map((f,i)=>f.per===100?'<option value="m:'+i+'"'+(sel==='m:'+i?' selected':'')+'>★ '+esc(f.n)+'</option>':'').join('')+'</optgroup>':'')+'<optgroup label="Base">'+F100.map((f,i)=>'<option value="b:'+i+'"'+(sel==='b:'+i?' selected':'')+'>'+esc(f[0])+'</option>').join('')+'</optgroup>'}
+function mcOpts(sel){return '<option value="">— ignorer —</option>'+(FOODS.some(f=>f&&f.per===100)?'<optgroup label="Mes aliments">'+FOODS.map((f,i)=>f&&f.per===100?'<option value="m:'+i+'"'+(sel==='m:'+i?' selected':'')+'>★ '+esc(String(f.n||'Sans nom'))+'</option>':'').join('')+'</optgroup>':'')+'<optgroup label="Base">'+F100.map((f,i)=>'<option value="b:'+i+'"'+(sel==='b:'+i?' selected':'')+'>'+esc(f[0])+'</option>').join('')+'</optgroup>'}
 function mcTotHtml(rows){const T=mcTot(rows),skip=rows.filter(w=>!mcVals(w.sel)).length;return '<div class="res"><div class="rs1">Portion calculée</div><div class="rs2"><b>'+Math.round(T[0])+'</b> kcal</div><div class="rs3"><span class="m-p">P '+num(T[1],1)+'</span><span class="m-g">G '+num(T[2],1)+'</span><span class="m-l">L '+num(T[3],1)+'</span><span class="m-f">F '+num(T[4],1)+'</span></div>'+(skip?'<div class="rs1" style="margin-top:6px">'+skip+' ingrédient'+(skip>1?'s':'')+' ignoré'+(skip>1?'s':'')+'</div>':'')+'</div>'}
 function mcName(sel){if(!sel)return '';const [t,i]=sel.split(':');return t==='m'?(FOODS[+i]||{}).n||'':(F100[+i]||[])[0]||''}
 function mcRow(w,k){const v=mcVals(w.sel),my=w.sel&&w.sel[0]==='m',kc=v?Math.round(v[0]*w.g/100):0;
@@ -3400,7 +3400,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=191;
+const APPV=192;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4316,7 +4316,7 @@ $('grid').addEventListener('click',e=>{
   if(d.por){const [i,x]=d.por.split(':');POR2[+i]=+x;lsw('cp-por2',POR2);render();return}
   if(d.cook){openCook(+d.cook);return}
   if(d.medit){state.medit=state.medit===+d.medit?null:+d.medit;render();return}
-  if(d.mcalc){const i=+d.mcalc;state.mcalc=state.mcalc===i?null:i;if(state.mcalc===null)state.mcrows=null;render();return}
+  if(d.mcalc){const i=+d.mcalc;state.mcalc=state.mcalc===i?null:i;if(state.mcalc===null)state.mcrows=null;try{render()}catch(err){state.mcalc=null;state.mcrows=null;try{render()}catch(e2){}if(window.toast)toast('Mes marques ne s\'ouvre pas : '+(err&&err.message),true)}return}
   if(d.mcok){const i=+d.mcok,r=R.find(x=>x.i===i),T=mcTot(state.mcrows.rows),m={k:Math.round(T[0]),p:Math.round(T[1]*10)/10,g:Math.round(T[2]*10)/10,l:Math.round(T[3]*10)/10,f:Math.round(T[4]*10)/10};MAC[i]=m;Object.assign(r,m);lsw('cp-mac',MAC);state.mcalc=null;state.mcrows=null;render();return}
   if(d.msave){const i=+d.msave,r=R.find(x=>x.i===i);const m={k:pnum($('mk').value),p:pnum($('mp').value),g:pnum($('mg').value),l:pnum($('ml').value),f:pnum($('mf').value)};MAC[i]=m;Object.assign(r,m);lsw('cp-mac',MAC);state.medit=null;render();return}
   if(d.mreset){const i=+d.mreset,r=R.find(x=>x.i===i);delete MAC[i];Object.assign(r,r.o);lsw('cp-mac',MAC);state.medit=null;render();return}
@@ -5025,7 +5025,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 191 (marques et ingrédients)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 192 (marques sécurisées)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
