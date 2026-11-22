@@ -3399,7 +3399,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=187;
+const APPV=188;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3918,6 +3918,35 @@ function slotFold(kind,rootId){
     if(k[0]==='d')renderDay();else renderWeek();
   };
   document.addEventListener('click',tog);document.addEventListener('keydown',tog);
+})();
+
+/* ===== v188 : « Mes marques » garde tes choix par recette, et suit tes changements de produit ===== */
+let MCS=ls('cp-mcsel',{});if(!MCS||typeof MCS!=='object'||Array.isArray(MCS))MCS={};
+function mcSelKey(sel){if(!sel)return '';const [t,i]=sel.split(':');if(t==='m'){const f=FOODS[+i];return f?'m|'+f.n:''}const b=F100[+i];return b?'b|'+b[0]:''}
+function mcSelResolve(k){if(k==='')return '';const [t,...rest]=k.split('|'),n=rest.join('|');
+  if(t==='m'){const i=FOODS.findIndex(f=>f.per===100&&f.n===n);return i>=0?'m:'+i:null}
+  if(t==='b'){const i=F100.findIndex(f=>f[0]===n);return i>=0?'b:'+i:null}return null}
+(function(){
+  const mp=mcParse;
+  mcParse=function(r){const rows=mp(r),sv=MCS[r.i];
+    if(sv)rows.forEach(w=>{const s=sv[w.t];if(!s)return;const rs=mcSelResolve(s.n);if(rs!==null)w.sel=rs;if(s.g>0)w.g=s.g});
+    return rows};
+  function recalcAll(){
+    let ch=false;
+    Object.keys(MCS).forEach(id=>{const r=R.find(x=>String(x.i)===String(id));if(!r)return;
+      const T=mcTot(mcParse(r));if(!(T[0]>0))return;
+      const m={k:Math.round(T[0]),p:Math.round(T[1]*10)/10,g:Math.round(T[2]*10)/10,l:Math.round(T[3]*10)/10,f:Math.round(T[4]*10)/10};
+      MAC[r.i]=m;Object.assign(r,m);ch=true});
+    if(ch)lsw('cp-mac',MAC)}
+  const sf=saveFoods;
+  saveFoods=function(){const r=sf.apply(this,arguments);try{recalcAll()}catch(e){}return r};
+  document.addEventListener('click',e=>{
+    const ok=e.target.closest&&e.target.closest('[data-mcok]');
+    if(ok&&state.mcrows){const i=ok.dataset.mcok,o={};state.mcrows.rows.forEach(w=>{o[w.t]={n:mcSelKey(w.sel),g:w.g}});MCS[i]=o;lsw('cp-mcsel',MCS);return}
+    const rs=e.target.closest&&e.target.closest('[data-mreset]');
+    if(rs&&MCS[rs.dataset.mreset]){delete MCS[rs.dataset.mreset];lsw('cp-mcsel',MCS)}
+  },true);
+  setTimeout(()=>{try{recalcAll();if(typeof render==='function'&&state.view==='rec')render()}catch(e){}},0);
 })();
 
 function courseData(){
@@ -4923,7 +4952,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== Sauvegarde ===== */
-const BKEYS=['cp-tplbk','cp-prog','cp-proghist','cp-tpl','cp-water','cp-watergoal','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
+const BKEYS=['cp-mcsel','cp-slotopen','cp-tplbk','cp-prog','cp-proghist','cp-tpl','cp-water','cp-watergoal','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
 state.bmsg='';state.bprev=null;
 const bObj=ph=>{const o={v:2,t:Date.now(),d:{}};BKEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)o.d[k]=JSON.parse(v)}catch(e){}});if(ph)o.ph=PH;return o};
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
@@ -4945,7 +4974,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 187 (pas de la séance)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 188 (marques mémorisées)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
