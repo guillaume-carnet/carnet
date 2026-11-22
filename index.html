@@ -1076,6 +1076,7 @@ html:not([data-tab="rec"]) #restbar{display:none!important}
 .slot > .sh{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .slc{flex:0 0 auto;font-style:normal;font-size:16px;color:var(--accent);margin-left:8px}
 .slb[hidden]{display:none!important}
+.mcp .mcadd,.mcp .mcrm{width:100%;min-height:44px;margin-top:8px}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -2237,7 +2238,7 @@ function mcParse(r){const rows=[];
     const n=nrm(part),m=n.match(/(\d+(?:[.,]\d+)?)\s*(?:g|ml)\b/);let g=0;
     if(m)g=parseFloat(m[1].replace(',','.'));
     else{const c=n.match(/^(\d+)\s*(oeuf|oeufs|wrap)/);if(c)g=(+c[1])*(c[2]==='wrap'?60:55)}
-    if(!g)return;
+    if(!g){if(!/(^|[^a-z])(sel|poivre|epices?|paprika|curry|herbes?|persil|basilic|cumin|ail|origan|thym|cannelle|vanille|muscade|piment|coriandre|ciboulette|curcuma|romarin|laurier|citron|vinaigre|eau|facultatif|gout|assaisonnement|ras el hanout|harissa|aneth|menthe|estragon|sauge)([^a-z]|$)/.test(n)&&n.length>2)rows.push({t:part.trim(),g:0,sel:'',u:1});return}
     const rule=MCR.find(x=>x[0].test(n));
     let sel='';
     if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const mi=FOODS.findIndex(f=>f.per===100&&nrm(f.n).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
@@ -3399,7 +3400,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=188;
+const APPV=191;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3947,6 +3948,56 @@ function mcSelResolve(k){if(k==='')return '';const [t,...rest]=k.split('|'),n=re
     if(rs&&MCS[rs.dataset.mreset]){delete MCS[rs.dataset.mreset];lsw('cp-mcsel',MCS)}
   },true);
   setTimeout(()=>{try{recalcAll();if(typeof render==='function'&&state.view==='rec')render()}catch(e){}},0);
+})();
+
+/* ===== v189 : « Mes marques » — ajouter un ingrédient (huile, amandes…) à une recette ===== */
+(function(){
+  const mp=mcParse;
+  mcParse=function(r){const rows=mp(r),sv=MCS[r.i];
+    if(sv)Object.keys(sv).forEach(k=>{if(k.indexOf('＋ Ajout')!==0||rows.some(w=>w.t===k))return;const s=sv[k],rs=mcSelResolve(s.n);rows.push({t:k,g:s.g||0,sel:rs===null?'':rs,x:1})});
+    return rows};
+  const mr=mcRow;
+  mcRow=function(w,k){let h=mr(w,k);if(w.u&&!(w.g>0))h=h.replace('IGNORÉ','À COMPLÉTER');if(w.x){const i=h.lastIndexOf('</div>');h=h.slice(0,i)+'<button type="button" class="gbtn mcrm" data-mcrm="'+k+'">Retirer cet ingrédient</button>'+h.slice(i)}return h};
+  const mpn=mcPanel;
+  mcPanel=function(r){let h=mpn(r);return h.replace('<div class="mct">','<button type="button" class="gbtn mcadd" data-mcadd="'+r.i+'">＋ Ajouter un ingrédient (huile, amandes…)</button><div class="mct">')};
+  document.addEventListener('click',e=>{
+    const a=e.target.closest&&e.target.closest('[data-mcadd]'),d=e.target.closest&&e.target.closest('[data-mcrm]');
+    if(!a&&!d)return;if(!state.mcrows)return;
+    const rows=state.mcrows.rows;
+    if(a){let n=1;while(rows.some(w=>w.t==='＋ Ajout '+n))n++;const bi=F100.findIndex(f=>f[0]==="Huile d'olive");rows.push({t:'＋ Ajout '+n,g:5,sel:bi>=0?'b:'+bi:'',x:1})}
+    else rows.splice(+d.dataset.mcrm,1);
+    e.stopPropagation();render()
+  },true);
+})();
+
+/* ===== v190 : ajouter un ingrédient directement dans un repas (Journée et Semaine) ===== */
+(function(){
+  const mu=medUI;
+  medUI=function(kind,a,j,e){
+    let h=mu(kind,a,j,e);const key=kind+':'+a+':'+j;
+    if(state.med===key){
+      h+='<div class="adjp medadd"><p class="note" style="margin:0 0 6px"><b>Ajouter un ingrédient à ce repas</b> (huile, amandes…) : ses calories et macros s\'ajoutent au repas.</p>'
+        +'<select id="medis" aria-label="Ingrédient">'+mcOpts('').replace('— ignorer —','— choisir un aliment —')+'</select>'
+        +'<div class="mcl" style="margin-top:6px"><input id="medig" inputmode="decimal" placeholder="Grammes" aria-label="Grammes"><span>g</span></div>'
+        +'<div class="adja"><button type="button" class="adjok" data-medadd="'+key+'">Ajouter au repas</button></div>'+(e.x===undefined?'<button type="button" class="adjb" data-medmq="'+e.r+'">⚖ Mes marques : changer les produits de cette recette</button>':'')+'</div>';
+    }
+    return h};
+  document.addEventListener('click',e=>{
+    const mq=e.target.closest&&e.target.closest('[data-medmq]');if(mq){e.preventDefault();e.stopPropagation();const r=R.find(x=>x.i===+mq.dataset.medmq);if(!r)return;state.med=null;state.q=r.n;$('q').value=r.n;state.cat='tous';state.mcalc=r.i;state.mcrows=null;state.view='rec';$('more').hidden=true;renderChips();render();renderViews();window.scrollTo(0,0);return}
+    const b=e.target.closest&&e.target.closest('[data-medadd]');if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    const key=b.dataset.medadd,en=adjEntry(key),ko=m=>{if(window.toast)toast(m,true)};
+    if(!en)return;
+    const sel=($('medis')||{}).value,g=pnum(($('medig')||{}).value),v=mcVals(sel);
+    if(!v)return ko('Choisis un aliment dans la liste.');
+    if(!(g>0&&g<=2000))return ko('Indique les grammes (entre 1 et 2000).');
+    const q=en.q||1,add=v.map(a=>a*g/100/q);
+    if(en.x!==undefined){en.k+=add[0];en.p+=add[1];en.g+=add[2];en.l+=add[3];en.f+=add[4]}
+    else{const r=R.find(r=>r.i===en.r),bs=en.o||r;en.o={k:bs.k+add[0],p:bs.p+add[1],g:bs.g+add[2],l:bs.l+add[3],f:bs.f+add[4]}}
+    state.med=null;
+    if(key[0]==='d'){saveDay();renderDay()}else{saveWeek();renderWeek()}
+    if(window.toast)toast('✓ '+mcName(sel)+' '+num(g,0)+' g ajouté : +'+Math.round(v[0]*g/100)+' kcal');
+  },true);
 })();
 
 function courseData(){
@@ -4974,7 +5025,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 188 (marques mémorisées)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 191 (marques et ingrédients)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
