@@ -3289,7 +3289,7 @@ function adjBuild(key){
   const base=w=>{const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
   const rows=mcParse(r).map(w=>({t:w.t,sel:w.sel,sel0:base(w),g0:w.g,g:w.g}));
   if(Array.isArray(e.gr)&&e.gr.length===rows.length)rows.forEach((w,i)=>{w.g=+e.gr[i]||0});
-  if(Array.isArray(e.sl)&&e.sl.length===rows.length)rows.forEach((w,i)=>{w.sel=e.sl[i]});
+  {const ps=Array.isArray(e.ps)?e.ps:(Array.isArray(e.sl)?e.sl:null);if(ps&&ps.length===rows.length)rows.forEach((w,i)=>{w.sel=ps[i]})}
   return {key:key,r:r,rows:rows};
 }
 function adjMac(A){
@@ -3325,10 +3325,10 @@ document.addEventListener('click',e=>{
   const b=e.target.closest&&e.target.closest('[data-adj],[data-adok],[data-adrs]');if(!b)return;
   e.preventDefault();
   if(b.dataset.adj){const k=b.dataset.adj;if(state.adj&&state.adj.key===k)state.adj=null;else state.adj=adjBuild(k);adjRender(k);return}
-  if(b.dataset.adrs){const k=b.dataset.adrs,en=adjEntry(k);if(en){delete en.o;delete en.gr;delete en.sl}state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Recette d\'origine rétablie');return}
+  if(b.dataset.adrs){const k=b.dataset.adrs,en=adjEntry(k);if(en){delete en.o;delete en.gr;delete en.ps;if(Array.isArray(en.sl))delete en.sl}state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Recette d\'origine rétablie');return}
   if(b.dataset.adok){const k=b.dataset.adok,en=adjEntry(k),A=state.adj;if(!en||!A||A.key!==k)return;
-    if(A.rows.every(w=>w.g===w.g0&&w.sel===w.sel0)){delete en.o;delete en.gr;delete en.sl}
-    else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g);en.sl=A.rows.map(w=>w.sel)}
+    if(A.rows.every(w=>w.g===w.g0&&w.sel===w.sel0)){delete en.o;delete en.gr;delete en.ps;if(Array.isArray(en.sl))delete en.sl}
+    else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g);en.ps=A.rows.map(w=>w.sel);if(Array.isArray(en.sl))delete en.sl}
     state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Quantités enregistrées');return}
 });
 document.addEventListener('change',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.ads!==undefined)||!state.adj)return;state.adj.rows[+t.dataset.ads].sel=t.value;const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
@@ -3410,7 +3410,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=194;
+const APPV=195;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4037,6 +4037,19 @@ function mcShowLine(r,x){
   },true);
 })();
 
+/* ===== v195 : un repas ajusté ne disparait plus de la liste (le champ « sl » servait à deux choses) ===== */
+(function(){
+  function fix(en){if(en&&Array.isArray(en.sl)){en.ps=en.sl;delete en.sl;return 1}return 0}
+  setTimeout(()=>{try{
+    let ch=0,cd=0;
+    Object.keys(WEEKS||{}).forEach(k=>(WEEKS[k]||[]).forEach(d=>(d||[]).forEach(en=>{ch+=fix(en)})));
+    SLOTS.forEach(([k])=>(DAY[k]||[]).forEach(en=>{cd+=fix(en)}));
+    if(ch){const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}
+    if(cd)rawSaveDay();
+    if(ch||cd){if(state.view==='sem')renderWeek();if(state.view==='jr')renderDay()}
+  }catch(e){}},0);
+})();
+
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -4383,7 +4396,7 @@ const wToday=()=>(new Date().getDay()+6)%7;
 const wDate=i=>{const d=new Date();d.setDate(d.getDate()+i-wToday()+7*WOFF);return d};
 const wFmt=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
 state.wd=wToday();state.wsl='dej';
-const wsl=e=>e.sl||'dej';
+const wsl=e=>SLOTS.some(x=>x[0]===e.sl)?e.sl:'dej';
 function wTot(day){return day.reduce((a,e)=>{const x=ent(e);for(const m of ['k','p','g','l','f'])a[m]+=x[m];return a},{k:0,p:0,g:0,l:0,f:0,s:0,a:0,e:0,d:0})}
 const SVG_C='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>',SVG_J='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>';
 function renderWeek(){
@@ -5062,7 +5075,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 194 (grammes de la recette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 195 (repas ajusté visible)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
