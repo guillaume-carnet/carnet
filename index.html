@@ -1044,6 +1044,19 @@ body:has(#more:not([hidden]))::after{display:none!important}
 :root[data-tab="rec"] .card .macros .kcal{background:linear-gradient(135deg,var(--accent),var(--acc2))!important;opacity:.96}
 :root:not([data-theme="dark"])[data-tab="rec"] .cbtn2{background:linear-gradient(135deg,#D98A66,#C97A92)!important}
 .card .macros>div:nth-child(4):not(.kcal){background:linear-gradient(135deg,#C9667C,#E58A98)!important}
+.fastr{display:flex;gap:6px;flex-wrap:wrap}.fastr button:disabled{opacity:.4}
+#day .rl{display:flex;justify-content:space-between;gap:8px;align-items:center}
+#day .rl>span:first-child{min-width:0}
+#day button.arm{background:#E5484D!important;color:#fff!important;border-color:#E5484D!important}
+#day [data-fast]{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;padding:10px 14px;min-height:42px;background:var(--accent-soft,#E4E8FF);color:var(--accent,#3D4FD6)}
+#day [data-fast].pri{background:linear-gradient(135deg,var(--accent),var(--acc2,#9B3FE0));color:#fff}
+#day [data-fast]:disabled{opacity:.4}
+#day .watb b{font-size:26px}#day .watb span{color:var(--muted)}
+#day .watp{height:12px;border-radius:99px;background:var(--accent-soft,#E4E8FF);overflow:hidden;margin-top:8px}
+#day .watp i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#3B82F6,#38BDF8)}
+#day [data-wat]{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;padding:10px 14px;min-height:42px;background:var(--accent-soft,#E4E8FF);color:var(--accent,#3D4FD6)}
+.wbar{height:12px;border-radius:99px;background:var(--accent-soft,#E4E8FF);overflow:hidden}.wbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#3E8FE8,#5BB4F0)}
+#day [data-wat]{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;padding:10px 14px;min-height:42px;background:var(--accent-soft,#E4E8FF);color:var(--accent,#3D4FD6)}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -3367,7 +3380,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=168;
+const APPV=173;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3595,6 +3608,140 @@ function fzOk(r,q){
     e.preventDefault();state.fxd=b.dataset.fxgo;state.view='fix';$('more').hidden=true;renderViews();window.scrollTo(0,0);
   });
 })();
+
+/* ===== v169 : geste « glisser depuis le bord gauche » pour revenir à l'écran précédent ===== */
+(function(){
+  const stk=[],fwd=[];let busy=false;
+  const snap=()=>({v:state.view,m:!$('more').hidden});
+  const note=()=>{if(busy)return;const c=snap(),l=stk[stk.length-1];if(!l||l.v!==c.v||l.m!==c.m){stk.push(c);fwd.length=0;if(stk.length>25)stk.shift()}};
+  const rv=renderViews;
+  renderViews=function(){const r=rv.apply(this,arguments);try{note()}catch(e){}return r};
+  window.__navBack=function(){
+    if(stk.length<2)return false;
+    fwd.push(stk.pop());const p=stk[stk.length-1];
+    busy=true;
+    try{state.view=p.v;$('more').hidden=!p.m;renderChips();render();renderViews();window.scrollTo(0,0)}catch(e){}
+    busy=false;return true;
+  };
+  window.__navFwd=function(){
+    if(!fwd.length)return false;
+    const p=fwd.pop();stk.push(p);
+    busy=true;
+    try{state.view=p.v;$('more').hidden=!p.m;renderChips();render();renderViews();window.scrollTo(0,0)}catch(e){}
+    busy=false;return true;
+  };
+  let sx=0,sy=0,st=0,on=false,side='';
+  document.addEventListener('touchstart',e=>{const t=e.touches[0];side=t.clientX<=30?'l':(t.clientX>=innerWidth-30?'r':'');on=e.touches.length===1&&side!=='';sx=t.clientX;sy=t.clientY;st=Date.now()},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!on)return;on=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=Math.abs(t.clientY-sy);
+    if(dy<60&&Date.now()-st<700){if(side==='l'&&dx>70){if(window.__navBack()&&window.toast)toast('← Retour')}else if(side==='r'&&dx<-70){if(window.__navBack()&&window.toast)toast('← Retour')}}
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{on=false},{passive:true});
+  setTimeout(note,0);
+})();
+
+/* ===== v172 : copier le repas d'hier + repas habituels ===== */
+let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
+(function(){
+  const cl=o=>JSON.parse(JSON.stringify(o));
+  const kc=a=>Math.round(a.reduce((t,e)=>{try{return t+ent(e).k}catch(x){return t}},0));
+  const gd=(b,m)=>{if(b.dataset.arm==='1'){delete b.dataset.arm;return true}
+    const t0=b.innerHTML;b.dataset.arm='1';b.textContent='Confirmer ?';b.classList.add('arm');if(window.toast)toast(m,true);
+    setTimeout(()=>{if(b.isConnected&&b.dataset.arm==='1'){delete b.dataset.arm;b.innerHTML=t0;b.classList.remove('arm')}},5000);return false};
+  const SN=k=>(SLOTS.find(x=>x[0]===k)||[0,k])[1];
+  function html(){
+    const yd=fxYest(),Y=LOGD[yd]||{};
+    let h='<p class="note" style="margin:0 0 6px"><b>Copier d\'hier</b>'+(LOG[yd]?' ('+Math.round(LOG[yd].k)+' kcal)':'')+'</p><div class="fastr">'+SLOTS.map(([k,n])=>{const c=(Y[k]||[]).length;return '<button type="button" data-fast="cpy:'+k+'"'+(c?'':' disabled')+'>'+n.replace('Petit-déjeuner','Petit-déj')+(c?' ('+c+')':'')+'</button>'}).join('')+'</div>';
+    if(!LOGD[yd])h+='<p class="note" style="margin:6px 0 0">'+(LOG[yd]?'Hier, seul le total est gardé, pas le détail des repas.':'Rien d\'enregistré hier.')+'</p>';
+    h+='<p class="note" style="margin:14px 0 6px"><b>Mes repas habituels</b></p>';
+    h+=TPL.length?'<div class="crs">'+TPL.map((t,i)=>'<div class="rl"><span><b>'+esc(t.n)+'</b> · '+SN(t.sl).toLowerCase()+' · '+kc(t.items)+' kcal</span><span style="display:flex;gap:6px"><button type="button" data-fast="tadd:'+i+'">Ajouter</button><button type="button" data-fast="tdel:'+i+'" aria-label="Supprimer ce repas habituel">×</button></span></div>').join('')+'</div>':'<p class="note" style="margin:0 0 6px">Aucun pour l\'instant. Remplis un repas dans Journée, puis crée un modèle ci-dessous.</p>';
+    h+='<div class="g2 fm" style="margin-top:8px"><label>Repas à copier<select id="tps">'+SLOTS.map(([k,n])=>'<option value="'+k+'">'+n+'</option>').join('')+'</select></label><label>Nom du modèle<input id="tpn" placeholder="ex. Petit-déj classique"></label></div><button type="button" class="pri" data-fast="tsave" style="margin-top:8px">Valider le modèle</button>';
+    return h;
+  }
+  const rd=renderDay;
+  renderDay=function(){
+    const r=rd.apply(this,arguments);
+    try{
+      const root=$('day');if(!root)return r;
+      const o=root.querySelector('[data-k="j-fast"]');if(o)o.remove();
+      const blkH=blk('j-fast','cal','Gagner du temps','copier hier, repas habituels',html(),false);
+      const hs=[...root.querySelectorAll('.sech')].find(x=>/Mes repas/.test(x.textContent));
+      if(hs)hs.insertAdjacentHTML('beforebegin',blkH);else root.insertAdjacentHTML('beforeend',blkH);
+    }catch(e){}
+    return r};
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest('#day [data-fast]');if(!b)return;
+    const [a,x]=b.dataset.fast.split(':'),ok=m=>{if(window.toast)toast('✓ '+m)},ko=m=>{if(window.toast)toast(m,true)};
+    if(a==='cpy'){const src=(LOGD[fxYest()]||{})[x]||[];if(!src.length)return ko('Rien d\'enregistré hier pour ce repas.');
+      if(DAY[x].length&&!gd(b,'Ce repas contient déjà des aliments. Appuie encore pour ajouter ceux d\'hier.'))return;
+      src.forEach(en=>DAY[x].push(cl(en)));saveDay();renderDay();return ok('Repas d\'hier copié ('+SN(x).toLowerCase()+')')}
+    if(a==='tsave'){const sl=$('tps').value,nm=($('tpn').value||'').trim();if(!DAY[sl].length)return ko('Ce repas est vide aujourd\'hui. Ajoute d\'abord des aliments.');if(!nm)return ko('Donne un nom au modèle.');
+      TPL.push({n:nm,sl:sl,items:cl(DAY[sl])});lsw('cp-tpl',TPL);OPEN['j-fast']=true;lsw('cp-open',OPEN);renderDay();return ok('Repas habituel créé : '+nm)}
+    if(a==='tadd'){const t=TPL[+x];if(!t)return;t.items.forEach(en=>DAY[t.sl].push(cl(en)));saveDay();renderDay();return ok(t.n+' ajouté à '+SN(t.sl).toLowerCase())}
+    if(a==='tdel'){if(!gd(b,'Appuie encore pour supprimer ce repas habituel.'))return;TPL.splice(+x,1);lsw('cp-tpl',TPL);renderDay();return ok('Repas habituel supprimé')}
+  });
+})();
+
+/* ===== v173 : eau + bilan de la semaine ===== */
+let WAT=ls('cp-water',{}),WGOAL=+ls('cp-watergoal',2500)||2500;
+if(typeof WAT!=='object'||Array.isArray(WAT))WAT={};
+(function(){
+  const saveW=()=>{lsw('cp-water',WAT);lsw('cp-watergoal',WGOAL)};
+  const L=ml=>(Math.round(ml/100)/10).toString().replace('.',',');
+  function wHtml(){
+    const td=today(),v=WAT[td]||0,pc=Math.min(100,Math.round(v*100/WGOAL));
+    return '<div class="wat"><div class="watb"><b>'+L(v)+' L</b> <span>sur '+L(WGOAL)+' L</span></div><div class="watp"><i style="width:'+pc+'%"></i></div><div class="fastr" style="margin-top:10px"><button type="button" data-wat="250">+ 1 verre (250 ml)</button><button type="button" data-wat="500">+ 500 ml</button><button type="button" data-wat="-250">− 250 ml</button></div><div class="g2 fm" style="margin-top:10px"><label>Objectif (litres)<input id="watg" inputmode="decimal" value="'+L(WGOAL)+'"></label><button type="button" data-wat="goal" style="align-self:end">Valider l\'objectif</button></div></div>';
+  }
+  const rd=renderDay;
+  renderDay=function(){
+    const r=rd.apply(this,arguments);
+    try{
+      const root=$('day');if(!root)return r;
+      SIC.drop=SIC.drop||'M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z';
+      const o=root.querySelector('[data-k="j-wat"]');if(o)o.remove();
+      const v=WAT[today()]||0;
+      const b=blk('j-wat','drop','Eau',L(v)+' / '+L(WGOAL)+' L',wHtml(),true);
+      const hs=[...root.querySelectorAll('.sech')].find(x=>/Mes repas/.test(x.textContent));
+      if(hs)hs.insertAdjacentHTML('beforebegin',b);else root.insertAdjacentHTML('beforeend',b);
+    }catch(e){}
+    return r};
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest('#day [data-wat]');if(!b)return;
+    const a=b.dataset.wat,td=today();
+    if(a==='goal'){const g=Math.round(pnum($('watg').value)*1000);if(!(g>=500&&g<=8000)){if(window.toast)toast('Objectif entre 0,5 et 8 litres.',true);return}WGOAL=g;saveW();renderDay();if(window.toast)toast('✓ Objectif d\'eau : '+L(g)+' L');return}
+    const d=+a;WAT[td]=Math.max(0,(WAT[td]||0)+d);if(!WAT[td])delete WAT[td];saveW();renderDay();
+  });
+  /* bilan de la semaine dans Historique */
+  const rh=renderHist;
+  renderHist=function(){
+    const r=rh.apply(this,arguments);
+    try{
+      const T=targets(),td=today(),days=lastDays(7).filter(d=>d!==td);
+      const ld=days.filter(d=>LOG[d]&&LOG[d].k>0),n=ld.length;
+      const L2=[];
+      if(n){
+        const ak=Math.round(ld.reduce((t,d)=>t+LOG[d].k,0)/n),ap=Math.round(ld.reduce((t,d)=>t+LOG[d].p,0)/n),pd=ld.filter(d=>LOG[d].p>=T.p*0.95).length;
+        L2.push(['Calories','moyenne '+fmtN(ak)+' kcal par jour, palier '+T.k+' ('+(ak-T.k>0?'+':'')+fmtN(ak-T.k)+')']);
+        L2.push(['Protéines',pd+' jour'+(pd>1?'s':'')+' sur '+n+' à '+Math.round(T.p*0.95)+' g ou plus, moyenne '+ap+' g']);
+      }else L2.push(['Repas','pas encore de journée enregistrée sur la semaine']);
+      const ws=WT.filter(x=>!x.s&&x.w&&days.includes(x.d)).sort((a,b)=>a.d<b.d?-1:1);
+      if(ws.length>=2){const dl=ws[ws.length-1].w-ws[0].w;L2.push(['Poids',(dl>0?'+':'')+num(dl,1)+' kg ('+num(ws[0].w,1)+' → '+num(ws[ws.length-1].w,1)+')'])}
+      else L2.push(['Poids','pas assez de pesées pour comparer']);
+      const st=days.map(d=>(ACT[d]||{}).st||0).filter(x=>x>0);
+      if(st.length)L2.push(['Pas','moyenne '+fmtN(Math.round(st.reduce((a,b)=>a+b,0)/st.length))+' par jour']);
+      const ns=days.reduce((t,d)=>t+(((ACT[d]||{}).ses)||[]).length,0);
+      L2.push(['Séances',ns+' sur la semaine']);
+      const wd=days.map(d=>WAT[d]||0).filter(x=>x>0);
+      if(wd.length)L2.push(['Eau','moyenne '+L(Math.round(wd.reduce((a,b)=>a+b,0)/wd.length))+' L par jour']);
+      const ok=n>=4&&ld.filter(d=>LOG[d].p>=T.p*0.95).length>=Math.ceil(n*0.7);
+      const verdict=!n?'':ok?'Bon rythme : tes protéines sont tenues la plupart des jours.':'À surveiller : les protéines sont atteintes moins de 7 jours sur 10.';
+      const h=blk('h-week','chart','Bilan de la semaine','7 derniers jours',(verdict?'<p style="margin:0 0 8px"><b>'+verdict+'</b></p>':'')+'<div class="crs">'+L2.map(x=>'<div class="rl"><span><b>'+x[0]+'</b> · '+x[1]+'</span></div>').join('')+'</div>',true);
+      const hc=document.querySelector('#history [data-k="h-ctl"]');
+      if(hc)hc.insertAdjacentHTML('beforebegin',h);
+    }catch(e){}
+    return r};
+})();
+
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -4598,7 +4745,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== Sauvegarde ===== */
-const BKEYS=['cp-prog','cp-proghist','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
+const BKEYS=['cp-prog','cp-proghist','cp-tpl','cp-water','cp-watergoal','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
 state.bmsg='';state.bprev=null;
 const bObj=ph=>{const o={v:2,t:Date.now(),d:{}};BKEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)o.d[k]=JSON.parse(v)}catch(e){}});if(ph)o.ph=PH;return o};
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
@@ -4620,7 +4767,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 168 (texte actualiser) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 173 (eau, bilan de la semaine) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
