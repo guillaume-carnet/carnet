@@ -8,7 +8,7 @@
   --accent:#3550E0; --accent-soft:#E1E6FD; --on-accent:#FFFFFF;
   --hero1:#2B3FD6; --hero-mid:#7A3FE0; --hero2:#D42B45;
   --m-p:#2F6FED; --m-g:#7C4DDB; --m-l:#D32F3F; --m-f:#0E87B8;
-  --c-poele:#BCD0FF; --c-mijote:#EE8C92; --c-four:#D9C6FA; --c-froid:#9ED4EA; --c-fun:#C9C7F7; --c-dessert:#E0CCFA; --c-collation:#B3CDEE; --c-sauce:#F0C77E; --warn:#B91C1C;
+  --c-poele:#BCD0FF; --c-mijote:#EE8C92; --c-four:#D9C6FA; --c-froid:#9ED4EA; --c-fun:#C9C7F7; --c-dessert:#E0CCFA; --c-collation:#B3CDEE; --c-sauce:#F0C77E; --c-raclette:#F3D27A; --warn:#B91C1C;
   --plate:#FFFFFF; --plate-in:#EEF0F8;
   --f-display:'Bricolage Grotesque','Inter',system-ui,sans-serif;
   --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -20,7 +20,7 @@
     --accent:#86B6FF; --accent-soft:#1E4488; --on-accent:#08163A;
     --hero1:#2A52D6; --hero-mid:#6A3FD0; --hero2:#C0283F;
     --m-p:#7FA6FF; --m-g:#B79CFF; --m-l:#FF8A8A; --m-f:#5CC8F0;
-    --c-poele:#3B6FE0; --c-mijote:#D9485A; --c-four:#7A4FE0; --c-froid:#2F93C0; --c-fun:#8A58D8; --c-dessert:#6A4BD0; --c-collation:#4A56C8; --c-sauce:#C98A12; --warn:#F87171;
+    --c-poele:#3B6FE0; --c-mijote:#D9485A; --c-four:#7A4FE0; --c-froid:#2F93C0; --c-fun:#8A58D8; --c-dessert:#6A4BD0; --c-collation:#4A56C8; --c-sauce:#C98A12; --c-raclette:#D9A21B; --warn:#F87171;
     --plate:#E9F0FB; --plate-in:#D6E2F4; color-scheme:dark;
   }
 }
@@ -29,7 +29,7 @@
   --accent:#86B6FF; --accent-soft:#1E4488; --on-accent:#08163A;
   --hero1:#2A52D6; --hero-mid:#6A3FD0; --hero2:#C0283F;
   --m-p:#7FA6FF; --m-g:#B79CFF; --m-l:#FF8A8A; --m-f:#5CC8F0;
-  --c-poele:#3B6FE0; --c-mijote:#D9485A; --c-four:#7A4FE0; --c-froid:#2F93C0; --c-fun:#8A58D8; --c-dessert:#6A4BD0; --c-collation:#4A56C8; --c-sauce:#C98A12; --warn:#F87171;
+  --c-poele:#3B6FE0; --c-mijote:#D9485A; --c-four:#7A4FE0; --c-froid:#2F93C0; --c-fun:#8A58D8; --c-dessert:#6A4BD0; --c-collation:#4A56C8; --c-sauce:#C98A12; --c-raclette:#D9A21B; --warn:#F87171;
   --plate:#E9F0FB; --plate-in:#D6E2F4; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -150,6 +150,7 @@ header.top>*{position:relative; z-index:1}
 .k-dessert{--t:#EDE0FC; --t2:#F6EFFE; --tb:#D2B6F2}
 .k-collation{--t:#D8E6F6; --t2:#EAF2FB; --tb:#9DBFE6}
 .k-sauce{--t:#FCEBC8; --t2:#FFF5E0; --tb:#F0C77E}
+.k-raclette{--t:#FBEBB8; --t2:#FFF6D6; --tb:#EBC650}
 :root[data-theme="dark"] .card{--t:#183A78; --t2:#13306A; --tb:#2F5BAE}
 :root[data-theme="dark"] .k-mijote{--t:#4A2038; --t2:#3A1A30; --tb:#8A3A55}
 :root[data-theme="dark"] .k-four{--t:#382466; --t2:#2E1E56; --tb:#6A48B8}
@@ -1154,7 +1155,7 @@ html,body{overscroll-behavior-y:none}
 </div>
 
 <script>
-const CATS={poele:"À la poêle",mijote:"Mijotés",four:"Au four",froid:"Froids",fun:"Buns, pizzas & co",dessert:"Desserts",collation:"Collations",sauce:"Sauces légères"};
+const CATS={poele:"À la poêle",mijote:"Mijotés",four:"Au four",froid:"Froids",fun:"Buns, pizzas & co",dessert:"Desserts",collation:"Collations",sauce:"Sauces légères",raclette:"Raclette & fondue"};
 const COL={riz:"#FBF6E6",poulet:"#EBB46E",pois:"#7CC443",carotte:"#F39A2C",jaune:"#F6B61E",blanc:"#FFFBF0",thon:"#E6B3A3",pdt:"#F2D77A",vert:"#4FA83A",pates:"#EBCB7A",dinde:"#F0CFA0",pr:"#D8322A",pj:"#F4B91E",jambon:"#EFA7A0",fromage:"#F7D45C",epi:"#2F7D3E",tomate:"#E0412F",pain:"#C88B52",wrap:"#EAD3A4",boeuf:"#8F4E34",rouge:"#B3342B",pc:"#E3BF7C",lent:"#B9763F",dore:"#D9A55C",cab:"#F4F1E8",poireau:"#C3DB92",cour:"#A9CC68",crev:"#F0906A",sem:"#F0D898",broc:"#3F8F3B",chou:"#BFD58E",chr:"#8E3F6B",chf:"#F4EDD9",aub:"#5A3566",conc:"#A9D181"};
 const R=[
 /* À LA POÊLE */
@@ -2164,31 +2165,31 @@ const R=[
  it:[["blanc","dot",10],["thon","chunk",6],["tomate","dot",5]],
  ing:["Haricots blancs 150 g égouttés (conserve)","Thon au naturel 120 g égoutté (boîte)","Tomate 100 g (crue)","Oignon 40 g","Salade verte 60 g","Huile d'olive 5 g","Pain complet 35 g (à côté)","Vinaigre, persil, poivre"],
  st:["Rince les haricots blancs et égoutte-les.","Émince l'oignon très finement et coupe la tomate en dés.","Mélange tout avec le thon émietté, l'huile, le vinaigre et le persil, et sers sur la salade avec le pain."]},
-{c:"four",n:"Raclette légère, pommes de terre, jambon de dinde et Grisons",k:522,p:48,g:46,l:16,f:6,t:30,v:"dish",b:"#F2D274",
+{c:"raclette",n:"Raclette légère, pommes de terre, jambon de dinde et Grisons",k:522,p:48,g:46,l:16,f:6,t:30,v:"dish",b:"#F2D274",
  it:[["pdt","chunk",8],["fromage","slab",2],["jambon","chunk",6]],
  ing:["Pommes de terre 250 g (crues)","Fromage à raclette 45 g","Jambon de dinde 90 g (déjà cuit)","Viande des Grisons 50 g","Salade verte 80 g","Cornichons, oignons grelots, poivre"],
  st:["Cuis les pommes de terre 20 minutes à l'eau avec leur peau.","Fais fondre le fromage à raclette sur l'appareil ou 3 minutes sous le grill du four.","Sers avec le jambon, la viande des Grisons, la salade, les cornichons et les oignons."]},
-{c:"four",n:"Tartiflette allégée, reblochon et lardons de dinde",k:514,p:42,g:53,l:15,f:6,t:45,v:"dish",b:"#E5CC92",
+{c:"raclette",n:"Tartiflette allégée, reblochon et lardons de dinde",k:514,p:42,g:53,l:15,f:6,t:45,v:"dish",b:"#E5CC92",
  it:[["pdt","chunk",8],["fromage","chunk",5],["dinde","dot",6]],
  ing:["Pommes de terre 250 g (crues)","Reblochon 40 g","Lardons de dinde fumés 110 g","Oignon 80 g","Fromage blanc 0 % 80 g","Ail, poivre, muscade"],
  st:["Cuis les pommes de terre en rondelles 12 minutes à l'eau, puis égoutte.","Fais revenir l'oignon et les lardons de dinde 6 minutes à sec dans une poêle.","Mélange avec les pommes de terre, le fromage blanc, l'ail et la muscade dans un plat.","Pose le reblochon coupé en tranches dessus et enfourne 20 minutes à 200 °C."]},
-{c:"four",n:"Croziflette allégée, pâtes complètes et reblochon",k:554,p:45,g:55,l:15,f:9,t:40,v:"dish",b:"#E5CC92",
+{c:"raclette",n:"Croziflette allégée, pâtes complètes et reblochon",k:554,p:45,g:55,l:15,f:9,t:40,v:"dish",b:"#E5CC92",
  it:[["pates","long",14],["fromage","chunk",5],["jambon","chunk",6]],
  ing:["Pâtes complètes 70 g crues","Reblochon 40 g","Jambon de dinde 90 g (déjà cuit)","Fromage blanc 0 % 100 g","Oignon 50 g","Épinards 100 g (crus)","Ail, poivre, muscade"],
  st:["Cuis les pâtes 2 minutes de moins que le temps indiqué, puis égoutte-les.","Fais tomber l'oignon et les épinards 5 minutes à la poêle.","Mélange avec les pâtes, le jambon en dés, le fromage blanc et la muscade dans un plat.","Pose le reblochon dessus et enfourne 20 minutes à 200 °C."]},
-{c:"mijote",n:"Fondue savoyarde légère, pain complet et crudités",k:521,p:55,g:42,l:14,f:9,t:25,v:"pot",b:"#F2D274",
+{c:"raclette",n:"Fondue savoyarde légère, pain complet et crudités",k:521,p:55,g:42,l:14,f:9,t:25,v:"pot",b:"#F2D274",
  it:[["fromage","chunk",8],["pain","slab",3],["broc","dot",8]],
  ing:["Fromage à raclette 40 g","Fromage blanc 0 % 100 g","Pain complet 60 g en cubes","Dinde crue 120 g en cubes (à tremper)","Brocoli 100 g (cru)","Carotte 80 g (crue)","Ail, muscade, poivre"],
  st:["Frotte le caquelon d'ail et fais fondre le fromage à raclette à feu doux 6 minutes.","Incorpore le fromage blanc, la muscade et le poivre en remuant.","Trempe les cubes de pain, de dinde cuite 8 minutes au bouillon, et les crudités."]},
-{c:"poele",n:"Poêlée montagnarde, pommes de terre, chou et raclette",k:532,p:37,g:54,l:18,f:10,t:30,v:"pan",b:"",
+{c:"raclette",n:"Poêlée montagnarde, pommes de terre, chou et raclette",k:532,p:37,g:54,l:18,f:10,t:30,v:"pan",b:"",
  it:[["pdt","chunk",8],["chou","slice",8],["dinde","dot",6],["fromage","slab",2]],
  ing:["Pommes de terre 250 g (crues)","Chou vert 150 g (cru)","Lardons de dinde fumés 100 g","Fromage à raclette 40 g","Oignon 50 g","Huile d'olive 4 g","Poivre, muscade"],
  st:["Fais dorer les pommes de terre en dés dans l'huile 12 minutes à couvert.","Ajoute l'oignon, le chou émincé et les lardons de dinde, 8 minutes.","Recouvre de fromage à raclette, couvre 2 minutes pour le faire fondre."]},
-{c:"four",n:"Gratin de courgettes et pommes de terre à la raclette, dinde",k:505,p:56,g:41,l:13,f:6,t:45,v:"dish",b:"#E5CC92",
+{c:"raclette",n:"Gratin de courgettes et pommes de terre à la raclette, dinde",k:505,p:56,g:41,l:13,f:6,t:45,v:"dish",b:"#E5CC92",
  it:[["pdt","chunk",8],["cour","slice",8],["dinde","chunk",6],["fromage","dot",5]],
  ing:["Dinde crue 150 g en dés","Pommes de terre 200 g (crues)","Courgette 200 g (crue)","Fromage à raclette 40 g","Fromage blanc 0 % 60 g","Ail, thym, poivre"],
  st:["Coupe les pommes de terre et les courgettes en rondelles fines.","Alterne les légumes, la dinde crue en dés et le fromage blanc dans un plat, avec l'ail et le thym.","Couvre de fromage à raclette et enfourne 35 minutes à 200 °C."]},
-{c:"poele",n:"Pierrade de dinde, légumes et sauce fromage blanc",k:462,p:55,g:45,l:7,f:7,t:30,v:"plate",b:"",
+{c:"raclette",n:"Pierrade de dinde, légumes et sauce fromage blanc",k:462,p:55,g:45,l:7,f:7,t:30,v:"plate",b:"",
  it:[["dinde","slab",2],["pdt","chunk",6],["cour","slice",6],["pr","slice",5]],
  ing:["Dinde crue 170 g en lamelles","Pommes de terre 200 g (crues)","Courgette 100 g (crue)","Poivrons 100 g (crus)","Fromage blanc 0 % 100 g","Huile d'olive 4 g","Ail, ciboulette, paprika"],
  st:["Cuis les pommes de terre 15 minutes à l'eau.","Fais saisir les lamelles de dinde, les courgettes et les poivrons à la poêle très chaude, 8 minutes.","Mélange le fromage blanc avec l'ail, la ciboulette et le paprika.","Sers la viande et les légumes avec les pommes de terre et la sauce."]}
@@ -2277,7 +2278,7 @@ function food(ck,shape,x,y,rnd,f,des,st){
   return null;
 }
 
-const CATC={poele:'#2F6FED',mijote:'#D32F3F',four:'#7A3FE0',froid:'#2F9BD1',fun:'#4B3FC9',dessert:'#9B5DE5',collation:'#1F5FA8',sauce:'#B07A00'};
+const CATC={poele:'#2F6FED',mijote:'#D32F3F',four:'#7A3FE0',froid:'#2F9BD1',fun:'#4B3FC9',dessert:'#9B5DE5',collation:'#1F5FA8',sauce:'#B07A00',raclette:'#C99A06'};
 function art(r){
   const rnd=rng(r.i*7919+11), cx=200, cy=150;
   const f=x=>x.toFixed(1);
@@ -3560,7 +3561,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=202;
+const APPV=203;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5271,7 +5272,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 202 (raclette, œufs, froid)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 203 (catégorie Raclette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
