@@ -3382,7 +3382,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=175;
+const APPV=176;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3747,6 +3747,35 @@ if(typeof WAT!=='object'||Array.isArray(WAT))WAT={};
       if(hc)hc.insertAdjacentHTML('beforebegin',h);
     }catch(e){}
     return r};
+})();
+
+/* ===== v175 : petit-déj habituel sur toute la semaine ===== */
+(function(){
+  let armed=false;
+  const kcT=t=>{let k=0;try{t.items.forEach(en=>k+=ent(en).k)}catch(e){}return Math.round(k)};
+  const need=()=>{try{loadWeek()}catch(e){}return WEEK.map((d,i)=>d.some(e=>wsl(e)==='pdj')?-1:i).filter(i=>i>=0)};
+  const rw=renderWeek;
+  renderWeek=function(){
+    const r=rw.apply(this,arguments);
+    try{
+      const root=$('week');if(!root)return r;
+      const o=root.querySelector('.wbk');if(o)o.remove();
+      const t=(typeof TPLBK==='number'&&TPL[TPLBK])?TPL[TPLBK]:null;if(!t||t.sl!=='pdj')return r;
+      const n=need().length;if(!n)return r;
+      const html='<div class="sum wbk"><button type="button" class="pri" data-wbk="1" style="width:100%;text-align:left;min-height:56px">'+(armed?'Appuie encore pour confirmer':'＋ Petit-déj habituel sur '+n+' jour'+(n>1?'s':''))+'<small style="display:block;font-weight:500">'+esc(t.n)+' · '+kcT(t)+' kcal · seulement les jours sans petit-déj</small></button></div>';
+      const fin=root.querySelector('.sum.fin');
+      if(fin)fin.insertAdjacentHTML('beforebegin',html);else root.insertAdjacentHTML('beforeend',html);
+    }catch(e){}
+    return r};
+  document.addEventListener('click',e=>{
+    const b=e.target.closest&&e.target.closest('#week [data-wbk]');if(!b)return;
+    const t=(typeof TPLBK==='number'&&TPL[TPLBK])?TPL[TPLBK]:null;if(!t)return;
+    if(!armed){armed=true;renderWeek();setTimeout(()=>{if(armed){armed=false;try{renderWeek()}catch(x){}}},5000);return}
+    armed=false;const days=need();
+    days.forEach(i=>t.items.forEach(en=>{const c=JSON.parse(JSON.stringify(en));c.sl='pdj';WEEK[i].push(c)}));
+    saveWeek();renderWeek();
+    if(window.toast)toast('✓ Petit-déj ajouté sur '+days.length+' jour'+(days.length>1?'s':''));
+  });
 })();
 
 function courseData(){
@@ -4774,7 +4803,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 175 (décimales)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 176 (petit-déj semaine)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
