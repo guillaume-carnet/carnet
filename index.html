@@ -1654,7 +1654,7 @@ const R=[
  it:[["riz","grain",40],["dinde","chunk",8],["pr","slice",8],["carotte","dot",8]],
  ing:["Dinde crue 180 g en lanières","Poivrons 150 g (crus)","Carotte 80 g (crue)","Riz basmati 55 g cru","Huile d'olive 5 g","Ail, gingembre, paprika"],
  st:["Cuis le riz à l'eau, puis égoutte-le.","Fais saisir la dinde dans l'huile à feu vif 5 minutes avec l'ail, le gingembre et le paprika.","Ajoute les poivrons en lanières et la carotte en bâtonnets, 6 minutes, puis le riz."]},
-{c:"poele",n:"Dinde à la tomate et pâtes complètes",k:512,p:48,g:54,l:10,f:9,t:25,v:"plate",b:"",
+{c:"poele",n:"Dinde à la tomate, poivrons et pâtes complètes",k:512,p:48,g:54,l:10,f:9,t:25,v:"plate",b:"",
  it:[["pates","long",18],["dinde","chunk",7],["tomate","dot",6],["pr","slice",5]],
  ing:["Dinde crue 170 g en dés","Pâtes complètes 65 g crues","Pulpe de tomates 100 g","Poivrons 100 g (crus)","Huile d'olive 5 g","Ail, origan, basilic"],
  st:["Cuis les pâtes, puis égoutte-les.","Fais dorer la dinde dans l'huile avec l'ail 5 minutes, ajoute les poivrons en dés, 4 minutes.","Verse la pulpe et l'origan, laisse mijoter 8 minutes, puis mélange avec les pâtes et le basilic."]},
@@ -1822,7 +1822,7 @@ const R=[
  it:[["dore","disc",3],["blanc","dot",5]],
  ing:["Flocons d'avoine 40 g","1 œuf + 60 g de blanc d'œuf","Lait demi-écrémé 100 ml","Skyr 0 % 80 g","Huile en spray, cannelle"],
  st:["Mixe les flocons, l'œuf, le blanc et le lait en pâte lisse.","Cuis 3 crêpes 1 minute par face dans une poêle huilée au spray.","Garnis de skyr et de cannelle."]},
-{c:"dessert",n:"Banana bread protéiné (1 part)",k:433,p:24,g:57,l:11,f:8,t:35,v:"dish",b:"#D9B070",
+{c:"dessert",n:"Banana bread protéiné (grosse part)",k:433,p:24,g:57,l:11,f:8,t:35,v:"dish",b:"#D9B070",
  it:[["pj","slice",6],["dore","chunk",6]],
  ing:["Banane mûre 120 g (épluchée)","Flocons d'avoine 50 g","1 œuf","Skyr 0 % 80 g","Levure chimique 3 g","Cannelle"],
  st:["Écrase la banane et mélange avec l'œuf, le skyr, les flocons, la levure et la cannelle.","Verse dans un petit moule.","Enfourne 25 minutes à 180 °C."]},
@@ -2395,11 +2395,11 @@ function card(r){
 /* ===== Recalcul avec mes marques ===== */
 const MCR=[[/raclette/,"Fromage à raclette","raclette"],[/reblochon/,"Reblochon","reblochon"],[/lardons de dinde/,"Lardons de dinde fumés","lardons"],[/grisons/,"Viande des Grisons","grisons"],[/foie de lapin/,"Foie de lapin cru","foie de lapin"],[/foie de veau|foie de genisse/,"Foie de veau cru","foie de veau"],[/foie de boeuf/,"Foie de bœuf cru","foie de boeuf"],[/ml d.?eau/,"Eau","eau"],[/levure/,"Levure chimique","levure"],[/moutarde/,"Moutarde","moutarde"],[/semoule/,"Semoule complète crue","semoule"],[/jus de citron/,"Jus de citron","jus de citron"],[/concombre/,"Concombre","concombre"],[/chou-?fleur/,"Chou-fleur cru","chou-fleur"],[/choux de bruxelles/,"Choux de Bruxelles crus","bruxelles"],[/chou (rouge|vert|blanc)/,"Chou cru (rouge, vert, blanc)","chou "],[/aubergine/,"Aubergine crue","aubergine"],[/sardine/,"Sardines au naturel égouttées","sardine"],[/maquereau/,"Maquereau cru","maquereau"],[/rumsteck/,"Rumsteck cru","rumsteck"],[/bavette/,"Bavette crue","bavette"],[/veau/,"Veau cru","veau"],[/filet mignon/,"Filet mignon de porc cru","filet mignon"],[/lasagne/,"Feuilles de lasagne complètes sèches","lasagne"],[/parmesan/,"Grana Padano","parmesan"],[/curry/,"Curry en poudre","curry"],[/sauce soja/,"Sauce soja","soja"],[/cabillaud|colin|merlu|\blieu\b/,"Cabillaud cru","cabillaud"],[/saumon/,"Saumon cru","saumon"],[/haricots rouges/,"Haricots rouges (conserve égouttés)","haricots rouges"],[/jambon/,"Jambon de dinde","jambon"],[/blanc d.?oeuf/,"Blanc d'œuf","blanc d"],[/oeuf/,"Œuf entier","oeuf"],[/poulet/,"Blanc de poulet cru","poulet"],[/dinde/,"Blanc de dinde cru","dinde"],[/steak/,"Steak haché 5 % cru","steak"],[/thon/,"Thon au naturel égoutté","thon"],[/crevette/,"Crevettes cuites","crevette"],[/skyr/,"Skyr nature","skyr"],[/fromage blanc/,"Fromage blanc 0 %","fromage blanc"],[/mozzarella/,"Mozzarella allégée","mozzarella"],[/grana/,"Grana Padano","grana"],[/emmental/,"Emmental râpé","emmental"],[/lait/,"Lait demi-écrémé","lait"],[/riz/,"Riz cru","riz"],[/pates completes/,"Pâtes complètes crues","pates"],[/pates/,"Pâtes crues","pates"],[/patate douce/,"Patate douce crue","patate"],[/pommes? de terre/,"Pomme de terre crue","pomme de terre"],[/flocons/,"Flocons d'avoine","flocons"],[/pain de mie/,"Pain de mie complet","pain"],[/pain/,"Pain complet","pain"],[/wrap/,"Wrap complet","wrap"],[/lentilles corail|corail/,"Lentilles corail crues","corail"],[/lentilles/,"Lentilles cuites (conserve égouttée)","lentilles"],[/pois chiches/,"Pois chiches (conserve égouttés)","pois chiches"],[/haricots blancs/,"Haricots blancs (conserve égouttés)","haricots blancs"],[/haricots verts/,"Haricots verts crus","haricots verts"],[/petits pois/,"Petits pois surgelés","petits pois"],[/pulpe/,"Pulpe de tomates","pulpe"],[/brocoli/,"Brocoli cru","brocoli"],[/carotte/,"Carotte crue","carotte"],[/courgette/,"Courgette crue","courgette"],[/tomate/,"Tomate","tomate"],[/poivron/,"Poivron","poivron"],[/epinards/,"Épinards crus","epinards"],[/oignon/,"Oignon","oignon"],[/banane/,"Banane","banane"],[/pomme/,"Pomme","pomme"],[/framboise|fruits rouges/,"Framboises","framboise"],[/huile/,"Huile d'olive","huile"],[/cacahuete/,"Beurre de cacahuète","cacahuete"],[/amande/,"Amandes","amande"],[/chocolat/,"Chocolat noir 70 %","chocolat"],[/chapelure/,"Chapelure","chapelure"],[/farine/,"Farine complète","farine"],[/miel/,"Miel","miel"],[/mais/,"Maïs égoutté (conserve)","mais"],[/salade/,"Salade verte","salade"],[/poireau/,"Poireau cru","poireau"],[/cacao/,"Cacao maigre en poudre","cacao"]];
 function mcParse(r){const rows=[];
-  r.ing.forEach(line=>{String(line).split(/\s\+\s/).forEach(part=>{
+  r.ing.forEach(line=>{String(line).split(/\s\+\s/).flatMap(pt=>{const w=(pt.match(/\d+(?:[.,]\d+)?\s*(?:g|ml)\b/g)||[]).length;return w>1?pt.split(/,\s+(?=[^,]*\d)/):[pt]}).forEach(part=>{
     const n=nrm(part),m=n.match(/(\d+(?:[.,]\d+)?)\s*(?:g|ml)\b/);let g=0;
     if(m)g=parseFloat(m[1].replace(',','.'));
-    else{const c=n.match(/^(\d+)\s*(oeuf|oeufs|wrap)/);if(c)g=(+c[1])*(c[2]==='wrap'?60:55)}
-    if(!g){if(!/(^|[^a-z])(sel|poivre|epices?|paprika|curry|herbes?|persil|basilic|cumin|ail|origan|thym|cannelle|vanille|muscade|piment|coriandre|ciboulette|curcuma|romarin|laurier|citron|vinaigre|eau|facultatif|gout|assaisonnement|ras el hanout|harissa|aneth|menthe|estragon|sauge)([^a-z]|$)/.test(n)&&n.length>2)rows.push({t:part.trim(),g:0,sel:'',u:1});return}
+    else{const c=n.match(/^(\d+)\s*(blancs? d.?oeufs?|oeufs?|wraps?)/);if(c)g=(+c[1])*(/^wrap/.test(c[2])?45:/^blanc/.test(c[2])?33:55)}
+    if(!g){if(!/(^|[^a-z])(sel|poivre|epices?|paprika|curry|herbes?|persil|basilic|cumin|ail|origan|thym|cannelle|vanille|muscade|piment|coriandre|ciboulette|curcuma|romarin|laurier|citron|vinaigre|eau|facultatif|gout|assaisonnement|spray|ras el hanout|harissa|aneth|menthe|estragon|sauge)([^a-z]|$)/.test(n)&&n.length>2)rows.push({t:part.trim(),g:0,sel:'',u:1});return}
     const rule=MCR.find(x=>x[0].test(n));
     let sel='';
     if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const mi=FOODS.findIndex(f=>f&&f.per===100&&nrm(String(f.n||'')).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
@@ -3200,7 +3200,7 @@ function parseIng(line){
   return out;
 }
 R.forEach(r=>{r.par=[];r.ing.forEach(l=>parseIng(l).forEach(x=>r.par.push(x)))});
-const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const ls=(k,d)=>{try{const s=localStorage.getItem(k);if(!s)return d;const v=JSON.parse(s);if(v===null||v===undefined)return d;if(Array.isArray(d))return Array.isArray(v)?v.filter(x=>x!==null&&x!==undefined):d;if(d&&typeof d==='object')return(typeof v==='object'&&!Array.isArray(v))?v:d;if(d!==null&&typeof d!==typeof v)return d;return v}catch(e){return d}};
 const lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const FAV=new Set(ls('cp-fav',[]));
 let VID=ls('cp-vid',{}),NOTES=ls('cp-notes',{}),POR2=ls('cp-por2',{}),MAC=ls('cp-mac',{}),CR=ls('cp-cr',[]),SVD=ls('cp-days',[]),WT=ls('cp-w',[]),WEEK=ls('cp-week',[[],[],[],[],[],[],[]]);
@@ -3561,7 +3561,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=203;
+const APPV=204;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5268,11 +5268,11 @@ function applyBak(o){const cur=bObj(false);try{lsw('cp-prerestore',{t:Date.now()
   state.bmsg='Sauvegarde restaurée. La page se recharge.';state.bprev=null;renderBak();setTimeout(()=>{try{location.reload()}catch(x){}},700)}
 try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(v=>{if(v){state.pers=1}else navigator.storage.persist().then(r=>{state.pers=r?1:2;if(typeof renderBak==='function'&&state.view==='sav')renderBak()})}).then(()=>{if(state.pers===1&&state.view==='sav')renderBak()}).catch(()=>{})}}catch(x){}
 function renderBak(){
-  const lb=ls('cp-lastbak',0),S=ls('cp-snaps',[]),pr=ls('cp-prerestore',null);
+  let lb=ls('cp-lastbak',0),S=ls('cp-snaps',[]),pr=ls('cp-prerestore',null);if(!(pr&&typeof pr==='object'&&pr.o&&typeof pr.o==='object'))pr=null;
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 203 (catégorie Raclette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 204 (contrôle complet)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -5298,7 +5298,7 @@ document.addEventListener('click',async e=>{
   if(a==='check'){try{const o=JSON.parse(await ungz($('br').value));if(!o||!o.d)throw 0;state.bprev=o;state.bmsg=''}catch(x){state.bprev=null;state.bmsg='Ce texte n\'est pas une sauvegarde valide.'}const keep=$('br').value;renderBak();if($('br'))$('br').value=keep;const pv=document.querySelector('[data-bk=confirm]')||document.querySelector('.msg');if(pv)pv.scrollIntoView({block:'center'});return}
   if(a==='cancel'){state.bprev=null;renderBak();return}
   if(a==='confirm'){if(state.bprev)applyBak(state.bprev);return}
-  if(a==='pre'){const pr=ls('cp-prerestore',null);if(pr)applyBak(pr.o);return}
+  if(a==='pre'){let pr=ls('cp-prerestore',null);if(!(pr&&typeof pr==='object'&&pr.o&&typeof pr.o==='object'))pr=null;if(pr)applyBak(pr.o);return}
   if(a.startsWith('snap:')){const x=ls('cp-snaps',[])[+a.slice(5)];if(x)applyBak(x.o);return}
 });
 
