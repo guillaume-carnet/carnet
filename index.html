@@ -3382,7 +3382,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=174;
+const APPV=175;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4655,7 +4655,7 @@ function dayDetail(d){
   const tl=(v,s)=>'<div><b>'+v+'</b><span>'+s+'</span></div>';
   let h='<h4 style="margin:14px 0 6px;text-transform:capitalize">'+lab+(live?' <small style="font-weight:500;color:var(--muted);text-transform:none">· en cours</small>':'')+'</h4>';
   let tiles='';
-  if(l){tiles+=tl(fmtN(l.k)+' kcal','Mangées (palier '+T.k+')')+tl(num(l.p,0)+' g','Protéines')+tl(num(l.g,0)+' g','Glucides')+tl(num(l.l,0)+' g','Lipides')+tl(num(l.f,1)+' g','Fibres')}
+  if(l){tiles+=tl(fmtN(l.k)+' kcal','Mangées (palier '+T.k+')')+tl(num(l.p,1)+' g','Protéines')+tl(num(l.g,1)+' g','Glucides')+tl(num(l.l,1)+' g','Lipides')+tl(num(l.f,1)+' g','Fibres')}
   if(a&&a.st)tiles+=tl(fmtN(a.st)+' pas','Pas');
   if(a&&(a.st||(a.ses&&a.ses.length))){let c=null;try{c=actCalc(d)}catch(e){}if(c){const dg=c.tot-(c.bmr+c.kPas+c.kSes);tiles+='<div style="grid-column:1/-1"><b>'+fmtN(c.tot)+' kcal brûlées</b><span>Estimation : base '+fmtN(c.bmr)+' + marche '+fmtN(c.kPas)+' + séances '+fmtN(c.kSes)+' + digestion '+fmtN(dg)+(l?' · bilan '+(l.k-c.tot>0?'+':'')+fmtN(l.k-c.tot)+' kcal':'')+'</span></div>'}}
   if(a&&a.ses&&a.ses.length)tiles+=tl(a.ses.map(x=>esc(x.n)+' '+x.min+' min').join(', '),'Séance'+(a.ses.length>1?'s':''));
@@ -4774,7 +4774,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 174 (petit-déj habituel)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 175 (décimales)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
