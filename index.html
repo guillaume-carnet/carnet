@@ -1057,6 +1057,8 @@ body:has(#more:not([hidden]))::after{display:none!important}
 #day [data-wat]{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;padding:10px 14px;min-height:42px;background:var(--accent-soft,#E4E8FF);color:var(--accent,#3D4FD6)}
 .wbar{height:12px;border-radius:99px;background:var(--accent-soft,#E4E8FF);overflow:hidden}.wbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#3E8FE8,#5BB4F0)}
 #day [data-wat]{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:14px;padding:10px 14px;min-height:42px;background:var(--accent-soft,#E4E8FF);color:var(--accent,#3D4FD6)}
+.bkq button{width:100%;text-align:left;min-height:56px}.bkq button small{display:block;font-weight:500;opacity:.9;margin-top:2px}
+#day .rl{flex-wrap:wrap}#day .rl>span:first-child{flex:1 1 150px}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -3380,7 +3382,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=173;
+const APPV=174;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3642,6 +3644,7 @@ function fzOk(r,q){
 
 /* ===== v172 : copier le repas d'hier + repas habituels ===== */
 let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
+let TPLBK=ls('cp-tplbk',null);if(typeof TPLBK!=='number'||!TPL[TPLBK])TPLBK=null;
 (function(){
   const cl=o=>JSON.parse(JSON.stringify(o));
   const kc=a=>Math.round(a.reduce((t,e)=>{try{return t+ent(e).k}catch(x){return t}},0));
@@ -3654,7 +3657,7 @@ let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
     let h='<p class="note" style="margin:0 0 6px"><b>Copier d\'hier</b>'+(LOG[yd]?' ('+Math.round(LOG[yd].k)+' kcal)':'')+'</p><div class="fastr">'+SLOTS.map(([k,n])=>{const c=(Y[k]||[]).length;return '<button type="button" data-fast="cpy:'+k+'"'+(c?'':' disabled')+'>'+n.replace('Petit-déjeuner','Petit-déj')+(c?' ('+c+')':'')+'</button>'}).join('')+'</div>';
     if(!LOGD[yd])h+='<p class="note" style="margin:6px 0 0">'+(LOG[yd]?'Hier, seul le total est gardé, pas le détail des repas.':'Rien d\'enregistré hier.')+'</p>';
     h+='<p class="note" style="margin:14px 0 6px"><b>Mes repas habituels</b></p>';
-    h+=TPL.length?'<div class="crs">'+TPL.map((t,i)=>'<div class="rl"><span><b>'+esc(t.n)+'</b> · '+SN(t.sl).toLowerCase()+' · '+kc(t.items)+' kcal</span><span style="display:flex;gap:6px"><button type="button" data-fast="tadd:'+i+'">Ajouter</button><button type="button" data-fast="tdel:'+i+'" aria-label="Supprimer ce repas habituel">×</button></span></div>').join('')+'</div>':'<p class="note" style="margin:0 0 6px">Aucun pour l\'instant. Remplis un repas dans Journée, puis crée un modèle ci-dessous.</p>';
+    h+=TPL.length?'<div class="crs">'+TPL.map((t,i)=>'<div class="rl"><span><b>'+esc(t.n)+'</b> · '+SN(t.sl).toLowerCase()+' · '+kc(t.items)+' kcal</span><span style="display:flex;gap:6px">'+(t.sl==='pdj'?'<button type="button" data-fast="tbk:'+i+'" aria-label="Petit-déj de tous les jours" aria-pressed="'+(TPLBK===i)+'">'+(TPLBK===i?'★ Tous les jours':'☆ Tous les jours')+'</button>':'')+'<button type="button" data-fast="tadd:'+i+'">Ajouter</button><button type="button" data-fast="tdel:'+i+'" aria-label="Supprimer ce repas habituel">×</button></span></div>').join('')+'</div>':'<p class="note" style="margin:0 0 6px">Aucun pour l\'instant. Remplis un repas dans Journée, puis crée un modèle ci-dessous.</p>';
     h+='<div class="g2 fm" style="margin-top:8px"><label>Repas à copier<select id="tps">'+SLOTS.map(([k,n])=>'<option value="'+k+'">'+n+'</option>').join('')+'</select></label><label>Nom du modèle<input id="tpn" placeholder="ex. Petit-déj classique"></label></div><button type="button" class="pri" data-fast="tsave" style="margin-top:8px">Valider le modèle</button>';
     return h;
   }
@@ -3666,7 +3669,9 @@ let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
       const o=root.querySelector('[data-k="j-fast"]');if(o)o.remove();
       const blkH=blk('j-fast','cal','Gagner du temps','copier hier, repas habituels',html(),false);
       const hs=[...root.querySelectorAll('.sech')].find(x=>/Mes repas/.test(x.textContent));
-      if(hs)hs.insertAdjacentHTML('beforebegin',blkH);else root.insertAdjacentHTML('beforeend',blkH);
+      const tb=TPLBK!==null?TPL[TPLBK]:null,old2=root.querySelector('.bkq');if(old2)old2.remove();
+      const bq=(tb&&!DAY.pdj.length)?'<div class="sum bkq"><button type="button" class="pri" data-fast="tbkadd">＋ Mon petit-déj habituel<small>'+esc(tb.n)+' · '+kc(tb.items)+' kcal</small></button></div>':'';
+      if(hs)hs.insertAdjacentHTML('beforebegin',bq+blkH);else root.insertAdjacentHTML('beforeend',bq+blkH);
     }catch(e){}
     return r};
   document.addEventListener('click',e=>{
@@ -3678,7 +3683,9 @@ let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
     if(a==='tsave'){const sl=$('tps').value,nm=($('tpn').value||'').trim();if(!DAY[sl].length)return ko('Ce repas est vide aujourd\'hui. Ajoute d\'abord des aliments.');if(!nm)return ko('Donne un nom au modèle.');
       TPL.push({n:nm,sl:sl,items:cl(DAY[sl])});lsw('cp-tpl',TPL);OPEN['j-fast']=true;lsw('cp-open',OPEN);renderDay();return ok('Repas habituel créé : '+nm)}
     if(a==='tadd'){const t=TPL[+x];if(!t)return;t.items.forEach(en=>DAY[t.sl].push(cl(en)));saveDay();renderDay();return ok(t.n+' ajouté à '+SN(t.sl).toLowerCase())}
-    if(a==='tdel'){if(!gd(b,'Appuie encore pour supprimer ce repas habituel.'))return;TPL.splice(+x,1);lsw('cp-tpl',TPL);renderDay();return ok('Repas habituel supprimé')}
+    if(a==='tbk'){TPLBK=(TPLBK===+x)?null:+x;lsw('cp-tplbk',TPLBK);OPEN['j-fast']=true;lsw('cp-open',OPEN);renderDay();return ok(TPLBK===null?'Petit-déj automatique retiré':'Petit-déj de tous les jours : '+TPL[TPLBK].n)}
+    if(a==='tbkadd'){const t=TPLBK!==null?TPL[TPLBK]:null;if(!t)return;t.items.forEach(en=>DAY[t.sl].push(cl(en)));saveDay();renderDay();return ok(t.n+' ajouté au petit-déjeuner')}
+    if(a==='tdel'){if(!gd(b,'Appuie encore pour supprimer ce repas habituel.'))return;if(TPLBK===+x)TPLBK=null;else if(TPLBK>+x)TPLBK--;lsw('cp-tplbk',TPLBK);TPL.splice(+x,1);lsw('cp-tpl',TPL);renderDay();return ok('Repas habituel supprimé')}
   });
 })();
 
@@ -4745,7 +4752,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== Sauvegarde ===== */
-const BKEYS=['cp-prog','cp-proghist','cp-tpl','cp-water','cp-watergoal','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
+const BKEYS=['cp-tplbk','cp-prog','cp-proghist','cp-tpl','cp-water','cp-watergoal','cp-logd','cp-daydate','cp-vid','cp-notes','cp-scans','cp-meals','cp-foods','cp-sel','cp-done','cp-por','cp-xtra','cp-buy','cp-day','cp-fav','cp-days','cp-week','cp-weeks','cp-cr','cp-mac','cp-w','cp-por2','cp-body','cp-act','cp-goal','cp-log','cp-frg','cp-palauto','cp-sexe','cp-theme','cp-open'];
 state.bmsg='';state.bprev=null;
 const bObj=ph=>{const o={v:2,t:Date.now(),d:{}};BKEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)o.d[k]=JSON.parse(v)}catch(e){}});if(ph)o.ph=PH;return o};
 const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));return btoa(s)};
@@ -4767,7 +4774,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 173 (eau, bilan de la semaine) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 174 (petit-déj habituel)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
