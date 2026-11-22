@@ -3399,7 +3399,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=186;
+const APPV=187;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3483,7 +3483,7 @@ function renderFix(){
   h+=secT('Poids');
   h+='<div class="sum"><div class="g2 fm"><label>Matin (kg)<input id="fxwm" inputmode="decimal" placeholder="ex. 66,1" value="'+(wm&&wm.w?String(wm.w).replace('.',','):'')+'"></label><label>Soir (kg)<input id="fxws" inputmode="decimal" placeholder="facultatif" value="'+(ws&&ws.w?String(ws.w).replace('.',','):'')+'"></label></div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="pri" data-fx="w">Valider le poids</button>'+((wm||ws)?'<button type="button" data-fx="wdel" class="ghost">Retirer les pesées du jour</button>':'')+'</div></div>';
   h+=secT('Séances',a.ses.length?a.ses.length+' ce jour':'aucune');
-  h+='<div class="sum">'+(a.ses.length?'<div class="crs">'+a.ses.map((x,i)=>'<div class="rl"><span>'+esc(x.n)+' · '+x.min+' min'+(x.sp?' · '+x.sp+' pas inclus':'')+'</span><button type="button" data-fx="sdel" data-i="'+i+'" aria-label="Supprimer cette séance">×</button></div>').join('')+'</div>':'')
+  h+='<div class="sum">'+(a.ses.length?'<div class="crs">'+a.ses.map((x,i)=>'<div class="rl"><span>'+esc(x.n)+' · '+x.min+' min'+(x.sp>0?' · '+x.sp+' pas inclus':(x.sp<0?' · aucun pas inclus':''))+'</span><button type="button" data-fx="sdel" data-i="'+i+'" aria-label="Supprimer cette séance">×</button></div>').join('')+'</div>':'')
    +'<div class="g2 fm"><label>Séance<select id="fxsn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="fxsm" inputmode="numeric" placeholder="ex. 60"></label></div><button type="button" class="pri" data-fx="sadd" style="margin-top:8px">Valider la séance</button></div>';
   h+=secT('Repas et totaux',l&&l.k?Math.round(l.k)+' kcal':'rien');
   if(!past){h+='<div class="sum"><p style="margin:0">Pour aujourd\'hui, corrige les repas dans <b>Journée</b>.</p></div>'}
@@ -4532,7 +4532,7 @@ const SPM={'Marche rapide':110,'Course à pied':160,'Foot':110,'Musculation':15,
 function sesSteps(x){return Math.round((x.min||0)*(SPM[x.n]||0))}
 function actCalc(d){
   const a=ACT[d]||{st:0,ses:[]},kg=wNow(),S=bodyStats(),stepM=BODY.h*0.415/100;
-  const spx=Math.min(a.st,a.ses.reduce((t,x)=>t+(x.sp>0?x.sp:sesSteps(x)),0)),walk=Math.max(0,a.st-spx);
+  const spx=Math.min(a.st,a.ses.reduce((t,x)=>t+(x.sp<0?0:(x.sp>0?x.sp:sesSteps(x))),0)),walk=Math.max(0,a.st-spx);
   const kPas=0.55*kg*(walk*stepM/1000),kSes=a.ses.reduce((t,x)=>t+Math.max(0,x.m-1)*kg*x.min/60,0);
   const bmr=(S&&S.bmr)||22*kg,base=bmr+kPas+kSes;
   return{kg,km:a.st*stepM/1000,kPas,kSes,bmr,tot:base*1.08,min:a.ses.reduce((t,x)=>t+x.min,0)};
@@ -4568,8 +4568,8 @@ function renderAct(){
   {const yd=new Date();yd.setDate(yd.getDate()-1);const ydS=yd.getFullYear()+'-'+String(yd.getMonth()+1).padStart(2,'0')+'-'+String(yd.getDate()).padStart(2,'0'),fd=state.afd||ydS,fv=(ACT[fd]||{}).st;
   h+=blk('a-fix','cal','Corriger un autre jour','pas d\'hier ou avant','<div class="g2 fm"><label>Jour<input type="date" id="afd" max="'+today()+'" value="'+fd+'"></label><label>Total de pas<input id="afs" inputmode="numeric" placeholder="ex. 12400" value="'+(fv?Math.round(fv):'')+'"></label></div><button type="button" data-aact="pfix" style="margin-top:8px">Enregistrer ce jour</button>',true)}
   h+=blk('a-ses','flame','Séances',a.ses.length?a.ses.length+' aujourd\'hui':'sport du jour',
-   '<form class="fm" id="sf"><div class="g2"><label>Séance<select id="sn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="smin" inputmode="numeric" placeholder="ex. 60"></label></div><div class="g2"><label>Dont pas (facultatif)<input id="ssp" inputmode="numeric" placeholder="vide = estimé automatiquement"></label><button type="submit" style="align-self:end">Ajouter la séance</button></div></form>'
-   +(a.ses.length?'<div class="crs">'+a.ses.map((x,i)=>'<div class="rl"><span>'+esc(x.n)+' · '+x.min+' min · '+Math.round(Math.max(0,x.m-1)*c.kg*x.min/60)+' kcal'+(x.sp?' · '+x.sp+' pas inclus':'')+'</span><button type="button" data-asdel="'+i+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>':''),true);
+   '<form class="fm" id="sf"><div class="g2"><label>Séance<select id="sn">'+SPORTS.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join('')+'</select></label><label>Durée (min)<input id="smin" inputmode="numeric" placeholder="ex. 60"></label></div><div class="g2"><label>Dont pas (facultatif)<input id="ssp" inputmode="numeric" placeholder="vide = estimé, 0 = aucun pas compté"></label><button type="submit" style="align-self:end">Ajouter la séance</button></div></form>'
+   +(a.ses.length?'<div class="crs">'+a.ses.map((x,i)=>'<div class="rl"><span>'+esc(x.n)+' · '+x.min+' min · '+Math.round(Math.max(0,x.m-1)*c.kg*x.min/60)+' kcal'+(x.sp>0?' · '+x.sp+' pas inclus':(x.sp<0?' · aucun pas inclus':''))+'</span><button type="button" data-asdel="'+i+'" aria-label="Supprimer">✕</button></div>').join('')+'</div>':''),true);
   h+=blk('a-bil','bars','Bilan du jour',Math.round(c.tot)+' kcal brûlées',
    '<div class="kv"><div><b>'+Math.round(c.kPas)+'</b><span>kcal brûlées en marchant</span></div><div><b>'+Math.round(c.kSes)+'</b><span>kcal brûlées en séances ('+c.min+' min)</span></div><div><b>'+Math.round(c.bmr)+'</b><span>Métabolisme de base</span></div><div><b>'+Math.round(c.tot)+'</b><span>Dépense totale estimée</span></div><div><b>'+Math.round(kin)+'</b><span>Calories '+(hasEat?'mangées (Journée)':'visées (palier)')+'</span></div><div><b>'+(bal>0?'+':'')+Math.round(bal)+'</b><span>Bilan ('+(bal>150?'surplus':bal<-150?'déficit':'équilibre')+') · ≈ '+(bal>0?'+':'')+num(bal*7/7700,2)+' kg/sem</span></div></div><p class="note" style="margin:0">Total = (métabolisme + pas + séances) + 8 % pour la digestion. Si ta séance est déjà dans tes pas (foot, course), indique « dont pas » pour ne pas la compter deux fois.</p>',true);
   const days=lastDays(7),vals=days.map(x=>(ACT[x]||{}).st||0),mx=Math.max(GOAL,...vals),ds=days.filter(x=>(ACT[x]||{}).st);
@@ -4609,7 +4609,7 @@ function liveStart(){
 document.addEventListener('submit',e=>{
   if(e.target.id!=='sf')return;e.preventDefault();
   const min=pnum($('smin').value);if(!min||min>600){$('smin').focus();return}
-  const sp=SPORTS[+$('sn').value],a=actDay(today());a.ses.push({n:sp[0],m:sp[1],min:Math.round(min),sp:Math.round(pnum($('ssp').value))||0});saveAct();renderAct();
+  const sp=SPORTS[+$('sn').value],a=actDay(today());a.ses.push({n:sp[0],m:sp[1],min:Math.round(min),sp:(String($('ssp').value).trim()!==''&&Math.round(pnum($('ssp').value))===0)?-1:(Math.round(pnum($('ssp').value))||0)});saveAct();renderAct();
 });
 document.addEventListener('click',e=>{
   if(state.view!=='act')return;
@@ -4945,7 +4945,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 186 (repas dépliables)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 187 (pas de la séance)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
