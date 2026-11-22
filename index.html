@@ -2924,8 +2924,8 @@ function ckRender(){
   const pct=Math.round((i+1)/(n+1)*100);
   el.innerHTML='<div class="ckh"><b>'+esc(r.n)+'</b><button type="button" data-ckclose aria-label="Fermer">✕</button></div><div class="ckbar"><i style="width:'+pct+'%"></i></div><p class="ckn">'+(i<0?'Avant de commencer':'Étape '+(i+1)+' sur '+n)+'</p><div class="ckb">'+b+'</div><div class="ckf"><button type="button" data-ckprev'+(i<0?' disabled':'')+'>← Précédent</button><button type="button" class="pri" data-cknext>'+(i>=n-1?'Terminé ✓':'Suivant →')+'</button></div>';
 }
-function ckTick(){if(!COOK||!COOK.tm)return;const left=(COOK.tm.end-Date.now())/1000,e=document.getElementById('ckcd');if(e)e.textContent=ckFmt(left);if(left<=0){const st=COOK.tm.step;COOK.tm=null;ckBeep();if(window.toast)toast('⏰ Minuteur terminé',false);if(COOK.s===st)ckRender()}}
-function ckOpen(i){const r=R.find(x=>x.i===i);if(!r||!r.st||!r.st.length)return;COOK={r,s:-1,tm:null};ckRender();clearInterval(COOKI);COOKI=setInterval(ckTick,500);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{if(COOK)COOK.wl=w;else w.release()}).catch(()=>{})}catch(e){}}
+function ckvTick(){if(!COOK||!COOK.tm)return;const left=(COOK.tm.end-Date.now())/1000,e=document.getElementById('ckcd');if(e)e.textContent=ckFmt(left);if(left<=0){const st=COOK.tm.step;COOK.tm=null;ckBeep();if(window.toast)toast('⏰ Minuteur terminé',false);if(COOK.s===st)ckRender()}}
+function ckOpen(i){const r=R.find(x=>x.i===i);if(!r||!r.st||!r.st.length)return;COOK={r,s:-1,tm:null};ckRender();clearInterval(COOKI);COOKI=setInterval(ckvTick,500);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{if(COOK)COOK.wl=w;else w.release()}).catch(()=>{})}catch(e){}}
 function ckClose(){if(COOK&&COOK.wl){try{COOK.wl.release()}catch(e){}}COOK=null;clearInterval(COOKI);ckRender()}
 document.addEventListener('click',e=>{
   const o=e.target.closest('[data-cook]');if(o){ckOpen(+o.dataset.cook);return}
@@ -3412,7 +3412,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=196;
+const APPV=198;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4050,6 +4050,30 @@ function mcShowLine(r,x){
     if(cd)rawSaveDay();
     if(ch||cd){if(state.view==='sem')renderWeek();if(state.view==='jr')renderDay()}
   }catch(e){}},0);
+})();
+
+/* ===== v197 : « Un aliment » ne reste plus blanc ; ma liste est réparée si une ligne est abîmée ===== */
+function sanitizeFoods(){
+  try{
+    const src=Array.isArray(FOODS)?FOODS:[];let ch=!Array.isArray(FOODS);
+    const out=src.filter(f=>{const ok=f&&typeof f==='object'&&!Array.isArray(f);if(!ok)ch=true;return ok}).map(f=>{
+      if(typeof f.n!=='string'){f.n=f.n==null?'Sans nom':String(f.n);ch=true}
+      ['k','p','g','l','f'].forEach(c=>{if(typeof f[c]!=='number'||!isFinite(f[c])){const v=parseFloat(String(f[c]).replace(',','.'));f[c]=isFinite(v)?v:0;ch=true}});
+      if(f.per!==100&&f.per!==0){f.per=(f.per==100)?100:0;ch=true}
+      return f});
+    if(ch){FOODS=out;lsw('cp-foods',FOODS)}
+  }catch(e){}
+}
+(function(){
+  const rm=renderMy;
+  renderMy=function(){
+    sanitizeFoods();
+    try{return rm.apply(this,arguments)}
+    catch(err){
+      try{$('myfoods').innerHTML='<h2>Ajouter</h2>'+addSeg('mes')+'<p class="note" style="color:#B42318"><b>Cette page n\'a pas pu s\'afficher.</b><br>Détail à me transmettre : '+esc(String(err&&err.message||err))+'</p>'}catch(e2){}
+    }
+  };
+  setTimeout(sanitizeFoods,0);
 })();
 
 function courseData(){
@@ -5077,7 +5101,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 196 (barre du bas fixe)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 198 (minuteur réparé)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
