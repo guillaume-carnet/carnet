@@ -1072,6 +1072,7 @@ html:not([data-tab="rec"]) #restbar{display:none!important}
 .mda{display:flex;gap:8px;flex-wrap:wrap}
 .mda button,.mtools button{font:inherit;font-size:14px;min-height:44px;padding:8px 12px;border:0;border-radius:10px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
 .mtools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+#day .ent2 .eob,#week .ent2 .eob{background:var(--accent-soft)!important;color:var(--accent)!important;font-size:18px!important;font-weight:800!important;width:34px!important;height:34px!important}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -3395,7 +3396,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=183;
+const APPV=185;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3868,6 +3869,20 @@ myList=function(){
   });
 })();
 
+/* ===== v185 : options de chaque repas repliées derrière un petit « + » ===== */
+function entOpen(key){return state.eo===key||state.mv===key||state.med===key||!!(state.adj&&state.adj.key===key)}
+function entBtn(key){const o=entOpen(key);return '<button type="button" class="ex eob" data-eo="'+key+'" aria-expanded="'+o+'" aria-label="'+(o?'Masquer les options':'Afficher les options')+'">'+(o?'−':'＋')+'</button>'}
+document.addEventListener('click',e=>{
+  const x=e.target.closest&&e.target.closest('#day [data-dx],#week [data-wx]');if(x){state.eo=null;return}
+},true);
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('#day [data-eo],#week [data-eo]');if(!b)return;
+  e.preventDefault();const k=b.dataset.eo;
+  if(entOpen(k)){state.eo=null;if(state.mv===k)state.mv=null;if(state.med===k)state.med=null;if(state.adj&&state.adj.key===k)state.adj=null}
+  else{state.eo=k}
+  if(k[0]==='d')renderDay();else renderWeek();
+});
+
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -4040,14 +4055,14 @@ function renderDay(){
   {const kp=Math.round(t.k/T.k*100),rk=T.k-t.k;
    const bt=(c,lab,v,tg,lim)=>{const pc=Math.min(100,Math.round(v/tg*100)),d=tg-v,sub=lab+' · '+(d>=0?'reste '+num(d,1)+' g':(lim?'+':'')+num(-d,1)+' g au-dessus');return '<div class="bt '+c+'"><b>'+num(v,1)+' / '+fmtN(tg)+' g</b><span>'+sub+'</span><i><u style="width:'+pc+'%"></u></i></div>'};
    h+=secT('Bilan du jour','palier '+T.k+' kcal')+'<div class="sum"><div class="hero2" style="border:0;box-shadow:none;background:none;padding:0;margin:0"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>'+fmtN(t.k)+' <small style="font-size:13px;font-weight:600;color:var(--muted)">/ '+fmtN(T.k)+' kcal</small></h3><div class="pbar"><i style="width:'+Math.min(100,kp)+'%"></i></div><small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+num(Math.max(0,T.p-t.p),1)+' g de protéines.')+'</small></div></div><div class="bento">'+bt('t-p','Protéines',t.p,T.p,false)+bt('t-g','Glucides',t.g,T.g,false)+bt('t-l','Lipides',t.l,T.l,true)+bt('t-f','Fibres',t.f,T.f,false)+'</div></div>';}
-  if(t.d>0){const sat=Math.round(T.k*0.1/9);h+='<div class="sum labd"><b>Détails étiquette</b> <small>Calculés sur les aliments saisis avec étiquette ('+num(t.d,0)+' sur '+num(t.k,0)+' kcal). Les recettes du carnet n\'ont pas ces valeurs.</small><div class="mts">'+meter('Acides gras saturés (repère : moins de 10 % des kcal)',t.a,sat,'g',true,1)+meter('Sel (repère OMS)',t.e,5,'g',true,2)+'</div><p class="note" style="margin:6px 0 0">Dont sucres : '+num(t.s,1)+' g</p></div>'}
+  if(false&&t.d>0){const sat=Math.round(T.k*0.1/9);h+='<div class="sum labd"><b>Détails étiquette</b> <small>Calculés sur les aliments saisis avec étiquette ('+num(t.d,0)+' sur '+num(t.k,0)+' kcal). Les recettes du carnet n\'ont pas ces valeurs.</small><div class="mts">'+meter('Acides gras saturés (repère : moins de 10 % des kcal)',t.a,sat,'g',true,1)+meter('Sel (repère OMS)',t.e,5,'g',true,2)+'</div><p class="note" style="margin:6px 0 0">Dont sucres : '+num(t.s,1)+' g</p></div>'}
   h+=secT('Mes repas','petit-déjeuner à dîner');
   SLOTS.forEach(([s,l])=>{
     const es=DAY[s];
     h+='<div class="slot"><div class="sh"><i class="sic s-'+s+'">'+SLI[s]+'</i><div class="sht"><h3>'+l+'</h3><small>'+SLS[s]+'</small></div><span>'+num(es.reduce((a,e)=>a+ent(e).k,0),0)+' kcal</span></div>';
     es.forEach((e,j)=>{const x=ent(e);const fs=/^FatSecret/i.test(x.n)||/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
       let stp=(fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('d',s,j,e));stp+=mvUI('d',s,j)+medUI('d',s,j,e);
-      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
+      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+entBtn('d:'+s+':'+j)+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+(entOpen('d:'+s+':'+j)?stp:'')+'</div>'});
     h+='<div class="sa"><button type="button" data-pick="'+s+'">+ Recette</button><button type="button" data-free="'+s+'">+ Aliment</button><button type="button" data-meal="'+s+'">★ Repas type</button></div>';
     if(state.meal===s){h+='<div class="pf">'+(MEALS.length?MEALS.map((m,i)=>state.delc==='M'+i?'<div class="mealrow"><span style="flex:1;font-size:13.5px">Supprimer « '+esc(m.n)+' » ?</span><button type="button" data-mdelok="'+i+'">Oui</button><button type="button" data-mdelno="1">Non</button></div>':'<div class="mealrow"><button type="button" class="mb2" data-muse="'+s+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal · '+m.e.length+' élément'+(m.e.length>1?'s':'')+'</small></button><button type="button" data-mdel="'+i+'" aria-label="Supprimer">✕</button></div>').join(''):'<p class="note" style="margin:0">Aucun repas type pour l\'instant.</p>')+(es.length?'<div class="mealrow"><input id="mname" type="text" placeholder="Nom du repas type" style="flex:1;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0"><button type="button" data-msave="'+s+'">Enregistrer ce repas</button></div>':'<p class="note" style="margin:6px 0 0">Compose d\'abord un repas pour pouvoir l\'enregistrer.</p>')+'</div>'}
     if(state.pick===s)h+='<div class="pk"><input id="pq" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.pq)+'" aria-label="Chercher une recette"><div id="pl"></div></div>';
@@ -4231,7 +4246,7 @@ function renderWeek(){
     h+='<div class="slot"><div class="sh"><i class="sic s-'+sk+'">'+SLI[sk]+'</i><div class="sht"><h3>'+sl+'</h3><small>'+SLS[sk]+'</small></div><span>'+num(es.reduce((a,x)=>a+ent(x[0]).k,0),0)+' kcal</span></div>';
     es.forEach(([e,j])=>{const x=ent(e);const fs=/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
       let stp=(fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('w',di,j,e));stp+=mvUI('w',di,j)+medUI('w',di,j,e);
-      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
+      h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+entBtn('w:'+di+':'+j)+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+(entOpen('w:'+di+':'+j)?stp:'')+'</div>'});
     h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button><button type="button" data-wfree="'+sk+'">+ Aliment</button>'+(MEALS.length?'<button type="button" data-wmeal="'+sk+'">★ Repas type</button>':'')+'</div>';
     if(state.wpick===sk)h+='<div class="pk"><input id="wqs" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.wq)+'" aria-label="Chercher une recette"><div id="wl"></div></div>';
     if(state.wfree===sk){const I=(id,l)=>'<label>'+l+'<input id="'+id+'" inputmode="decimal" placeholder="0"></label>';h+='<div class="pf"><div class="nf"><h4>Ajouter un aliment</h4><button type="button" class="nfph" data-nphoto="w"><span>📷</span><b>Photographier l\'étiquette</b><small>Remplit les valeurs automatiquement</small></button><input type="file" id="nphf" accept="image/*" capture="environment" hidden><div id="nphs" class="note nphs" hidden></div><button type="button" class="nfscan" data-scan="wk">📷 Scanner un code-barres</button><input id="wfs" type="search" placeholder="🔍  Chercher dans mes aliments ou la base" autocomplete="off"><div id="wfsr" class="fsr"></div><input id="wfn" type="text" placeholder="Nom de l\'aliment" aria-label="Nom"><div class="g2"><label>Valeurs données<select id="wfm"><option value="100">pour 100 g/ml</option><option value="1">pour la portion</option></select></label>'+I('wfq','Quantité (g ou ml)')+'</div><div class="pfg nfm">'+I('wfk','kcal')+I('wfp','Prot')+I('wfg','Gluc')+I('wfl','Lip')+I('wff','Fibres')+'</div><div class="dact"><button type="button" class="pri" data-wfadd="'+sk+'">Ajouter</button></div></div></div>'}
@@ -4893,7 +4908,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 183 (liste déroulante)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 185 (options repliées)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
