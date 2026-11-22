@@ -3384,7 +3384,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=179;
+const APPV=182;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3587,7 +3587,7 @@ function fzOk(r,q){
         else{
           if(l.k<1000)m.push('seulement '+fmtN(l.k)+' kcal');
           if(l.k>T.k+350)m.push(fmtN(l.k)+' kcal, bien au-dessus du palier');
-          if(l.p<T.p*0.6)m.push('protéines basses ('+fmtN(l.p)+' g)');
+          if(l.p<T.p*0.6)m.push('protéines basses ('+num(l.p,1)+' g)');
           if(!a.st)m.push('aucun pas enregistré');
         }
         if(a.st>35000)m.push(fmtN(a.st)+' pas, très élevé');
@@ -3780,6 +3780,42 @@ if(typeof WAT!=='object'||Array.isArray(WAT))WAT={};
   });
 })();
 
+/* ===== v181 : modifier n'importe quel repas (Journée et Semaine) ===== */
+function medUI(kind,a,j,e){
+  const key=kind+':'+a+':'+j,open=state.med===key,custom=e.x!==undefined;
+  let h='<button type="button" class="adjb" data-med="'+key+'">'+(open?'Fermer':'✎ Modifier les valeurs')+'</button>';
+  if(open){
+    const x=ent(e),f=v=>String(Math.round((v||0)*100)/100).replace('.',',');
+    const I=(id,l,v)=>'<label>'+l+'<input id="'+id+'" inputmode="decimal" value="'+f(v)+'"></label>';
+    h+='<div class="adjp"><p class="note" style="margin:0 0 6px">Change les valeurs du repas entier'+(e.q&&e.q!==1?' (×'+String(e.q).replace('.',',')+' déjà compté)':'')+', comme dans FatSecret (avec une virgule : 23,8).</p>'
+      +'<div class="g2 fm">'+(custom?'<label style="grid-column:1/-1">Nom<input id="medn" type="text" value="'+esc(e.x)+'"></label>':'')+I('medk','kcal',x.k)+I('medp','Protéines (g)',x.p)+I('medg','Glucides (g)',x.g)+I('medl','Lipides (g)',x.l)+I('medf','Fibres (g)',x.f)+'</div>'
+      +'<div class="adja"><button type="button" class="adjok" data-medok="'+key+'">Valider les valeurs</button>'+(!custom&&e.o?'<button type="button" class="adjrs" data-medrs="'+key+'">Recette d\'origine</button>':'')+'</div></div>';
+  }
+  return h;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('#day [data-med],#day [data-medok],#day [data-medrs],#week [data-med],#week [data-medok],#week [data-medrs]');if(!b)return;
+  e.preventDefault();
+  const ko=m=>{if(window.toast)toast(m,true)};
+  const redraw=key=>{if(key[0]==='d'){saveDay();renderDay()}else{saveWeek();renderWeek()}};
+  if(b.dataset.med!==undefined){state.med=state.med===b.dataset.med?null:b.dataset.med;if(b.dataset.med[0]==='d')renderDay();else renderWeek();return}
+  const key=b.dataset.medok||b.dataset.medrs,en=adjEntry(key);if(!en)return;
+  if(b.dataset.medrs){delete en.o;state.med=null;redraw(key);if(window.toast)toast('✓ Valeurs de la recette remises');return}
+  const n=id=>pnum(($(id)||{}).value),k=n('medk'),p=n('medp'),g=n('medg'),l=n('medl'),f=n('medf');
+  if(!(k>0&&k<=6000))return ko('Calories incorrectes (entre 1 et 6000).');
+  if([p,g,l,f].some(v=>v<0||v>600))return ko('Une valeur de macros est incorrecte.');
+  const q=en.q||1;
+  if(en.x!==undefined){
+    const nm=(($('medn')||{}).value||'').trim();if(!nm)return ko('Donne un nom au repas.');
+    ['s','a','e'].forEach(c=>{if(en[c]!==undefined)en[c]=en[c]*q});
+    en.x=nm;en.k=k;en.p=p;en.g=g;en.l=l;en.f=f;en.q=1;
+  }else{
+    en.o={k:k/q,p:p/q,g:g/q,l:l/q,f:f/q};
+  }
+  state.med=null;redraw(key);
+  if(window.toast)toast('✓ Repas modifié : '+Math.round(k)+' kcal');
+});
+
 function courseData(){
   const tot={};
   R.filter(r=>SEL.has(r.i)).forEach(r=>{const m=PORT[r.i]||1;r.par.forEach(([id,q])=>{const t=tot[id]||(tot[id]={q:0,has:false,n:[]});if(!t.n.includes(r.n))t.n.push(r.n);if(q){t.q+=q*m;t.has=true}})});
@@ -3958,7 +3994,7 @@ function renderDay(){
     const es=DAY[s];
     h+='<div class="slot"><div class="sh"><i class="sic s-'+s+'">'+SLI[s]+'</i><div class="sht"><h3>'+l+'</h3><small>'+SLS[s]+'</small></div><span>'+num(es.reduce((a,e)=>a+ent(e).k,0),0)+' kcal</span></div>';
     es.forEach((e,j)=>{const x=ent(e);const fs=/^FatSecret/i.test(x.n)||/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      let stp=(fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('d',s,j,e));stp+=mvUI('d',s,j);
+      let stp=(fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('d',s,j,e));stp+=mvUI('d',s,j)+medUI('d',s,j,e);
       h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
     h+='<div class="sa"><button type="button" data-pick="'+s+'">+ Recette</button><button type="button" data-free="'+s+'">+ Aliment</button><button type="button" data-meal="'+s+'">★ Repas type</button></div>';
     if(state.meal===s){h+='<div class="pf">'+(MEALS.length?MEALS.map((m,i)=>state.delc==='M'+i?'<div class="mealrow"><span style="flex:1;font-size:13.5px">Supprimer « '+esc(m.n)+' » ?</span><button type="button" data-mdelok="'+i+'">Oui</button><button type="button" data-mdelno="1">Non</button></div>':'<div class="mealrow"><button type="button" class="mb2" data-muse="'+s+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal · '+m.e.length+' élément'+(m.e.length>1?'s':'')+'</small></button><button type="button" data-mdel="'+i+'" aria-label="Supprimer">✕</button></div>').join(''):'<p class="note" style="margin:0">Aucun repas type pour l\'instant.</p>')+(es.length?'<div class="mealrow"><input id="mname" type="text" placeholder="Nom du repas type" style="flex:1;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0"><button type="button" data-msave="'+s+'">Enregistrer ce repas</button></div>':'<p class="note" style="margin:6px 0 0">Compose d\'abord un repas pour pouvoir l\'enregistrer.</p>')+'</div>'}
@@ -4142,7 +4178,7 @@ function renderWeek(){
     const es=day.map((e,j)=>[e,j]).filter(x=>wsl(x[0])===sk);
     h+='<div class="slot"><div class="sh"><i class="sic s-'+sk+'">'+SLI[sk]+'</i><div class="sht"><h3>'+sl+'</h3><small>'+SLS[sk]+'</small></div><span>'+num(es.reduce((a,x)=>a+ent(x[0]).k,0),0)+' kcal</span></div>';
     es.forEach(([e,j])=>{const x=ent(e);const fs=/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      let stp=(fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('w',di,j,e));stp+=mvUI('w',di,j);
+      let stp=(fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('w',di,j,e));stp+=mvUI('w',di,j)+medUI('w',di,j,e);
       h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+stp+'</div>'});
     h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button><button type="button" data-wfree="'+sk+'">+ Aliment</button>'+(MEALS.length?'<button type="button" data-wmeal="'+sk+'">★ Repas type</button>':'')+'</div>';
     if(state.wpick===sk)h+='<div class="pk"><input id="wqs" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.wq)+'" aria-label="Chercher une recette"><div id="wl"></div></div>';
@@ -4726,7 +4762,7 @@ function renderHist(){
   h+=blk('h-pr','chart','Protéines','7 derniers jours',bars('p','g',T.p),false);
   h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',25),false);
   const any=rows.filter(r=>r.k||r.st||r.w);
-  h+=blk('h-days','cal','Jour par jour','14 derniers jours','<div class="crs">'+(any.length?any.map(r=>{const dt=new Date(r.d+'T00:00:00');return '<div class="hrow"><b>'+JRS[dt.getDay()]+' '+fdate(r.d)+'</b><span>'+(r.k?fmtN(r.k)+' kcal · P '+fmtN(r.p)+' · G '+fmtN(r.g)+' · L '+fmtN(r.l)+' · F '+num(r.f,1):'<small>repas non enregistrés</small>')+'<small>'+(r.st?fmtN(r.st)+' pas':'')+(r.st&&r.w?' · ':'')+(r.w?num(r.w,1)+' kg':'')+'</small></span>'+(LOG[r.d]?'<button type="button" data-hldel="'+r.d+'" aria-label="Supprimer">✕</button>':'<span></span>')+'</div>'}).join(''):'<p class="note">Aucune donnée pour le moment.</p>')+'</div>',true);
+  h+=blk('h-days','cal','Jour par jour','14 derniers jours','<div class="crs">'+(any.length?any.map(r=>{const dt=new Date(r.d+'T00:00:00');return '<div class="hrow"><b>'+JRS[dt.getDay()]+' '+fdate(r.d)+'</b><span>'+(r.k?fmtN(r.k)+' kcal · P '+num(r.p,1)+' · G '+num(r.g,1)+' · L '+num(r.l,1)+' · F '+num(r.f,1):'<small>repas non enregistrés</small>')+'<small>'+(r.st?fmtN(r.st)+' pas':'')+(r.st&&r.w?' · ':'')+(r.w?num(r.w,1)+' kg':'')+'</small></span>'+(LOG[r.d]?'<button type="button" data-hldel="'+r.d+'" aria-label="Supprimer">✕</button>':'<span></span>')+'</div>'}).join(''):'<p class="note">Aucune donnée pour le moment.</p>')+'</div>',true);
   $('history').innerHTML=h;
   if(state.hrctx&&$('hrctx')){$('hrctx').focus();$('hrctx').select()}
 }
@@ -4805,7 +4841,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 179 (décimales jauges)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 182 (décimales partout)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
