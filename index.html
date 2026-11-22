@@ -3362,7 +3362,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=164;
+const APPV=165;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -3513,12 +3513,12 @@ document.addEventListener('click',e=>{
   render=function(){
     const T=targets(),eat=dayTot(),rk=Math.round(T.k-eat.k),rp=Math.round(T.p-eat.p);
     state.frk=rk;state.frp=Math.max(0,rp);
-    if(rk<150)state.frest=false;
+    const useful=rk>=150&&eat.k>=100;if(!useful)state.frest=false;
     const r=r0.apply(this,arguments);
     try{
       let bar=document.getElementById('restbar');
       if(!bar){bar=document.createElement('div');bar.id='restbar';const g=$('grid');g.parentNode.insertBefore(bar,g)}
-      bar.innerHTML=rk>=150?'<button type="button" class="restb'+(state.frest?' on':'')+'" data-rest="1"><span><b>Il te reste '+rk+' kcal'+(rp>0?' · '+rp+' g de protéines':'')+'</b><small>'+(state.frest?'Recettes adaptées, les plus riches en protéines d\'abord. Appuie pour retirer.':'Appuie pour voir les recettes qui rentrent dans ton reste du jour.')+'</small></span></button>':'';
+      bar.innerHTML=useful?'<button type="button" class="restb'+(state.frest?' on':'')+'" data-rest="1"><span><b>Il te reste '+rk+' kcal'+(rp>0?' · '+rp+' g de protéines':'')+'</b><small>'+(state.frest?'Recettes adaptées, les plus riches en protéines d\'abord. Appuie pour retirer.':'Appuie pour voir les recettes qui rentrent dans ton reste du jour.')+'</small></span></button>':'';
     }catch(e){}
     return r};
   document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-rest]');if(!b)return;state.frest=!state.frest;render()});
@@ -4615,7 +4615,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 164 (contrôle des jours) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 165 (barre du reste) <button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
