@@ -3528,7 +3528,7 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest&&e.target.closest('[data-bkq]');if(!b)return;
   e.preventDefault();b.disabled=true;b.textContent='Préparation…';
   try{
-    const o=bObj(false);const t=await gz(JSON.stringify(o));
+    const t=await genBackup();
     const nm='carnet-sauvegarde-'+today()+'.txt',f=new File([t],nm,{type:'text/plain'});
     if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'Sauvegarde du carnet'});
     else if(navigator.share)await navigator.share({title:'Sauvegarde du carnet',text:t});
@@ -3566,7 +3566,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=212;
+const APPV=213;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5335,18 +5335,18 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 212 (améliorations)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 213 (sauvegarde)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
   h+='<div class="'+(emp?'al al-warn':'sum')+'"><p style="margin:0"><b>Données sur cet appareil :</b> '+bsum(cur)+'.'+(emp?' <b>Rien à sauvegarder pour le moment</b> : cette version n\'a pas tes données. Si tu les avais dans l\'ancienne version, fais la sauvegarde là-bas.':'')+'</p></div>';
   if(state.bmsg)h+='<p class="msg">'+esc(state.bmsg)+'</p>';
-  h+=blk('s-new','dl','Faire une sauvegarde','copier dans tes notes','<div class="fm" style="border:0;padding:0"><label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="bph" style="width:22px;min-height:22px" checked> Inclure mes photos (recommandé, un peu plus lourd)</label><div class="bkb"><button type="button" class="pri" data-bk="copy">Générer et copier</button><button type="button" data-bk="share">Partager en fichier</button></div><p class="note" id="bshm" style="margin:0">« Partager en fichier » ouvre le menu de ton téléphone (Fichiers, Notes, AirDrop, Drive…). S\'il ne s\'ouvre pas, utilise « Générer et copier ».</p><label>Sauvegarde<textarea id="bt" rows="5" placeholder="La sauvegarde apparaît ici"></textarea></label><p class="note" style="margin:0">Le texte est compressé : il est beaucoup plus court qu\'avant. Il commence par « CP1: ».</p></div>',true);
+  h+=blk('s-new','dl','Copier le texte','secours si le partage ne marche pas','<div class="fm" style="border:0;padding:0"><p class="note" style="margin:0">Le bouton « Sauvegarder maintenant » suffit en général. Si le menu de partage ne s\'ouvre pas sur ton téléphone, génère le texte ici, copie-le et colle-le dans Notes. Tes photos sont incluses.</p><div class="bkb"><button type="button" class="pri" data-bk="copy">Générer et copier</button></div><label>Sauvegarde<textarea id="bt" rows="5" placeholder="La sauvegarde apparaît ici"></textarea></label><p class="note" id="bshm" style="margin:0">Le texte est compressé. Il commence par « CP1: ».</p></div>',true);
   h+=blk('s-res','copy','Restaurer','coller une sauvegarde','<div class="fm" style="border:0;padding:0"><p class="note" style="margin:0">Un fichier enregistré en pièce jointe dans Notes n\'est pas visible ici. Enregistre-le plutôt dans l\'appli Fichiers, ou copie son texte.</p><label>Choisir un fichier de sauvegarde<input type="file" id="bfile" accept="*/*"></label><label>Ou colle ta sauvegarde ici<textarea id="br" rows="4" placeholder="Colle le texte de ta sauvegarde"></textarea></label><div class="bkb"><button type="button" data-bk="check">Vérifier le contenu</button></div>'+(state.bprev?'<div class="sum"><p style="margin:0"><b>Sauvegarde du '+bdt(state.bprev.t)+' :</b> '+bsum(state.bprev)+'.</p><p class="note" style="margin:6px 0 0">La restauration remplace les données actuelles. Un point de retour est gardé automatiquement.</p></div><div class="bkb"><button type="button" class="pri" data-bk="confirm">Confirmer la restauration</button><button type="button" data-bk="cancel">Annuler</button></div>':'')+'</div>',!!state.bprev);
   h+=blk('s-auto','star','Points de retour automatiques','3 derniers jours','<p class="note" style="margin:0">L\'appli garde seule une copie par jour (sans photos), sur cet appareil. Utile si tu te trompes ; ne remplace pas la copie dans tes notes.</p><div class="crs">'+(S.length?S.map((x,i)=>'<div class="rl"><span>'+bdt(x.t)+'<br><small>'+bsum(x.o)+'</small></span><button type="button" data-bk="snap:'+i+'">Revenir</button></div>').join(''):'<p class="note">Aucune pour le moment.</p>')+(pr?'<div class="rl"><span>Avant la dernière restauration<br><small>'+bdt(pr.t)+' · '+bsum(pr.o)+'</small></span><button type="button" data-bk="pre">Revenir</button></div>':'')+'</div>',false);
   $('bak').innerHTML=h;
 }
-async function genBackup(){const w=!!($('bph')&&$('bph').checked);const o=bObj(w);if(w&&PHN){PHN=0;lsw('ph-new',0);phBanner()}return await gz(JSON.stringify(o))}
+async function genBackup(){const o=bObj(true);if(PHN){PHN=0;lsw('ph-new',0);phBanner()}return await gz(JSON.stringify(o))}
 document.addEventListener('change',e=>{if(e.target.id!=='bfile'||!e.target.files[0])return;const fr=new FileReader();fr.onload=()=>{$('br').value=String(fr.result||'');const c=document.querySelector('[data-bk=check]');if(c)c.click()};fr.readAsText(e.target.files[0])});
 document.addEventListener('click',async e=>{
   const pc=e.target.closest('[data-aact=pclip]');
