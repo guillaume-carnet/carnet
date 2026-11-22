@@ -3564,7 +3564,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=209;
+const APPV=210;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4009,14 +4009,14 @@ myList=function(){
     let h='<div class="mdi'+(o?' open':'')+'"><button type="button" class="mdh" data-mopen="'+i+'" aria-expanded="'+o+'"><span class="mdn"><b>'+esc(f.n)+'</b><small>'+Math.round(f.k)+' kcal · P '+num(f.p,1)+' · F '+num(f.f,1)+(f.nf?' ?':'')+' · '+un+'</small></span><i class="mdc" aria-hidden="true">'+(o?'▴':'▾')+'</i></button>';
     if(o)h+='<div class="mdb"><div class="fdm"><div class="k"><b>'+Math.round(f.k)+'</b><span>kcal</span></div><div><b>'+num(f.p,1)+'</b><span>Prot</span></div><div><b>'+num(f.g,1)+'</b><span>Gluc</span></div><div><b>'+num(f.l,1)+'</b><span>Lip</span></div><div><b>'+num(f.f,1)+'</b><span>Fibres'+(f.nf?' ?':'')+'</span></div></div>'+(f.nf?'<small class="nfx">Fibres non renseignées : à compléter avec l\'emballage (✎).</small>':'')+'<div class="mda"><button type="button" data-mact="edit:'+i+'">✎ Modifier</button><button type="button" data-mact="del:'+i+'">✕ Supprimer</button></div></div>';
     return h+'</div>'};
-  const G=[['gr','Matières grasses & sauces',/huile|\boil\b|olive|mayo|sauce|ketchup|moutarde|vinaigre|pesto|beurre|margarine/],
+  const G=[['pw','Whey, barres & compléments',/whey|prozis|isolat|casein|proteine en poudre|barre|creatine|shaker|gainer/],['sc','Sucré & gourmandises',/chocolat|biscuit|cookie|miel|confiture|sucre|gateau|bonbon|nutella|sirop|dessert|glace/],['gr','Matières grasses & sauces',/huile|\boil\b|olive|mayo|sauce|ketchup|moutarde|vinaigre|pesto|beurre|margarine/],
    ['lt','Laitages & fromages',/skyr|fromage|yaourt|yogourt|\blait\b|mozzarella|emmental|raclette|parmesan|feta|cottage|creme|faisselle|petit suisse|gruyere|comte|chevre|brie|camembert/],
    ['vp','Viandes, poissons & œufs',/poulet|dinde|boeuf|veau|porc|jambon|lardon|steak|saucisse|thon|saumon|cabillaud|poisson|crevette|surimi|foie|bacon|viande|oeuf|merguez|colin|sardine|maquereau|canard|lapin|agneau/],
-   ['fe','Féculents & céréales',/\briz\b|pate|pates|pomme de terre|patate|quinoa|semoule|flocon|avoine|pain|wrap|tortilla|granola|muesli|boulgour|lentille|pois chiche|haricots rouges|torti|spaghetti|farine|biscotte|galette|cereale|fiorini|penne|macaroni|gnocchi/],
+   ['fe','Féculents & céréales',/\briz\b|pate|pates|coquillette|vermicelle|nouille|tagliatelle|fusilli|farfalle|lasagne|ravioli|couscous|polenta|pomme de terre|patate|quinoa|semoule|flocon|avoine|pain|wrap|tortilla|granola|muesli|boulgour|lentille|pois chiche|haricots rouges|torti|spaghetti|farine|biscotte|galette|cereale|fiorini|penne|macaroni|gnocchi/],
    ['lg','Légumes & fruits',/legume|brocoli|courgette|aubergine|carotte|tomate|poivron|haricot|pois|epinard|\bchou|salade|laitue|oignon|champignon|banane|pomme|fruit|orange|fraise|avocat|puree|concombre|poireau|compote|citron|ail\b/]];
   const grp=f=>{const t=nrm(f.n);for(const g of G)if(g[2].test(t))return g[0];return 'ot'};
   const names=Object.fromEntries(G.map(g=>[g[0],g[1]]));names.ot='Autres';
-  const order=['vp','lt','fe','lg','gr','ot'],by={};
+  const order=['vp','lt','fe','lg','pw','sc','gr','ot'],by={};
   L.forEach(x=>{(by[grp(x[0])]=by[grp(x[0])]||[]).push(x)});
   return '<div class="fav2 mdd mgs">'+order.filter(k=>by[k]).map(k=>{
     const o=!!MGOPEN[k]||!!q;
@@ -4039,7 +4039,7 @@ myList=function(){
     e.preventDefault();
     if(b.dataset.mgrp!==undefined){const k=b.dataset.mgrp;if(MGOPEN[k])delete MGOPEN[k];else MGOPEN[k]=1;$('mlist').innerHTML=myList();return}
     if(b.dataset.mopen!==undefined){const i=b.dataset.mopen;if(MOPEN[i])delete MOPEN[i];else MOPEN[i]=1;$('mlist').innerHTML=myList();return}
-    if(b.dataset.mall!==undefined){MOPEN={};MGOPEN={};if(b.dataset.mall==='1'){FOODS.forEach((x,i)=>MOPEN[i]=1);['vp','lt','fe','lg','gr','ot'].forEach(k=>MGOPEN[k]=1)}$('mlist').innerHTML=myList();return}
+    if(b.dataset.mall!==undefined){MOPEN={};MGOPEN={};if(b.dataset.mall==='1'){FOODS.forEach((x,i)=>MOPEN[i]=1);['vp','lt','fe','lg','pw','sc','gr','ot'].forEach(k=>MGOPEN[k]=1)}$('mlist').innerHTML=myList();return}
     const per=FOODS.filter(f=>f.per===100),por=FOODS.filter(f=>f.per!==100);
     let t=per.map(f=>[f.n,Math.round(f.k*10)/10,f2(f.p),f2(f.g),f2(f.l),f.nf?'':f2(f.f)].join(' ; ').replace(/ ; (\d+),?(\d*) ; /,(m,a,c)=>m)+(f.un==='ml'?' ; ml':'')).join('\n');
     t=per.map(f=>[f.n,f2(f.k),f2(f.p),f2(f.g),f2(f.l),f.nf?'':f2(f.f)].join(' ; ')+(f.un==='ml'?' ; ml':'')).join('\n');
@@ -5288,7 +5288,7 @@ function renderBak(){
   let h='<h2>Sauvegarde</h2><p class="note">Tes données sont stockées sur cet appareil et peuvent disparaître si l\'appli nettoie son stockage. Copie une sauvegarde dans tes notes une fois par semaine.</p>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 209 (groupes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 210 (groupes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
