@@ -2259,6 +2259,19 @@ let SEX=(()=>{try{return JSON.parse(localStorage.getItem('cp-sexe')||'"h"')==='f
 const PALIERS=PROF[SEX].pal.map(x=>Object.assign({},x));
 const PAL_START=[['2026-11-16',0],['2026-11-23',1],['2026-11-30',2],['2026-12-07',3]];
 let PALAUTO=true;
+const PROF0=JSON.parse(JSON.stringify(PROF));
+let PU=(()=>{try{return JSON.parse(localStorage.getItem('cp-pu')||'null')}catch(e){return null}})();
+const PU_ACT={sed:1.2,leg:1.375,act:1.55,spo:1.725},PU_ACTL={sed:'Sédentaire (peu de sport)',leg:'Légèrement actif (1 à 3 séances)',act:'Actif (3 à 5 séances)',spo:'Très actif (6 séances ou plus)'},PU_GL={perte:'Perdre du gras',maintien:'Maintenir mon poids',muscle:'Prendre du muscle'};
+function puCalc(u){
+  const bmr=10*u.w+6.25*u.h-5*u.age+(u.sex==='f'?-161:5),tdee=bmr*(PU_ACT[u.act]||1.55);
+  const st=u.goal==='perte'?tdee-500:u.goal==='muscle'?tdee+100:tdee-150,r50=x=>Math.round(x/50)*50;
+  const p=Math.round(u.w*(u.goal==='perte'?2.2:2)/5)*5,l=Math.max(35,Math.round(u.w*0.8/5)*5);
+  const pal=[0,1,2,3].map(i=>{const k=r50(st+100*i);return{k,g:Math.max(60,Math.round((k-4*p-9*l)/4))}});
+  const f=Math.min(30,Math.max(22,Math.round(14*pal[1].k/1000)));
+  return{bmr:Math.round(bmr),tdee:Math.round(tdee),pal,p,l,f,pi:u.goal==='maintien'?1:0};
+}
+function puApplyData(u){const c=puCalc(u);PROF[u.sex]={p:c.p,l:c.l,f:c.f,pal:c.pal};SEX=u.sex;PALIERS.splice(0,PALIERS.length,...c.pal.map(x=>Object.assign({},x)));return c}
+if(PU&&PU.on){try{puApplyData(PU)}catch(e){PU=null}}
 function autoPal(){const t=today();let k=0;PAL_START.forEach(([d,i])=>{if(t>=d)k=i});return k}
 function nextPal(){const t=today();return PAL_START.find(([d])=>d>t)||null}
 
@@ -3681,7 +3694,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=227;
+const APPV=228;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4548,7 +4561,7 @@ function parseNutri(t,q){
   o.per100=per100&&!(q>0);return o;
 }
 function dayTot(){const t={k:0,p:0,g:0,l:0,f:0,s:0,a:0,e:0,d:0};SLOTS.forEach(([s])=>DAY[s].forEach(e=>{const x=ent(e);for(const m in t)t[m]+=x[m]}));return t}
-function targets(){const p=PALIERS[state.pal];return{k:p.k,p:PROF[SEX].p,g:p.g,l:PROF[SEX].l,f:25}}
+function targets(){const p=PALIERS[state.pal];return{k:p.k,p:PROF[SEX].p,g:p.g,l:PROF[SEX].l,f:PROF[SEX].f||25}}
 function meter(lab,v,t,unit,limit,d){
   const over=v>t,pct=Math.min(100,Math.round(v/t*100)),rest=t-v;
   const msg=limit?(over?'dépassé de '+num(-rest,d)+' '+unit:'reste '+num(rest,d)+' '+unit):(v>=t?'objectif atteint ✓':'reste '+num(rest,d)+' '+unit);
@@ -5038,14 +5051,25 @@ function actCalc(d){
 function lastDays(n){const o=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);o.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))}return o}
 const JRS=['dim','lun','mar','mer','jeu','ven','sam'];
 function palHome(){const pal=$('palier'),bar=document.querySelector('.bar');if(pal&&bar&&pal.parentNode!==bar.parentNode)bar.parentNode.insertBefore(pal,bar)}
+function puRes(c){return '<b>Résultat</b> : calories de maintien environ '+fmtN(c.tdee)+' kcal. Paliers : '+c.pal.map(x=>x.k).join(' · ')+' kcal. Protéines '+c.p+' g, lipides '+c.l+' g, fibres '+c.f+' g, glucides '+c.pal[c.pi].g+' g (palier '+c.pal[c.pi].k+').'}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-puc]');if(!b)return;
+  if(b.dataset.puc==='calc'){const u={sex:$('pu-sex').value==='f'?'f':'h',age:pnum($('pu-age').value),h:pnum($('pu-h').value),w:pnum($('pu-w').value),act:$('pu-act').value,goal:$('pu-goal').value};
+    if(!(u.age>=14&&u.age<=100&&u.h>=120&&u.h<=230&&u.w>=35&&u.w<=250)){$('pures').textContent='Vérifie les chiffres : âge (14 à 100), taille (120 à 230 cm), poids (35 à 250 kg).';return}
+    if(!(PU&&PU.on))u.prev=SEX;else u.prev=PU.prev;u.on=true;const c=puApplyData(u);lsw('cp-sexe',u.sex);u.pi=c.pi;PU=u;lsw('cp-pu',u);
+    PALAUTO=false;lsw('cp-palauto',false);state.pal=c.pi;BODY.h=u.h;lsw('cp-body',BODY);
+    renderSex();renderMoi();if(window.toast)toast('✓ Objectifs calculés')}
+  else if(b.dataset.puc==='reset'){const pv=PU&&PU.prev||'h';Object.keys(PROF0).forEach(k=>{PROF[k]=JSON.parse(JSON.stringify(PROF0[k]))});SEX=pv;lsw('cp-sexe',pv);PALIERS.splice(0,PALIERS.length,...PROF[pv].pal.map(x=>Object.assign({},x)));PU=Object.assign({},PU,{on:false});lsw('cp-pu',PU);PALAUTO=true;lsw('cp-palauto',true);state.pal=autoPal();renderSex();renderMoi();if(window.toast)toast('✓ Réglages de départ remis')}
+});
 function renderMoi(){
   palHome();
   const I=(id,lab)=>'<label>'+lab+'<input id="'+id+'" inputmode="decimal"></label>';
   let h='<h2>Moi</h2><p class="note">Mes infos et mes objectifs, au même endroit. Tout est enregistré sur cet appareil.</p>';
   h+=secT('Mon palier calorique','profil, palier, mode auto')+'<div id="mepal"></div>';
+  h+=secT('Calculer mes objectifs','calories, protéines, lipides, fibres')+'<div class="sum"><p class="note" style="margin:0 0 8px">Remplis une fois : l\'appli calcule tes paliers de calories et tes objectifs. C\'est un repère, pas un avis médical.'+(PU&&PU.on?' <b>Calcul actif.</b>':'')+'</p><div class="fm"><div class="g2"><label>Sexe<select id="pu-sex"><option value="h">Homme</option><option value="f">Femme</option></select></label>'+I('pu-age','Âge')+I('pu-h','Taille (cm)')+I('pu-w','Poids (kg)')+'</div><label>Activité<select id="pu-act">'+Object.keys(PU_ACTL).map(k=>'<option value="'+k+'">'+PU_ACTL[k]+'</option>').join('')+'</select></label><label>Objectif<select id="pu-goal">'+Object.keys(PU_GL).map(k=>'<option value="'+k+'">'+PU_GL[k]+'</option>').join('')+'</select></label><button type="button" class="pri" data-puc="calc">Calculer et appliquer</button>'+(PU&&PU.on?'<button type="button" data-puc="reset">Revenir aux réglages de départ</button>':'')+'</div><div id="pures" class="note" style="margin-top:8px"></div></div>';
   h+=secT('Mon corps','taille, poids cible, activité')+'<div class="sum"><div class="fm"><div class="g2">'+I('bh','Taille (cm)')+I('bkc','Calories moyennes mangées / jour')+I('bz1','Zone cible : min (kg)')+I('bz2','Plafond à ne pas dépasser (kg)')+'</div><label>Activité<select id="bact"><option value="1.2">Sédentaire (×1,2)</option><option value="1.375">Légère, 1 à 3 séances (×1,375)</option><option value="1.55">Modérée, 3 à 5 séances (×1,55)</option><option value="1.725">Intense, 6 à 7 séances (×1,725)</option></select></label><p class="note">Laisse les calories vides pour utiliser ton palier du jour ('+targets().k+' kcal). La taille sert à l\'IMC et aux ratios.</p><button type="button" class="pri" data-bset="1">Enregistrer mes infos</button></div></div>';
   h+=secT('Mes pas','objectif par jour')+'<div class="sum"><div class="fm"><label>Objectif de pas par jour<input id="agoal" inputmode="numeric"></label><button type="button" class="pri" data-aact="gsave">Enregistrer l\'objectif</button></div></div>';
   $('me').innerHTML=h;
+  if(PU){$('pu-sex').value=PU.sex;$('pu-age').value=PU.age;$('pu-h').value=PU.h;$('pu-w').value=PU.w;$('pu-act').value=PU.act;$('pu-goal').value=PU.goal;if(PU.on){const c=puCalc(PU);$('pures').innerHTML=puRes(c)}}else{$('pu-h').value=BODY.h}
   $('bh').value=BODY.h;$('bkc').value=BODY.kc||'';$('bz1').value=BODY.zmin;$('bz2').value=BODY.zmax;$('bact').value=String(BODY.act);$('agoal').value=GOAL;
   const pal=$('palier');$('mepal').appendChild(pal);pal.open=true;
 }
@@ -5365,7 +5389,7 @@ function renderHist(){
   h+=blk('h-pr','chart','Protéines','7 derniers jours',bars('p','g',T.p),false);
   h+=blk('h-gl','chart','Glucides','7 derniers jours',bars('g','g',T.g),false);
   h+=blk('h-li','chart','Lipides','7 derniers jours',bars('l','g',T.l,true),false);
-  h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',25),false);
+  h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',T.f),false);
   {/* conseil de la semaine */
    const S=bodyStats(),r7=rows.slice(0,7),kd=r7.filter(r=>r.k>0),av=kd.length?kd.reduce((q,r)=>q+r.k,0)/kd.length:0,nx=PALIERS[state.pal+1];
    let tx='',cl='';
@@ -5374,6 +5398,8 @@ function renderHist(){
     const ev='Cette semaine : '+fmtN(av)+' kcal en moyenne (palier '+fmtN(T.k)+'), poids moyen '+num(S.a7,1)+' kg ('+(rt>0?'+':'')+num(rt,2)+' kg par rapport à la semaine d\'avant). ';
     if(S.a7>BODY.zmax){tx=ev+'Ton poids dépasse ton plafond de '+num(BODY.zmax,1)+' kg : reste sur ton palier actuel et ne monte pas.';cl='warn'}
     else if(Math.abs(dv)>150){tx=ev+'Tu es loin de ton palier : le poids ne dit pas grand-chose tant que tu ne manges pas autour de '+fmtN(T.k)+' kcal. Vise ce chiffre avant de changer de palier.';cl='info'}
+    else if(PU&&PU.on&&PU.goal==='perte'){tx=ev+(rt<-0.8?'Tu perds vite. '+(nx?'Passe au palier suivant ('+nx.k+' kcal) pour garder du muscle.':'Ajoute environ 100 kcal par jour.'):rt>0.4?'Le poids monte alors que tu veux perdre. '+(state.pal>0?'Redescends d\'un palier.':'Vérifie tes quantités et tes pesées, puis garde ce palier.'):rt>-0.1?'Le poids stagne. Garde ce palier une semaine de plus avant de changer.':'Bon rythme de perte. Garde ton palier.');cl='ok'}
+    else if(PU&&PU.on&&PU.goal==='muscle'){tx=ev+(rt<0.1?'Le poids ne monte pas. '+(nx?'Passe au palier suivant ('+nx.k+' kcal).':'Ajoute environ 100 kcal par jour.'):rt>0.5?'Tu prends vite : une partie sera du gras. Garde ou redescends d\'un palier.':'Bon rythme de prise. Garde ton palier.');cl='ok'}
     else if(rt<-0.5){tx=ev+'Le poids baisse vite. '+(nx?'Tu peux passer au palier suivant ('+nx.k+' kcal).':'Ajoute environ 100 kcal par jour.');cl='ok'}
     else if(rt>0.4){tx=ev+'Le poids monte vite. Garde ton palier actuel cette semaine, ne monte pas.';cl='warn'}
     else{tx=ev+'Le poids est stable. '+(nx?'Tu peux passer au palier suivant ('+nx.k+' kcal) si tu veux continuer à remonter.':'Tu es au dernier palier : garde-le.');cl='ok'}}
@@ -5477,7 +5503,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 227 (bilan du mois)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 228 (calcul des objectifs)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -5544,7 +5570,7 @@ $('cook').addEventListener('click',e=>{
     CK.run=!CK.run;clearInterval(CKT);if(CK.run)CKT=setInterval(ckTick,1000);cookRender();return}
   if(a==='rst'){CK.t=0;CK.fin=false;CK.run=false;clearInterval(CKT);cookRender();return}
 });
-PALAUTO=ls('cp-palauto',true);if(PALAUTO)state.pal=autoPal();
+PALAUTO=ls('cp-palauto',true);if(PALAUTO)state.pal=autoPal();else if(PU&&PU.on)state.pal=Math.min(PU.pi||0,PALIERS.length-1);
 reconcileDay();
 renderChips();renderSex();renderPalier();render();renderViews();
 $('eyebrow').textContent=R.length+' recettes · macros par portion';
