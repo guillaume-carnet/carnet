@@ -3681,7 +3681,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=224;
+const APPV=226;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4837,7 +4837,7 @@ document.addEventListener('click',e=>{
   if(d.wsug){const sl=($('wsugsel')||{}).value||'dej';state.wsl=sl;WEEK[state.wd].push({r:+d.wsug,q:+d.q||1,sl});saveWeek();renderWeek();return}
   if(d.waddr){WEEK[state.wd].push({r:+d.waddr,q:1,sl:state.wpick});saveWeek();state.wpick=null;renderWeek();return}
   if(d.wq){const [di,j,dl]=d.wq.split(':');const en=WEEK[+di][+j];en.q=Math.max(0.25,Math.round(((en.q||1)+0.25*(+dl))*4)/4);saveWeek();renderWeek();return}
-  if(d.wact==='use'){const n=WEEK[state.wd].length;WEEK[state.wd].forEach(e=>{const c=JSON.parse(JSON.stringify(e));const sl=wsl(c);delete c.sl;DAY[sl].push(c)});saveDay();state.view='jr';renderViews();render();window.scrollTo(0,0);return}
+  if(d.wact==='use'){const n=WEEK[state.wd].length;const sync=(WOFF===0&&state.wd===wToday());if(!sync)WEEK[state.wd].forEach(e=>{const c=JSON.parse(JSON.stringify(e));const sl=wsl(c);delete c.sl;DAY[sl].push(c)});if(!sync)saveDay();state.view='jr';renderViews();render();window.scrollTo(0,0);return}
   if(d.wx){const [di,j]=d.wx.split(':');WEEK[+di].splice(+j,1);saveWeek();renderWeek();return}
   if(d.wact==='cart'){const c={};WEEK.forEach(day=>day.forEach(en=>{if(en.r!==undefined)c[en.r]=(c[en.r]||0)+effQ(en)}));Object.keys(c).forEach(k=>{SEL.add(+k);PORT[+k]=Math.max(1,Math.min(9,Math.ceil(c[k]-0.001)))});saveSel();saveX();state.view='crs';state.cmode='rec';renderViews();render();window.scrollTo(0,0);return}
   if(d.wact==='copy'){const t=weekText();const fb=()=>{state.wctx=t;renderWeek()};try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>{b.textContent='Copié ✓'}).catch(fb)}else fb()}catch(x){fb()}return}
@@ -5366,6 +5366,30 @@ function renderHist(){
   h+=blk('h-gl','chart','Glucides','7 derniers jours',bars('g','g',T.g),false);
   h+=blk('h-li','chart','Lipides','7 derniers jours',bars('l','g',T.l,true),false);
   h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',25),false);
+  {/* conseil de la semaine */
+   const S=bodyStats(),r7=rows.slice(0,7),kd=r7.filter(r=>r.k>0),av=kd.length?kd.reduce((q,r)=>q+r.k,0)/kd.length:0,nx=PALIERS[state.pal+1];
+   let tx='',cl='';
+   if(kd.length<4||!S||S.rate===null){tx='Pas encore assez de données. Pour un conseil fiable, enregistre tes repas au moins 4 jours par semaine et pèse-toi au moins 2 matins par semaine, sur 2 semaines.';cl='info'}
+   else{const rt=S.rate,dv=av-T.k;
+    const ev='Cette semaine : '+fmtN(av)+' kcal en moyenne (palier '+fmtN(T.k)+'), poids moyen '+num(S.a7,1)+' kg ('+(rt>0?'+':'')+num(rt,2)+' kg par rapport à la semaine d\'avant). ';
+    if(S.a7>BODY.zmax){tx=ev+'Ton poids dépasse ton plafond de '+num(BODY.zmax,1)+' kg : reste sur ton palier actuel et ne monte pas.';cl='warn'}
+    else if(Math.abs(dv)>150){tx=ev+'Tu es loin de ton palier : le poids ne dit pas grand-chose tant que tu ne manges pas autour de '+fmtN(T.k)+' kcal. Vise ce chiffre avant de changer de palier.';cl='info'}
+    else if(rt<-0.5){tx=ev+'Le poids baisse vite. '+(nx?'Tu peux passer au palier suivant ('+nx.k+' kcal).':'Ajoute environ 100 kcal par jour.');cl='ok'}
+    else if(rt>0.4){tx=ev+'Le poids monte vite. Garde ton palier actuel cette semaine, ne monte pas.';cl='warn'}
+    else{tx=ev+'Le poids est stable. '+(nx?'Tu peux passer au palier suivant ('+nx.k+' kcal) si tu veux continuer à remonter.':'Tu es au dernier palier : garde-le.');cl='ok'}}
+   h+=blk('h-adv','chart','Conseil de la semaine','selon ton poids et tes calories','<p style="margin:0">'+tx+'</p><p class="note" style="margin:8px 0 0">Simple repère, pas un avis médical. Les variations de moins de 0,3 kg sont normales d\'un jour à l\'autre.</p>',true);
+   const ds=rows.slice(0,14).reverse(),wv=ds.map(r=>r.w).filter(x=>x>0);
+   if(ds.some(r=>r.k)||wv.length){
+    const W=336,Hh=130,pl=34,pb=18,iw=W-pl-6,ih=Hh-pb-6,mk=Math.max(T.k,...ds.map(r=>r.k),1)*1.1,w0=wv.length?Math.min(...wv)-0.3:0,w1=wv.length?Math.max(...wv)+0.3:1,bw=iw/ds.length;
+    let sv='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="Poids et calories sur 14 jours" style="width:100%;height:auto;display:block">';
+    ds.forEach((r,i)=>{const x=pl+i*bw,bh=r.k/mk*ih;sv+='<rect x="'+(x+1.5)+'" y="'+(6+ih-bh)+'" width="'+(bw-3)+'" height="'+bh+'" rx="2" fill="var(--m-p)" opacity=".35"/>';if(i%2===0||i===ds.length-1)sv+='<text x="'+(x+bw/2)+'" y="'+(Hh-4)+'" font-size="9" text-anchor="middle" fill="var(--muted)">'+JRS[new Date(r.d+'T00:00:00').getDay()]+'</text>'});
+    const ty=6+ih-T.k/mk*ih;sv+='<line x1="'+pl+'" x2="'+(W-6)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--m-p)" stroke-dasharray="3 3" opacity=".7"/>';
+    if(wv.length){const pts=ds.map((r,i)=>r.w?[pl+i*bw+bw/2,6+ih-(r.w-w0)/(w1-w0)*ih,r.w]:null).filter(Boolean);
+     sv+='<polyline points="'+pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')+'" fill="none" stroke="var(--m-g)" stroke-width="2.5" stroke-linejoin="round"/>';
+     pts.forEach(q=>{sv+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.5" fill="var(--m-g)"/>'});
+     sv+='<text x="2" y="14" font-size="9" fill="var(--m-g)">'+num(w1,1)+'</text><text x="2" y="'+(6+ih)+'" font-size="9" fill="var(--m-g)">'+num(w0,1)+'</text>'}
+    sv+='</svg>';
+    h+=blk('h-wc','chart','Poids et calories','14 derniers jours',sv+'<p class="note" style="margin:6px 0 0"><b style="color:var(--m-g)">●</b> poids (kg) · <b style="color:var(--m-p)">▮</b> calories par jour · ligne pointillée = ton palier ('+fmtN(T.k)+' kcal)</p>',false)}}
   const any=rows.filter(r=>r.k||r.st||r.w);
   h+=blk('h-days','cal','Jour par jour','14 derniers jours','<div class="crs">'+(any.length?any.map(r=>{const dt=new Date(r.d+'T00:00:00');return '<div class="hrow"><b>'+JRS[dt.getDay()]+' '+fdate(r.d)+'</b><span>'+(r.k?fmtN(r.k)+' kcal · P '+num(r.p,1)+' · G '+num(r.g,1)+' · L '+num(r.l,1)+' · F '+num(r.f,1):'<small>repas non enregistrés</small>')+'<small>'+(r.st?fmtN(r.st)+' pas':'')+(r.st&&r.w?' · ':'')+(r.w?num(r.w,1)+' kg':'')+'</small></span>'+(LOG[r.d]?'<button type="button" data-hldel="'+r.d+'" aria-label="Supprimer">✕</button>':'<span></span>')+'</div>'}).join(''):'<p class="note">Aucune donnée pour le moment.</p>')+'</div>',true);
   $('history').innerHTML=h;
@@ -5447,7 +5471,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 224 (glucides, lipides)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 226 (conseil, courbe)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
