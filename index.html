@@ -1094,6 +1094,9 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}body{height:100%;min-h
 .mgrp{margin:0 0 10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}.mgh{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:56px;padding:10px 14px;border:0;background:transparent;color:var(--ink);text-align:left;cursor:pointer}.mgh .mdn{display:grid;gap:2px;min-width:0}.mgh b{font-size:16px}.mgh small{color:var(--muted);font-size:13px}.mgb{padding:0 8px 8px;display:grid;gap:8px}
 .mdmv{display:flex;align-items:center;gap:10px;margin:10px 0 0;font-size:14px;color:var(--muted)}.mdmv select{font:inherit;flex:1;min-width:0;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .vchk{font-style:normal;color:#B45309;font-weight:700}
+.mcpk{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-width:0;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);text-align:left;cursor:pointer}.mcpk span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.mcpk i{font-style:normal;color:var(--muted)}
+.xpk{position:fixed;inset:0;z-index:2000;background:rgba(10,20,40,.45);display:flex;align-items:flex-end;justify-content:center}.xsh{width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink);border-radius:20px 20px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px))}.xhd{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}.xhd b{font-size:17px}.xcl{font:inherit;min-height:44px;padding:0 14px;border:0;border-radius:12px;background:var(--line);color:var(--ink);cursor:pointer}.xqi{font:inherit;width:100%;min-height:46px;padding:8px 12px;margin:0 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);box-sizing:border-box}.xls{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:grid;gap:8px;align-content:start}
+.xgh{font:inherit;display:flex;align-items:center;gap:8px;width:100%;min-height:52px;padding:8px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);text-align:left;cursor:pointer}.xgh b{flex:1;font-size:15px}.xgh small{color:var(--muted);font-size:13px}.xgh i{font-style:normal;color:var(--muted)}.xgh.open{border-color:#4F46E5}.xgb{display:grid;gap:6px;padding:0 0 4px 8px}.xop{font:inherit;width:100%;min-height:48px;padding:8px 12px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--ink);text-align:left;cursor:pointer}.xop.on{background:rgba(79,70,229,.12);border-color:#4F46E5;font-weight:700}
 </style><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carnet"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#3f51e0"><style>.nfscan{font:inherit;font-size:15px;font-weight:700;min-height:48px;border-radius:12px;border:1px dashed var(--accent);background:transparent;color:var(--accent);cursor:pointer;width:100%}#scanov{position:fixed;inset:0;z-index:9999;background:#0b1022;display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#fff}#scanov[hidden]{display:none}#scanov h3{margin:0;font-size:17px}#scanvid{width:100%;max-height:50vh;border-radius:16px;background:#000;object-fit:cover;justify-self:center}#scanov .sc2{display:grid;gap:8px}#scanov input{font:inherit;font-size:16px;height:48px;border-radius:12px;border:1px solid #556;background:#111a33;color:#fff;padding:0 12px;box-sizing:border-box;width:100%}#scanov button{font:inherit;font-size:16px;font-weight:700;min-height:48px;border-radius:12px;border:0;background:#3f51e0;color:#fff}#scanov button.sec{background:#2a3355}#scanmsg{font-size:14px;min-height:20px}</style></head><body>
 
 
@@ -2477,8 +2480,54 @@ function mcOpts(sel,hint){const fl=FOODS.map((f,i)=>[f,i]).filter(([f])=>f&&f.pe
 function mcTotHtml(rows){const T=mcTot(rows),skip=rows.filter(w=>!mcVals(w.sel)).length;return '<div class="res"><div class="rs1">Portion calculée</div><div class="rs2"><b>'+Math.round(T[0])+'</b> kcal</div><div class="rs3"><span class="m-p">P '+num(T[1],1)+'</span><span class="m-g">G '+num(T[2],1)+'</span><span class="m-l">L '+num(T[3],1)+'</span><span class="m-f">F '+num(T[4],1)+'</span></div>'+(skip?'<div class="rs1" style="margin-top:6px">'+skip+' ingrédient'+(skip>1?'s':'')+' ignoré'+(skip>1?'s':'')+'</div>':'')+'</div>'}
 function mcName(sel){if(!sel)return '';const [t,i]=sel.split(':');return t==='m'?(FOODS[+i]||{}).n||'':(F100[+i]||[])[0]||''}
 function mcRow(w,k){const v=mcVals(w.sel),my=w.sel&&w.sel[0]==='m',kc=v?Math.round(v[0]*w.g/100):0;
-  return '<div class="mcr '+(!v?'ig':my?'my':'bs')+'" data-row="'+k+'"><div class="mcn">'+esc(w.t)+'</div><div class="mcb">'+(!v?'<span class="bd bi">IGNORÉ</span>':my?'<span class="bd bm">★ MA MARQUE</span>':'<span class="bd bb">BASE · MOYENNE</span>')+'<b>'+esc(mcName(w.sel)||'Aucun aliment choisi')+'</b></div><div class="mcl"><select data-mcs="'+k+'" aria-label="Changer d\'aliment">'+mcOpts(w.sel,w.t)+'</select><input data-mcg="'+k+'" inputmode="decimal" value="'+w.g+'" aria-label="Poids"><span>g</span></div><div class="mck">'+(v?kc+' kcal · P '+num(v[1]*w.g/100,1):'non compté')+'</div></div>'}
+  return '<div class="mcr '+(!v?'ig':my?'my':'bs')+'" data-row="'+k+'"><div class="mcn">'+esc(w.t)+'</div><div class="mcb">'+(!v?'<span class="bd bi">IGNORÉ</span>':my?'<span class="bd bm">★ MA MARQUE</span>':'<span class="bd bb">BASE · MOYENNE</span>')+'<b>'+esc(mcName(w.sel)||'Aucun aliment choisi')+'</b></div><div class="mcl"><button type="button" class="mcpk" data-mcpk="'+k+'" aria-label="Changer d\'aliment"><span>'+(my?'★ ':'')+esc(mcName(w.sel)||'Choisir un aliment')+'</span><i aria-hidden="true">▾</i></button><select class="mcsel" hidden data-mcs="'+k+'" aria-label="Aliment">'+mcOpts(w.sel,w.t)+'</select><input data-mcg="'+k+'" inputmode="decimal" value="'+w.g+'" aria-label="Poids"><span>g</span></div><div class="mck">'+(v?kc+' kcal · P '+num(v[1]*w.g/100,1):'non compté')+'</div></div>'}
 function mcSum(rows){const my=rows.filter(w=>w.sel&&w.sel[0]==='m').length,bs=rows.filter(w=>w.sel&&w.sel[0]==='b').length;return '<div class="mcs"><span class="bd bm">★ '+my+' ma marque</span><span class="bd bb">'+bs+' base moyenne</span></div>'}
+/* ===== v218 : sélecteur d'aliment avec groupes pliables ===== */
+(function(){
+  let SEL=null,OPEN=new Set(),Q='';
+  const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e};
+  function close(){const p=document.getElementById('xpk');if(p)p.remove();document.body.classList.remove('lock');SEL=null}
+  function draw(){
+    const L=document.getElementById('xls');if(!L||!SEL)return;L.textContent='';
+    const q=nrm(Q.trim()),cur=SEL.value;
+    const none=SEL.querySelector('option[value=""]');
+    if(none&&!q){const b=el('button','xop'+(cur===''?' on':''),'— ignorer cet ingrédient —');b.type='button';b.dataset.xv='';L.appendChild(b)}
+    [...SEL.querySelectorAll('optgroup')].forEach((g,gi)=>{
+      const os=[...g.querySelectorAll('option')].filter(o=>!q||nrm(o.textContent).includes(q));
+      if(!os.length)return;
+      const key=g.label,open=q?true:OPEN.has(key);
+      const h=el('button','xgh'+(open?' open':''));h.type='button';h.dataset.xgh=key;
+      h.appendChild(el('b','',g.label));h.appendChild(el('small','',os.length+(os.length>1?' aliments':' aliment')));h.appendChild(el('i','',open?'▴':'▾'));
+      L.appendChild(h);
+      if(open){const w=el('div','xgb');os.forEach(o=>{const b=el('button','xop'+(o.value===cur?' on':''),o.textContent);b.type='button';b.dataset.xv=o.value;w.appendChild(b)});L.appendChild(w)}
+    });
+    if(!L.children.length)L.appendChild(el('p','note','Aucun aliment trouvé.'))
+  }
+  function openSheet(sel){
+    close();SEL=sel;Q='';OPEN=new Set();
+    const gs=[...sel.querySelectorAll('optgroup')];
+    const cur=sel.querySelector('option:checked'),cg=cur&&cur.parentElement&&cur.parentElement.tagName==='OPTGROUP'?cur.parentElement.label:null;
+    if(cg)OPEN.add(cg);else if(gs[0])OPEN.add(gs[0].label);
+    const p=el('div','xpk');p.id='xpk';
+    const sh=el('div','xsh');
+    const hd=el('div','xhd');hd.appendChild(el('b','','Choisir un aliment'));const x=el('button','xcl','Fermer');x.type='button';x.dataset.xcl='1';hd.appendChild(x);
+    const i=el('input','xqi');i.id='xqi';i.type='search';i.placeholder='Chercher un aliment…';i.setAttribute('autocomplete','off');
+    const L=el('div','xls');L.id='xls';
+    sh.appendChild(hd);sh.appendChild(i);sh.appendChild(L);p.appendChild(sh);document.body.appendChild(p);document.body.classList.add('lock');draw();
+    const on=L.querySelector('.xop.on');if(on)setTimeout(()=>{try{on.scrollIntoView({block:'center'})}catch(e){}},30);
+  }
+  document.addEventListener('click',e=>{
+    const t=e.target;if(!t||!t.closest)return;
+    const pk=t.closest('[data-mcpk]');
+    if(pk){e.preventDefault();const s=pk.parentElement.querySelector('select[data-mcs]');if(s)openSheet(s);return}
+    if(!document.getElementById('xpk'))return;
+    const g=t.closest('[data-xgh]');if(g){const k=g.dataset.xgh;if(OPEN.has(k))OPEN.delete(k);else OPEN.add(k);draw();return}
+    const v=t.closest('[data-xv]');if(v&&SEL){const s=SEL;s.value=v.dataset.xv;close();s.dispatchEvent(new Event('change',{bubbles:true}));return}
+    if(t.closest('[data-xcl]')||t.id==='xpk')close();
+  });
+  document.addEventListener('input',e=>{if(e.target&&e.target.id==='xqi'){Q=e.target.value;draw()}});
+})();
+
 function mcPanel(r){if(!state.mcrows||state.mcrows.i!==r.i)state.mcrows={i:r.i,rows:mcParse(r)};const rows=state.mcrows.rows;
   return '<div class="pf nf mcp" data-mc="'+r.i+'"><div class="nfc"><div class="nft">Mes marques</div><p class="note" style="margin:0">Chaque ligne indique d\'où viennent les valeurs. Pour passer à ta marque, change l\'aliment dans la liste. Crée tes marques dans Plus &gt; Mes aliments.</p><div class="mcsum">'+mcSum(rows)+'</div>'+(rows.length?rows.map(mcRow).join(''):'<p class="note">Aucun ingrédient pesé dans cette recette.</p>')+'<div class="mct">'+mcTotHtml(rows)+'</div><button type="button" class="nfadd" data-mcok="'+r.i+'">Utiliser ces valeurs pour cette recette</button></div></div>'}
 function mcRefresh(t,full){const P=t.closest('.mcp'),rows=state.mcrows.rows,k=+(t.dataset.mcs!==undefined?t.dataset.mcs:t.dataset.mcg),row=P.querySelector('[data-row="'+k+'"]');
@@ -3627,7 +3676,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=217;
+const APPV=218;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5391,7 +5440,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 217 (recettes volumineuses)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 218 (choix par groupes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
