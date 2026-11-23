@@ -2484,14 +2484,14 @@ function mcRow(w,k){const v=mcVals(w.sel),my=w.sel&&w.sel[0]==='m',kc=v?Math.rou
 function mcSum(rows){const my=rows.filter(w=>w.sel&&w.sel[0]==='m').length,bs=rows.filter(w=>w.sel&&w.sel[0]==='b').length;return '<div class="mcs"><span class="bd bm">★ '+my+' ma marque</span><span class="bd bb">'+bs+' base moyenne</span></div>'}
 /* ===== v218 : sélecteur d'aliment avec groupes pliables ===== */
 (function(){
-  let SEL=null,OPEN=new Set(),Q='';
+  let SEL=null,SRC=null,OPEN=new Set(),Q='';
   const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e};
-  function close(){const p=document.getElementById('xpk');if(p)p.remove();document.body.classList.remove('lock');SEL=null}
+  function close(){const p=document.getElementById('xpk');if(p)p.remove();document.body.classList.remove('lock');SEL=null;SRC=null}
   function draw(){
     const L=document.getElementById('xls');if(!L||!SEL)return;L.textContent='';
     const q=nrm(Q.trim()),cur=SEL.value;
     const none=SEL.querySelector('option[value=""]');
-    if(none&&!q){const b=el('button','xop'+(cur===''?' on':''),'— ignorer cet ingrédient —');b.type='button';b.dataset.xv='';L.appendChild(b)}
+    if(none&&!q){const b=el('button','xop'+(cur===''?' on':''),none.textContent);b.type='button';b.dataset.xv='';L.appendChild(b)}
     [...SEL.querySelectorAll('optgroup')].forEach((g,gi)=>{
       const os=[...g.querySelectorAll('option')].filter(o=>!q||nrm(o.textContent).includes(q));
       if(!os.length)return;
@@ -2504,7 +2504,7 @@ function mcSum(rows){const my=rows.filter(w=>w.sel&&w.sel[0]==='m').length,bs=ro
     if(!L.children.length)L.appendChild(el('p','note','Aucun aliment trouvé.'))
   }
   function openSheet(sel){
-    close();SEL=sel;Q='';OPEN=new Set();
+    const keep=SRC;close();SRC=keep;SEL=sel;Q='';OPEN=new Set();
     const gs=[...sel.querySelectorAll('optgroup')];
     const cur=sel.querySelector('option:checked'),cg=cur&&cur.parentElement&&cur.parentElement.tagName==='OPTGROUP'?cur.parentElement.label:null;
     if(cg)OPEN.add(cg);else if(gs[0])OPEN.add(gs[0].label);
@@ -2519,10 +2519,10 @@ function mcSum(rows){const my=rows.filter(w=>w.sel&&w.sel[0]==='m').length,bs=ro
   document.addEventListener('click',e=>{
     const t=e.target;if(!t||!t.closest)return;
     const pk=t.closest('[data-mcpk]');
-    if(pk){e.preventDefault();const s=pk.parentElement.querySelector('select[data-mcs]');if(s)openSheet(s);return}
+    if(pk){e.preventDefault();const s=pk.parentElement.querySelector('select');if(s){SRC=pk;openSheet(s)}return}
     if(!document.getElementById('xpk'))return;
     const g=t.closest('[data-xgh]');if(g){const k=g.dataset.xgh;if(OPEN.has(k))OPEN.delete(k);else OPEN.add(k);draw();return}
-    const v=t.closest('[data-xv]');if(v&&SEL){const s=SEL;s.value=v.dataset.xv;close();s.dispatchEvent(new Event('change',{bubbles:true}));return}
+    const v=t.closest('[data-xv]');if(v&&SEL){const s=SEL,bt=SRC,val=v.dataset.xv,o=[...s.options].find(x=>x.value===val),mine=o&&o.parentElement&&o.parentElement.tagName==='OPTGROUP'&&/^★/.test(o.parentElement.label);s.value=val;if(bt&&bt.isConnected){const sp=bt.querySelector('span');if(sp)sp.textContent=(mine?'★ ':'')+(o?o.textContent:'')}close();s.dispatchEvent(new Event('change',{bubbles:true}));return}
     if(t.closest('[data-xcl]')||t.id==='xpk')close();
   });
   document.addEventListener('input',e=>{if(e.target&&e.target.id==='xqi'){Q=e.target.value;draw()}});
@@ -3580,7 +3580,7 @@ function adjUI(kind,a,b,e){
   if(open){
     const A=state.adj;
     h+='<div class="adjp"><p class="note" style="margin:0 0 6px">Mets les grammes que tu as vraiment utilisés. Les calories et macros se recalculent.</p>'
-      +A.rows.map((w,i)=>'<div class="adjr"><span>'+esc(w.t)+'</span><div class="adjl"><select data-ads="'+i+'" aria-label="Produit ou marque">'+mcOpts(w.sel)+'</select><input data-adg="'+i+'" inputmode="decimal" value="'+w.g+'" aria-label="Grammes"><u>g</u></div></div>').join('')
+      +A.rows.map((w,i)=>'<div class="adjr"><span>'+esc(w.t)+'</span><div class="adjl"><button type="button" class="mcpk" data-mcpk="a'+i+'" aria-label="Produit ou marque"><span>'+(w.sel&&w.sel[0]==='m'?'★ ':'')+esc(mcName(w.sel)||'Choisir un aliment')+'</span><i aria-hidden="true">▾</i></button><select class="mcsel" hidden data-ads="'+i+'" aria-label="Produit ou marque">'+mcOpts(w.sel,w.t)+'</select><input data-adg="'+i+'" inputmode="decimal" value="'+w.g+'" aria-label="Grammes"><u>g</u></div></div>').join('')
       +adjNoG(A)+adjFib(A)+'<div class="adjt" id="adjt">'+adjTot(A)+'</div>'
       +'<div class="adja"><button type="button" class="adjok" data-adok="'+key+'">Valider les quantités</button>'+(e.o?'<button type="button" class="adjrs" data-adrs="'+key+'">Recette d\'origine</button>':'')+'</div></div>';
   }
@@ -3676,7 +3676,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=218;
+const APPV=219;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4305,7 +4305,7 @@ function mcSelResolve(k){if(k==='')return '';const [t,...rest]=k.split('|'),n=re
     let h=mu(kind,a,j,e);const key=kind+':'+a+':'+j;
     if(state.med===key){
       h+='<div class="adjp medadd"><p class="note" style="margin:0 0 6px"><b>Ajouter un ingrédient à ce repas</b> (huile, amandes…) : ses calories et macros s\'ajoutent au repas.</p>'
-        +'<select id="medis" aria-label="Ingrédient">'+mcOpts('').replace('— ignorer —','— choisir un aliment —')+'</select>'
+        +'<button type="button" class="mcpk" data-mcpk="med" style="width:100%" aria-label="Ingrédient"><span>— choisir un aliment —</span><i aria-hidden="true">▾</i></button><select class="mcsel" hidden id="medis" aria-label="Ingrédient">'+mcOpts('').replace('— ignorer —','— choisir un aliment —')+'</select>'
         +'<div class="mcl" style="margin-top:6px"><input id="medig" inputmode="decimal" placeholder="Grammes" aria-label="Grammes"><span>g</span></div>'
         +'<div class="adja"><button type="button" class="adjok" data-medadd="'+key+'">Ajouter au repas</button></div>'+(e.x===undefined?'<button type="button" class="adjb" data-medmq="'+e.r+'">⚖ Mes marques : changer les produits de cette recette</button>':'')+'</div>';
     }
@@ -5440,7 +5440,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 218 (choix par groupes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 219 (menus groupés partout)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
