@@ -3681,7 +3681,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=226;
+const APPV=227;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5390,6 +5390,12 @@ function renderHist(){
      sv+='<text x="2" y="14" font-size="9" fill="var(--m-g)">'+num(w1,1)+'</text><text x="2" y="'+(6+ih)+'" font-size="9" fill="var(--m-g)">'+num(w0,1)+'</text>'}
     sv+='</svg>';
     h+=blk('h-wc','chart','Poids et calories','14 derniers jours',sv+'<p class="note" style="margin:6px 0 0"><b style="color:var(--m-g)">●</b> poids (kg) · <b style="color:var(--m-p)">▮</b> calories par jour · ligne pointillée = ton palier ('+fmtN(T.k)+' kcal)</p>',false)}}
+  {const d60=lastDays(60).reverse(),cu=d60.slice(0,30),pv=d60.slice(30);
+   const per=ds=>{const L=ds.map(d=>LOG[d]).filter(x=>x&&x.k>0),Wt=WT.filter(x=>!x.s&&x.w&&ds.includes(x.d)),av=(a,f)=>a.length?a.reduce((q,x)=>q+f(x),0)/a.length:0;return{n:L.length,k:av(L,x=>x.k),p:av(L,x=>x.p),f:av(L,x=>x.f),w:av(Wt,x=>x.w),nw:Wt.length}};
+   const A=per(cu),B=per(pv);
+   if(A.n>=7){
+    const row=(lab,a,b,u,dg,inv)=>{const has=a>0&&b>0,dv=a-b;return '<div class="rl"><span><b>'+lab+'</b> · '+(a>0?(dg?num(a,dg):fmtN(a))+u:'—')+(has?'<br><small>mois d\'avant : '+(dg?num(b,dg):fmtN(b))+u+' ('+(dv>0?'+':'')+(dg?num(dv,dg):fmtN(dv))+u+')</small>':'<br><small>pas de données le mois d\'avant</small>')+'</span></div>'};
+    h+=blk('h-mo','chart','Bilan du mois','30 derniers jours, comparés aux 30 d\'avant','<div class="crs">'+row('Calories par jour',A.k,B.k,' kcal',0)+row('Protéines par jour',A.p,B.p,' g',0)+row('Fibres par jour',A.f,B.f,' g',1)+row('Poids moyen',A.w,B.w,' kg',1)+'</div><p class="note" style="margin:8px 0 0">Jours de repas enregistrés : '+A.n+' sur 30 (mois d\'avant : '+B.n+') · pesées : '+A.nw+' (mois d\'avant : '+B.nw+').</p>',false)}}
   const any=rows.filter(r=>r.k||r.st||r.w);
   h+=blk('h-days','cal','Jour par jour','14 derniers jours','<div class="crs">'+(any.length?any.map(r=>{const dt=new Date(r.d+'T00:00:00');return '<div class="hrow"><b>'+JRS[dt.getDay()]+' '+fdate(r.d)+'</b><span>'+(r.k?fmtN(r.k)+' kcal · P '+num(r.p,1)+' · G '+num(r.g,1)+' · L '+num(r.l,1)+' · F '+num(r.f,1):'<small>repas non enregistrés</small>')+'<small>'+(r.st?fmtN(r.st)+' pas':'')+(r.st&&r.w?' · ':'')+(r.w?num(r.w,1)+' kg':'')+'</small></span>'+(LOG[r.d]?'<button type="button" data-hldel="'+r.d+'" aria-label="Supprimer">✕</button>':'<span></span>')+'</div>'}).join(''):'<p class="note">Aucune donnée pour le moment.</p>')+'</div>',true);
   $('history').innerHTML=h;
@@ -5471,7 +5477,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 226 (conseil, courbe)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 227 (bilan du mois)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
