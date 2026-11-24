@@ -3694,7 +3694,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=228;
+const APPV=229;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5241,7 +5241,9 @@ function closeDay(){
       LOG[st]={k:Math.round(t.k),p:Math.round(t.p*10)/10,g:Math.round(t.g*10)/10,l:Math.round(t.l*10)/10,f:Math.round(t.f*10)/10};
       LOGD[st]=JSON.parse(JSON.stringify(DAY));saveLog();lsw('cp-logd',LOGD);closed=st;
     }
-    DAY={pdj:[],dej:[],col:[],din:[]};saveDay();
+    /* ne pas passer par saveDay() : il copierait la journée vide sur le planning du nouveau jour et l'effacerait */
+    DAY={pdj:[],dej:[],col:[],din:[]};rawSaveDay();
+    if(WOFF===0){try{loadWeek()}catch(e){}}
   }
   DAYD=td;try{localStorage.setItem('cp-daydate',td)}catch(e){}
   return closed||(st<td?'vide':null);
@@ -5503,7 +5505,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 228 (calcul des objectifs)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 229 (planning de minuit)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
