@@ -189,6 +189,13 @@ h1{text-shadow:0 2px 12px rgba(30,30,110,.25)}
 #ckov .ckst{font-size:23px;line-height:1.4;margin:0;font-weight:500}
 #ckov .cking{margin:0;padding-left:20px;font-size:18px;line-height:1.7}
 #ckov .cktms{display:flex;flex-wrap:wrap;gap:8px}#ckov .cktms button,#ckov .ckstop{font:inherit;min-height:48px;padding:8px 18px;border-radius:14px;border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:700;font-size:16px;cursor:pointer}
+#tmbar{position:fixed;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));top:max(8px,env(safe-area-inset-top,0px));z-index:95;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#tmbar .tmi{pointer-events:auto;display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border-radius:16px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.28);font-size:13px}
+#tmbar .tmi.done{background:#D32F3F;color:#fff;animation:tmpulse 1s infinite}
+@keyframes tmpulse{50%{opacity:.75}}
+#tmbar .tml{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+#tmbar .tmt{font-variant-numeric:tabular-nums;font-weight:700;font-size:20px;min-width:58px;text-align:center}
+#tmbar button{font:inherit;font-weight:700;min-height:40px;min-width:40px;padding:4px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.4);background:transparent;color:inherit;cursor:pointer}
 #ckov .ckcd{font-family:var(--f-display);font-size:56px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
 #ckov .ckf{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;padding-top:12px}
 #ckov .ckf button{font:inherit;min-height:56px;border-radius:14px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);font-weight:700;font-size:17px;cursor:pointer}
@@ -3200,14 +3207,14 @@ function ckRender(){
     b='<p class="ckst">'+esc(r.st[i])+'</p>';
     const ts=ckTimes(r.st[i]);
     if(ts.length)b+='<div class="cktms">'+ts.map(x=>'<button type="button" data-cktm="'+x.s+'">⏱ '+x.l+'</button>').join('')+'</div>';
-    if(COOK.tm&&COOK.tm.step===i)b+='<div class="ckcd" id="ckcd">'+ckFmt((COOK.tm.end-Date.now())/1000)+'</div><button type="button" class="ckstop" data-ckstop>Arrêter le minuteur</button>';
+    b+='<p class="note" style="margin:10px 0 4px">Autre durée :</p><div class="cktms">'+[1,3,5,10,15].filter(m=>!ts.some(x=>x.s===m*60)).map(m=>'<button type="button" data-cktm="'+(m*60)+'">⏱ '+m+' min</button>').join('')+'</div>';
     if(i===n-1&&r.tip)b+='<p class="tip">💡 '+esc(r.tip)+'</p>';
   }
   const pct=Math.round((i+1)/(n+1)*100);
   el.innerHTML='<div class="ckh"><b>'+esc(r.n)+'</b><button type="button" data-ckclose aria-label="Fermer">✕</button></div><div class="ckbar"><i style="width:'+pct+'%"></i></div><p class="ckn">'+(i<0?'Avant de commencer':'Étape '+(i+1)+' sur '+n)+'</p><div class="ckb">'+b+'</div><div class="ckf"><button type="button" data-ckprev'+(i<0?' disabled':'')+'>← Précédent</button><button type="button" class="pri" data-cknext>'+(i>=n-1?'Terminé ✓':'Suivant →')+'</button></div>';
 }
-function ckvTick(){if(!COOK||!COOK.tm)return;const left=(COOK.tm.end-Date.now())/1000,e=document.getElementById('ckcd');if(e)e.textContent=ckFmt(left);if(left<=0){const st=COOK.tm.step;COOK.tm=null;ckBeep();if(window.toast)toast('⏰ Minuteur terminé',false);if(COOK.s===st)ckRender()}}
-function ckOpen(i){const r=R.find(x=>x.i===i);if(!r||!r.st||!r.st.length)return;COOK={r,s:-1,tm:null};ckRender();clearInterval(COOKI);COOKI=setInterval(ckvTick,500);try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{if(COOK)COOK.wl=w;else w.release()}).catch(()=>{})}catch(e){}}
+function ckvTickOld(){if(!COOK||!COOK.tm)return;const left=(COOK.tm.end-Date.now())/1000,e=document.getElementById('ckcd');if(e)e.textContent=ckFmt(left);if(left<=0){const st=COOK.tm.step;COOK.tm=null;ckBeep();if(window.toast)toast('⏰ Minuteur terminé',false);if(COOK.s===st)ckRender()}}
+function ckOpen(i){const r=R.find(x=>x.i===i);if(!r||!r.st||!r.st.length)return;COOK={r,s:-1,tm:null};ckRender();try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{if(COOK)COOK.wl=w;else w.release()}).catch(()=>{})}catch(e){}}
 function ckClose(){if(COOK&&COOK.wl){try{COOK.wl.release()}catch(e){}}COOK=null;clearInterval(COOKI);ckRender()}
 document.addEventListener('click',e=>{
   const o=e.target.closest('[data-cook]');if(o){ckOpen(+o.dataset.cook);return}
@@ -3215,10 +3222,42 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-ckclose]')){ckClose();return}
   if(e.target.closest('[data-ckprev]')){if(COOK.s>-1){COOK.s--;ckRender()}return}
   if(e.target.closest('[data-cknext]')){if(COOK.s>=COOK.r.st.length-1){ckClose();if(window.toast)toast('Bon appétit !');return}COOK.s++;ckRender();return}
-  const t=e.target.closest('[data-cktm]');if(t){COOK.tm={step:COOK.s,end:Date.now()+(+t.dataset.cktm)*1000};try{ckBeep.warm||(ckBeep.warm=1,COOKAU=COOKAU||new (window.AudioContext||window.webkitAudioContext)())}catch(x){}ckRender();return}
-  if(e.target.closest('[data-ckstop]')){COOK.tm=null;ckRender()}
 });
 document.addEventListener('keydown',e=>{if(COOK&&e.key==='Escape')ckClose()});
+/* ===== v231 : minuteurs multiples, visibles partout, avec pause / +1 min / sonnerie qui insiste ===== */
+let TMS=(()=>{try{const a=JSON.parse(localStorage.getItem('cp-tms')||'[]');return Array.isArray(a)?a.filter(t=>t&&t.id&&(t.pause!=null||Date.now()-t.end<600000)):[]}catch(e){return[]}})(),TMI=0,TMR=0;
+function tmSave(){try{localStorage.setItem('cp-tms',JSON.stringify(TMS))}catch(e){}}
+function tmLeft(t){return t.pause!=null?t.pause:t.end-Date.now()}
+function tmAudio(){try{COOKAU=COOKAU||new (window.AudioContext||window.webkitAudioContext)();if(COOKAU.state==='suspended')COOKAU.resume()}catch(e){}}
+function tmRing(){try{tmAudio();[0,.3,.6].forEach(d=>{const o=COOKAU.createOscillator(),g=COOKAU.createGain();o.frequency.value=880;g.gain.value=.25;o.connect(g);g.connect(COOKAU.destination);o.start(COOKAU.currentTime+d);o.stop(COOKAU.currentTime+d+.18)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([400,150,400,150,400])}catch(e){}}
+function tmStart(sec,lab){tmAudio();TMS.push({id:Date.now()+Math.random(),lab:lab,end:Date.now()+sec*1000,pause:null,rung:false});tmSave();tmEnsure();tmDraw()}
+function tmEnsure(){if(!TMI)TMI=setInterval(tmTick,500)}
+function tmTick(){
+  let ring=false;TMS.forEach(t=>{if(t.pause==null&&tmLeft(t)<=0){if(!t.rung){t.rung=true;t.ringAt=Date.now();tmSave()}ring=true}});
+  const anyDone=TMS.some(t=>t.rung&&t.pause==null);
+  if(anyDone&&Date.now()-TMR>2200){TMR=Date.now();const ok=TMS.some(t=>t.rung&&t.pause==null&&Date.now()-(t.ringAt||0)<180000);if(ok)tmRing()}
+  tmDraw();if(!TMS.length){clearInterval(TMI);TMI=0}
+}
+function tmDraw(){
+  let el=document.getElementById('tmbar');
+  if(!TMS.length){if(el)el.remove();return}
+  if(!el){el=document.createElement('div');el.id='tmbar';el.setAttribute('aria-live','polite');document.body.appendChild(el)}
+  const h=TMS.map(t=>{const l=tmLeft(t),done=t.rung&&t.pause==null&&l<=0;
+    return '<div class="tmi'+(done?' done':'')+'" data-tid="'+t.id+'"><span class="tml">'+esc(t.lab)+'</span><span class="tmt">'+(done?'Terminé':ckFmt(l/1000))+'</span>'+(done?'<button type="button" data-tmx="'+t.id+'">Arrêter</button>':'<button type="button" data-tmp="'+t.id+'" aria-label="'+(t.pause!=null?'Reprendre':'Pause')+'">'+(t.pause!=null?'▶':'❚❚')+'</button><button type="button" data-tm1="'+t.id+'" aria-label="Ajouter 1 minute">+1</button><button type="button" data-tmx="'+t.id+'" aria-label="Supprimer">✕</button>')+'</div>'}).join('');
+  if(el.dataset.h!==h||!el.firstChild){el.innerHTML=h;el.dataset.h=h}
+}
+document.addEventListener('click',e=>{
+  const g=a=>{const b=e.target.closest&&e.target.closest('['+a+']');return b?b.getAttribute(a):null},
+    f=id=>TMS.find(t=>String(t.id)===String(id));
+  let id;
+  if((id=g('data-tmp'))!==null){const t=f(id);if(t){if(t.pause!=null){t.end=Date.now()+t.pause;t.pause=null}else{t.pause=Math.max(0,tmLeft(t))}tmSave();tmDraw()}return}
+  if((id=g('data-tm1'))!==null){const t=f(id);if(t){if(t.pause!=null)t.pause+=60000;else t.end+=60000;t.rung=false;tmSave();tmDraw()}return}
+  if((id=g('data-tmx'))!==null){TMS=TMS.filter(t=>String(t.id)!==String(id));tmSave();tmDraw();return}
+  const c=e.target.closest&&e.target.closest('[data-cktm]');
+  if(c&&COOK){{const sc=+c.dataset.cktm,du=sc%60?ckFmt(sc):(sc/60)+' min';tmStart(sc,'Étape '+(COOK.s+1)+' · '+du+' · '+COOK.r.n)}}
+},true);
+if(TMS.length)setTimeout(()=>{tmEnsure();tmDraw()},0);
+
 function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=900,sc=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};im.onerror=()=>res(null);im.src=fr.result};fr.onerror=()=>res(null);fr.readAsDataURL(file)})}
 $('grid').addEventListener('click',e=>{
   const b=e.target.closest('.pdel');if(!b)return;const i=+b.dataset.i;
@@ -3591,8 +3630,23 @@ function adjNoG(A){
   return oth.length?'<div class="adjn"><b>Aussi dans la recette</b> <small>(non pesé, pas compté)</small><br>'+oth.map(esc).join(' · ')+'</div>':'';
 }
 function adjTot(A){const m=adjMac(A);return '<b>'+m.k+'</b> kcal · P '+num(m.p)+' · G '+num(m.g)+' · L '+num(m.l)+' · F '+num(m.f)+'<small> (pour 1 portion)</small>'}
+function qtyParse(e){const m=String(e.x).match(/^(.*?)\s*\((\d+(?:[.,]\d+)?)\s*(g|ml)\)\s*$/);return m?{base:m[1],q:parseFloat(m[2].replace(',','.')),u:m[3]}:null}
+function qtyUI(kind,a,b,e){
+  const P=qtyParse(e);if(!P||!(P.q>0))return '';const key=kind+':'+a+':'+b,tot=Math.round(P.q*(e.q||1)*10)/10;
+  return '<div class="adjp"><label style="display:block;font-size:13.5px">Quantité mangée ('+P.u+')<input type="text" inputmode="decimal" id="qi-'+key+'" value="'+String(tot).replace('.',',')+'" style="width:100%;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-top:4px"></label><button type="button" class="adjb" data-qchg="'+key+'">Valider la quantité</button></div>'}
+document.addEventListener('click',ev=>{
+  const bt=ev.target.closest&&ev.target.closest('[data-qchg]');if(!bt)return;ev.preventDefault();
+  const [kd,x,y]=bt.dataset.qchg.split(':'),inp=document.getElementById('qi-'+bt.dataset.qchg),nq=pnum(inp&&inp.value);
+  const e=kd==='d'?(DAY[x]||[])[+y]:(WEEK[+x]||[])[+y];if(!e)return;const P=qtyParse(e);
+  if(!P||!(nq>0)||nq>5000){if(window.toast)toast('Entre une quantité valide (en '+(P?P.u:'g')+').',true);return}
+  const f=nq/P.q;['k','p','g','l','f','s','a','e'].forEach(c=>{if(e[c]!==undefined)e[c]=Math.round(e[c]*f*100)/100});
+  e.q=1;e.x=P.base+' ('+String(Math.round(nq*10)/10).replace('.',',')+' '+P.u+')';
+  if(kd==='d'){saveDay();renderDay()}else{saveWeek();renderWeek()}
+  if(window.toast)toast('✓ Quantité mise à jour : '+Math.round(nq*10)/10+' '+P.u)
+});
 function adjUI(kind,a,b,e){
-  if(e.r===undefined||e.x!==undefined)return '';
+  if(e.x!==undefined)return qtyUI(kind,a,b,e);
+  if(e.r===undefined)return '';
   const key=kind+':'+a+':'+b,open=state.adj&&state.adj.key===key;
   let h='<button type="button" class="adjb" data-adj="'+key+'">'+(open?'Fermer':'⚖ Ajuster les quantités')+'</button>';
   if(open){
@@ -3694,7 +3748,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=229;
+const APPV=231;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5505,7 +5559,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 229 (planning de minuit)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 231 (minuteurs)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
