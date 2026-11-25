@@ -3770,6 +3770,11 @@ function adjFixAll(){
   }catch(e){}
 }
 setTimeout(adjFixAll,0);
+/* v250 : pour chaque ligne, ce qu'elle compte vraiment, et un avertissement si les valeurs de l'aliment sont douteuses */
+function adjRowInfo(w){try{const v=mcVals(w.sel);if(!v)return '<small style="color:#B7791F">Aucun aliment : cette ligne n\'est pas comptée.</small>';
+  let h='<small>'+Math.round(v[0]*w.g/100)+' kcal · P '+num(v[1]*w.g/100)+' · G '+num(v[2]*w.g/100)+' · L '+num(v[3]*w.g/100)+' · F '+num(v[4]*w.g/100)+'</small>';
+  const m=/^m:(\d+)$/.exec(w.sel||'');if(m&&FOODS[+m[1]]){const c=mchk(FOODS[+m[1]]);if(c)h+='<div style="color:#B7791F;font-size:12.5px">⚠ '+esc(FOODS[+m[1]].n)+' : '+esc(c)+' Corrige-le dans Plus &gt; Mes aliments.</div>'}
+  return h}catch(e){return ''}}
 function adjMac(A){
   const T0=mcTot(A.rows.map(w=>({sel:w.sel0,g:w.g0}))),T1=mcTot(A.rows);
   const X=A.extra||{k:0,p:0,g:0,l:0,f:0};
@@ -3808,7 +3813,7 @@ function adjUI(kind,a,b,e){
   if(open){
     const A=state.adj;
     h+='<div class="adjp"><p class="note" style="margin:0 0 6px">Mets les grammes que tu as vraiment utilisés. Les calories et macros se recalculent.</p>'
-      +A.rows.map((w,i)=>'<div class="adjr"><span>'+esc(w.t)+'</span><div class="adjl"><button type="button" class="mcpk" data-mcpk="a'+i+'" aria-label="Produit ou marque"><span>'+(w.sel&&w.sel[0]==='m'?'★ ':'')+esc(mcName(w.sel)||'Choisir un aliment')+'</span><i aria-hidden="true">▾</i></button><select class="mcsel" hidden data-ads="'+i+'" aria-label="Produit ou marque">'+mcOpts(w.sel,w.t)+'</select><input data-adg="'+i+'" inputmode="decimal" value="'+w.g+'" aria-label="Grammes"><u>g</u></div></div>').join('')
+      +A.rows.map((w,i)=>'<div class="adjr"><span>'+esc(w.t)+'</span><div class="adjl"><button type="button" class="mcpk" data-mcpk="a'+i+'" aria-label="Produit ou marque"><span>'+(w.sel&&w.sel[0]==='m'?'★ ':'')+esc(mcName(w.sel)||'Choisir un aliment')+'</span><i aria-hidden="true">▾</i></button><select class="mcsel" hidden data-ads="'+i+'" aria-label="Produit ou marque">'+mcOpts(w.sel,w.t)+'</select><input data-adg="'+i+'" inputmode="decimal" value="'+w.g+'" aria-label="Grammes"><u>g</u></div><div class="adjv" data-adv="'+i+'">'+adjRowInfo(w)+'</div></div>').join('')
       +adjNoG(A)+adjFib(A)+'<div class="adjt" id="adjt">'+adjTot(A)+'</div>'
       +'<div class="adja"><button type="button" class="adjok" data-adok="'+key+'">Valider les quantités</button>'+(e.o?'<button type="button" class="adjrs" data-adrs="'+key+'">Recette d\'origine</button>':'')+'</div></div>';
   }
@@ -3825,11 +3830,11 @@ document.addEventListener('click',e=>{
     else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g);en.ps=A.rows.map(w=>w.sel&&w.sel[0]==='m'?mcSelKey(w.sel):w.sel);if(Array.isArray(en.sl))delete en.sl}
     state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Quantités enregistrées');return}
 });
-document.addEventListener('change',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.ads!==undefined)||!state.adj)return;state.adj.rows[+t.dataset.ads].sel=t.value;
+document.addEventListener('change',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.ads!==undefined)||!state.adj)return;state.adj.rows[+t.dataset.ads].sel=t.value;{const r0=document.querySelector('[data-adv="'+t.dataset.ads+'"]');if(r0)r0.innerHTML=adjRowInfo(state.adj.rows[+t.dataset.ads])}
   /* v247 : retient la marque choisie pour cet ingrédient, elle sera proposée d'office la fois suivante */
   try{const w=state.adj.rows[+t.dataset.ads],ru=MCR.find(x=>x[0].test(nrm(w.t)));if(ru){const m=/^m:(\d+)$/.exec(t.value||'');if(m&&FOODS[+m[1]])PREF[ru[1]]=FOODS[+m[1]].n;else delete PREF[ru[1]];localStorage.setItem('cp-pref',JSON.stringify(PREF))}}catch(x){}const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
 document.addEventListener('input',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.adg!==undefined)||!state.adj)return;
-  state.adj.rows[+t.dataset.adg].g=Math.max(0,parseFloat(String(t.value).replace(',','.'))||0);
+  state.adj.rows[+t.dataset.adg].g=Math.max(0,parseFloat(String(t.value).replace(',','.'))||0);{const r0=document.querySelector('[data-adv="'+t.dataset.adg+'"]');if(r0)r0.innerHTML=adjRowInfo(state.adj.rows[+t.dataset.adg])}
   const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
 
 /* ===== Déplacer un élément vers un autre repas (v152) ===== */
@@ -3905,7 +3910,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=249;
+const APPV=250;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5791,7 +5796,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 249 (objectif selon la date)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 250 (détail par ligne)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
