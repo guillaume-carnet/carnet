@@ -3905,7 +3905,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=248;
+const APPV=249;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4157,7 +4157,7 @@ function fzOk(r,q){
         if(!l||!l.k)m.push('repas non enregistrés');
         else{
           if(l.k<1000)m.push('seulement '+fmtN(l.k)+' kcal');
-          if(l.k>T.k+350)m.push(fmtN(l.k)+' kcal, bien au-dessus du palier');
+          if(l.k>targets(d).k+350)m.push(fmtN(l.k)+' kcal, bien au-dessus du palier');
           if(l.p<T.p*0.6)m.push('protéines basses ('+num(l.p,1)+' g)');
           if(!a.st)m.push('aucun pas enregistré');
         }
@@ -4831,7 +4831,9 @@ function parseNutri(t,q){
   o.per100=per100&&!(q>0);return o;
 }
 function dayTot(){const t={k:0,p:0,g:0,l:0,f:0,s:0,a:0,e:0,d:0};SLOTS.forEach(([s])=>DAY[s].forEach(e=>{const x=ent(e);for(const m in t)t[m]+=x[m]}));return t}
-function targets(){const p=PALIERS[state.pal];return{k:p.k,p:PROF[SEX].p,g:p.g,l:PROF[SEX].l,f:PROF[SEX].f||25}}
+function isoD(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+/* v249 : l'objectif d'un jour passé est celui qui était en vigueur à cette date (mode automatique) */
+function targets(dt){let i=state.pal;if(dt&&typeof PALAUTO!=='undefined'&&PALAUTO){i=0;PAL_START.forEach(([d,k])=>{if(dt>=d)i=k});if(!PALIERS[i])i=state.pal}const p=PALIERS[i];return{k:p.k,p:PROF[SEX].p,g:p.g,l:PROF[SEX].l,f:PROF[SEX].f||25}}
 function meter(lab,v,t,unit,limit,d){
   const over=v>t,pct=Math.min(100,Math.round(v/t*100)),rest=t-v;
   const msg=limit?(over?'dépassé de '+num(-rest,d)+' '+unit:'reste '+num(rest,d)+' '+unit):(v>=t?'objectif atteint ✓':'reste '+num(rest,d)+' '+unit);
@@ -5052,12 +5054,12 @@ function wTot(day){return day.reduce((a,e)=>{const x=ent(e);for(const m of ['k',
 const SVG_C='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>',SVG_J='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>';
 function renderWeek(){
   loadWeek();
-  const T=targets(),di=state.wd,day=WEEK[di],t=wTot(day);
+  const T=targets(isoD(wDate(state.wd))),di=state.wd,day=WEEK[di],t=wTot(day);
   const wl=WOFF===0?'Cette semaine':WOFF===1?'Semaine prochaine':WOFF===-1?'Semaine dernière':WOFF>0?'Dans '+WOFF+' semaines':'Il y a '+(-WOFF)+' semaines',
     w0=wDate(0),w6=wDate(6),rng='Du '+w0.getDate()+(w0.getMonth()!==w6.getMonth()?' '+MOIS[w0.getMonth()]:'')+' au '+w6.getDate()+' '+MOIS[w6.getMonth()]+(w0.getFullYear()!==new Date().getFullYear()?' '+w6.getFullYear():'');
   const pk=wMonISO(WOFF-1),pw=WEEKS[pk],canCopy=!WEEK.some(d=>d.length)&&pw&&pw.some(d=>d.length);
   let h='<h2>Semaine</h2><div class="wnav"><button type="button" data-wnav="-1" aria-label="Semaine précédente">‹</button><div><b>'+wl+'</b><span>'+rng+'</span></div><button type="button" data-wnav="1" aria-label="Semaine suivante">›</button></div>'+(WOFF!==0?'<div class="dact" style="margin:0 0 8px"><button type="button" data-wnav="0">↩ Revenir à cette semaine</button></div>':'')+(canCopy?'<div class="dact" style="margin:0 0 8px"><button type="button" data-wprev>📋 Reprendre le planning de la semaine d\'avant</button></div>':'')+'<p class="note" style="display:none"><b></b></p><p class="note">Prépare chaque jour à l\'avance ('+T.k+' kcal par jour, réglable dans Moi). Touche un jour, ajoute tes repas, puis envoie-le dans « Journée » ou toute la semaine dans les courses.</p>';
-  h+='<div class="wtabs" role="tablist">'+WEEK.map((dd,i)=>{const k=wTot(dd).k,ok=k>0&&Math.abs(k-T.k)<=T.k*0.08;return '<button type="button" role="tab" class="'+(i===di?'on':'')+(WOFF===0&&i===wToday()?' td':'')+'" data-wd="'+i+'"><b>'+DS[i]+'</b><em class="wdt">'+wDate(i).getDate()+'</em><small>'+(k?Math.round(k):'–')+'</small><i class="'+(k?(ok?'g':'o'):'')+'"></i></button>'}).join('')+'</div>';
+  h+='<div class="wtabs" role="tablist">'+WEEK.map((dd,i)=>{const k=wTot(dd).k,TT=targets(isoD(wDate(i))),ok=k>0&&Math.abs(k-TT.k)<=TT.k*0.08;return '<button type="button" role="tab" class="'+(i===di?'on':'')+(WOFF===0&&i===wToday()?' td':'')+'" data-wd="'+i+'"><b>'+DS[i]+'</b><em class="wdt">'+wDate(i).getDate()+'</em><small>'+(k?Math.round(k):'–')+'</small><i class="'+(k?(ok?'g':'o'):'')+'"></i></button>'}).join('')+'</div>';
   h+=secT('Planning du jour',DN[di])+''; {const kp=Math.round(t.k/T.k*100),rk=T.k-t.k;const bt=(c,lab,v,tg,lim)=>{const pc=Math.min(100,Math.round(v/tg*100)),d=tg-v,sub=lab+' · '+(d>=0?'reste '+num(d,1)+' g':(lim?'+':'')+num(-d,1)+' g au-dessus');return '<div class="bt '+c+'"><b>'+num(v,1)+' / '+fmtN(tg)+' g</b><span>'+sub+'</span><i><u style="width:'+pc+'%"></u></i></div>'};h+='<div class="sum"><div class="mh"><span>'+DN[di]+' '+wDate(di).getDate()+' '+MOIS[wDate(di).getMonth()]+(WOFF===0&&di===wToday()?' · aujourd\'hui':'')+'</span></div><div class="hero2" style="border:0;box-shadow:none;background:none;padding:0;margin:0"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>'+fmtN(t.k)+' <small style="font-size:13px;font-weight:600;color:var(--muted)">/ '+fmtN(T.k)+' kcal</small></h3><div class="pbar"><i style="width:'+Math.min(100,kp)+'%"></i></div><small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+num(Math.max(0,T.p-t.p),1)+' g de protéines.')+'</small></div></div><div class="bento">'+bt('t-p','Protéines',t.p,T.p,false)+bt('t-g','Glucides',t.g,T.g,false)+bt('t-l','Lipides',t.l,T.l,true)+bt('t-f','Fibres',t.f,T.f,false)+'</div></div>';}
   SLOTS.forEach(([sk,sl])=>{
     const es=day.map((e,j)=>[e,j]).filter(x=>wsl(x[0])===sk);
@@ -5619,7 +5621,7 @@ function calHTML(){
   let g='';for(let i=0;i<off;i++)g+='<span></span>';
   for(let d=1;d<=nd;d++){
     const ds=Y+'-'+String(M).padStart(2,'0')+'-'+String(d).padStart(2,'0'),l=ds===td?{k:Math.round(dayTot().k)}:LOG[ds],k=l&&l.k,
-      cls=!k?'':(k>T.k*1.05?'hi':k>=T.k*0.9?'ok':'lo');
+      cls=!k?'':(k>targets(ds).k*1.05?'hi':k>=targets(ds).k*0.9?'ok':'lo');
     g+='<button type="button" data-cd="'+ds+'" class="'+cls+(ds===td?' td':'')+(ds===state.cd?' on':'')+'" aria-label="'+d+' '+MOIS[M-1]+'"><b>'+d+'</b>'+(k?'<small>'+k+'</small>':'')+'</button>';
   }
   return '<div class="calh"><button type="button" data-cmn="-1" aria-label="Mois précédent">‹</button><b style="text-transform:capitalize">'+MOIS[M-1]+' '+Y+'</b><button type="button" data-cmn="1" aria-label="Mois suivant">›</button></div>'
@@ -5628,7 +5630,7 @@ function calHTML(){
    +dayDetail(state.cd||td);
 }
 function dayDetail(d){
-  const td=today(),live=d===td,l=live?(()=>{const t=dayTot();return t.k>0?{k:Math.round(t.k),p:t.p,g:t.g,l:t.l,f:t.f}:null})():LOG[d],a=ACT[d],ws=WT.filter(x=>x.d===d),T=targets();
+  const td=today(),live=d===td,l=live?(()=>{const t=dayTot();return t.k>0?{k:Math.round(t.k),p:t.p,g:t.g,l:t.l,f:t.f}:null})():LOG[d],a=ACT[d],ws=WT.filter(x=>x.d===d),T=targets(d);
   const lab=new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const tl=(v,s)=>'<div><b>'+v+'</b><span>'+s+'</span></div>';
   let h='<h4 style="margin:14px 0 6px;text-transform:capitalize">'+lab+(live?' <small style="font-weight:500;color:var(--muted);text-transform:none">· en cours</small>':'')+'</h4>';
@@ -5789,7 +5791,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 248 (marques par nom)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 249 (objectif selon la date)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
