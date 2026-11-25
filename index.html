@@ -3748,7 +3748,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=234;
+const APPV=236;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5350,7 +5350,6 @@ function renderHome(){
   let h='<div class="hhead"><h2 style="text-transform:capitalize;margin:0">'+lab+'</h2><button type="button" class="chip2" data-hgo="moi">Palier '+T.k+' kcal'+(PALAUTO?' · auto':'')+' ›</button></div>';
   const lb=ls('cp-lastbak',0),age=lb?dAgo(lb):null;
   const nb=(ls('cp-w',[]).length||Object.keys(ls('cp-log',{})).length||ls('cp-foods',[]).length);
-  if(nb&&(!lb||age>=7))h+='<div class="al al-warn" style="margin:0 0 10px"><p style="margin:0 0 8px"><b>Sauvegarde :</b> '+(lb?'dernière il y a '+age+' jours.':'tu n\'en as encore jamais fait.')+' Fais-la maintenant pour protéger tes données et tes photos.</p><button type="button" class="pri" data-hbak>Sauvegarder</button></div>';
   const heroH='<button type="button" class="hero2" data-hgo="jr" style="border:0;box-shadow:none;background:none;padding:0;margin:0"><div class="rw">'+ring(kp)+'<div class="rc"><b>'+fmtN(Math.abs(rk))+'</b><span>'+(rk>=0?'kcal restantes':'kcal en trop')+'</span></div></div><div class="hm"><h3>Aujourd\'hui</h3>'+mrow('Calories',t.k,T.k,'kcal')+mrow('Protéines',t.p,T.p,'g')+'<small>'+(t.p>=T.p?'Objectif protéines atteint.':'Encore '+fmtN(Math.max(0,T.p-t.p))+' g de protéines.')+'</small></div></button>';
   {
     const lw=(S&&S.last)||null,cb=WT.filter(x=>x.b>0).sort((x,y)=>x.d<y.d?-1:1).pop()||null,tl=(k,v,sub)=>'<div class="t-'+k+'"><b>'+v+'</b><span>'+sub+'</span></div>';
@@ -5358,6 +5357,10 @@ function renderHome(){
     const sec=(title,right,body,go)=>'<div class="sum sec"><div class="sech"'+(go?' data-hgo="'+go+'" style="cursor:pointer"':'')+'><h3>'+title+'</h3>'+(right?'<small>'+right+'</small>':'')+'</div>'+body+'</div>';
     let t1=tl('g',fmtN(t.g)+' / '+T.g+' g','Glucides')+tl('l',fmtN(t.l)+' / '+T.l+' g','Lipides')+tl('f',num(t.f,1)+' / '+T.f+' g','Fibres');
     const s1=sec('Alimentation',fa?'FatSecret · '+esc(fa):'',heroH+'<div class="kv">'+t1+'</div>','jr');
+    const rt=(k,v,u,lab,min)=>{const f=x=>lab==='Fibres'?num(x,1):fmtN(x),un=u==='g'?' g':' kcal';
+      return v>=0?tl(k,f(v)+un,lab+' restantes'):min?tl(k,'0'+un,lab+' · objectif atteint ✓'):tl(k,'0'+un,lab+' · dépassé de '+f(-v))};
+    const s1b=sec('Reste du jour','',
+      '<div class="kv">'+rt('bal',T.k-t.k,'kcal','Calories')+rt('w',T.p-t.p,'g','Protéines',1)+rt('g',T.g-t.g,'g','Glucides')+rt('l',T.l-t.l,'g','Lipides')+rt('f',T.f-t.f,'g','Fibres',1)+'</div>','jr');
     let tiles='';
     tiles+=tl('st',fmtN(a.st)+' pas','Objectif '+fmtN(GOAL));
     {const dg=c.tot-(c.bmr+c.kPas+c.kSes);tiles+='<div style="grid-column:1/-1"><b>'+fmtN(c.tot)+' kcal brûlées</b><span>Estimation sur 24 h</span></div>'}
@@ -5369,10 +5372,8 @@ function renderHome(){
     if(cb){tb+=tl('b',num(cb.b,1)+' %','Graisse corporelle'+(cb.w?' ('+num(cb.w*cb.b/100,1)+' kg)':''));
     }
     const s3=sec('Corps',cb&&cb.d!==td?'impédancemètre du '+fdate(cb.d):'','<div class="kv">'+tb+'</div>','poids');
-    h+='<div id="dsum">'+s1+s2+s3+'</div>';
+    h+='<div id="dsum">'+s1+s1b+s2+s3+'</div>';
   }
-  h+='<div class="dact" style="margin:10px 0"><button type="button" class="pri" data-hgo="jr">＋ Ajouter un repas</button></div>';
-  if(MEALS.length){const hr=new Date().getHours(),sl=hr<10?'pdj':hr<15?'dej':hr<18?'col':'din',sn=SLOTS.find(x=>x[0]===sl)[1];h+='<div class="grp"><h3>Mes repas types <small style="font-weight:500;color:var(--muted)">→ '+sn+'</small></h3><div class="crs">'+MEALS.slice(0,3).map((m,i)=>'<div class="rl"><span><b>'+esc(m.n)+'</b></span><button type="button" data-hmeal="'+i+':'+sl+'">Ajouter</button></div>').join('')+'</div></div>'}
   h+='<div class="sum imp"><div class="sech"><h3>Importer mes données</h3></div><div class="impg"><button type="button" data-auto><span class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span><b>Captures d\'écran</b><small>Huawei, FatSecret</small></button><button type="button" data-autoclip><span class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4h6v1M9 11h6M9 15h4"/></svg></span><b>Coller</b><small>Image copiée</small></button></div><input type="file" id="autofile" accept="image/*" multiple hidden></div>';
   $('home').innerHTML=h;
 }
@@ -5565,7 +5566,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 234 (nouveau logo)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 236 (reste du jour)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
