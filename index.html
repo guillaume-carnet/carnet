@@ -3444,6 +3444,9 @@ const secT=(t,sm)=>'<div class="sech" style="margin:18px 0 8px"><h3>'+t+'</h3>'+
 const addSeg=v=>'<div class="seg2"><button type="button" data-hgo="new" class="'+(v==='new'?'on':'')+'">Une recette</button><button type="button" data-hgo="mes" class="'+(v==='mes'?'on':'')+'">Un aliment</button></div>';
 function renderViews(){
   try{sessionStorage.setItem('cp-lv',state.view)}catch(e){}
+  /* v245 : en arrivant dans « Mes aliments / marques », tous les onglets sont repliés */
+  if(state.view==='mes'&&window.__lvw!=='mes'){['m-add','m-fs','m-bulk','m-list'].forEach(k=>{OPEN[k]=false})}
+  window.__lvw=state.view;
   try{const lb0=ls('cp-lastbak',0);MSUB.sav=lb0?'Dernière : il y a '+dAgo(lb0)+' j':'Jamais sauvegardé'}catch(e){}
   document.documentElement.dataset.tab=VIEWS.some(v=>v[0]===state.view)?state.view:'plus';
   const inMore=MORE.some(m=>m[0]===state.view)||state.view==='mes';
@@ -3723,15 +3726,37 @@ function adjRatio(e){
 }
 const effQ=e=>(e.q||1)*adjRatio(e);
 function adjEntry(key){const [t,a,b]=key.split(':');return t==='d'?(DAY[a]||[])[+b]:(WEEK[+a]||[])[+b]}
-function adjBuild(key){
-  const e=adjEntry(key);if(!e||e.r===undefined||e.x!==undefined)return null;
+function adjBuild(key){return adjBuildE(adjEntry(key),key)}
+function adjBuildE(e,key){
+  if(!e||e.r===undefined||e.x!==undefined)return null;
   const r=R.find(x=>x.i===e.r);if(!r)return null;
-  const base=w=>{const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
+  /* v244 : si « Mes marques » est enregistré pour cette recette, ses calories de base viennent déjà de ces produits : le point de départ du recalcul doit être ces produits, pas les valeurs génériques (sinon l'écart marque - générique était compté deux fois) */
+  const sv=(typeof MCS!=='undefined')?MCS[r.i]:null,useSaved=!!(sv&&!sv.__d);
+  const base=w=>{if(useSaved)return w.sel;const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
   const rows=mcParse(r).map(w=>({t:w.t,sel:w.sel,sel0:base(w),g0:w.g,g:w.g}));
   if(Array.isArray(e.gr)&&e.gr.length===rows.length)rows.forEach((w,i)=>{w.g=+e.gr[i]||0});
   {const ps=Array.isArray(e.ps)?e.ps:(Array.isArray(e.sl)?e.sl:null);if(ps&&ps.length===rows.length)rows.forEach((w,i)=>{w.sel=ps[i]})}
   return {key:key,r:r,rows:rows};
 }
+/* v244 : une seule fois, recalcule les repas déjà validés (aujourd'hui et semaines) qui avaient des calories en trop */
+function adjFixAll(){
+  try{
+    if(ls('cp-fix245',0))return;
+    let n=0;
+    const fx=en=>{if(!en||en.r===undefined||en.x!==undefined||!en.o||!Array.isArray(en.gr))return;
+      const A=adjBuildE(en,null);if(!A)return;const m=adjMac(A);
+      if(m.k!==en.o.k||m.p!==en.o.p||m.g!==en.o.g||m.l!==en.o.l||m.f!==en.o.f){en.o=m;n++}};
+    SLOTS.forEach(([k])=>(DAY[k]||[]).forEach(fx));
+    Object.keys(WEEKS).forEach(k=>(WEEKS[k]||[]).forEach(d=>(d||[]).forEach(fx)));
+    if(n){rawSaveDay();const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}
+    /* jours déjà archivés dans l'historique : on recalcule leurs repas puis leur total */
+    Object.keys(LOGD).forEach(d=>{let c=0;const f2=en=>{const b=n;fx(en);if(n>b)c++};
+      SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(f2));if(c)fxRecalc(d)});
+    lsw('cp-fix245',1);
+    if(n)setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' repas recalculé'+(n>1?'s':'')+' (calories en trop corrigées)')}catch(e){}},400)
+  }catch(e){}
+}
+setTimeout(adjFixAll,0);
 function adjMac(A){
   const T0=mcTot(A.rows.map(w=>({sel:w.sel0,g:w.g0}))),T1=mcTot(A.rows);
   const f=(b,i,d)=>Math.max(0,Math.round((b+T1[i]-T0[i])*Math.pow(10,d))/Math.pow(10,d));
@@ -3859,13 +3884,12 @@ document.addEventListener('click',e=>{
   const b=e.target.closest&&e.target.closest('[data-impgo]');if(!b)return;
   e.preventDefault();const v=b.dataset.impgo;
   if(v==='prog')state.hopen=true;
-  if(v==='mes'){OPEN['m-bulk']=true;lsw('cp-open',OPEN)}
   if(v==='sav'){OPEN['s-res']=true;lsw('cp-open',OPEN)}
   state.view=v;$('more').hidden=true;renderChips();render();renderViews();window.scrollTo(0,0);
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=243;
+const APPV=245;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5749,7 +5773,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 243 (choix du jour)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 245 (calcul des quantités)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
