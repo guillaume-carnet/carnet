@@ -3748,7 +3748,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=232;
+const APPV=233;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5471,11 +5471,13 @@ function renderHist(){
     ds.forEach((r,i)=>{const x=pl+i*bw,bh=r.k/mk*ih;sv+='<rect x="'+(x+1.5)+'" y="'+(6+ih-bh)+'" width="'+(bw-3)+'" height="'+bh+'" rx="2" fill="var(--m-p)" opacity=".35"/>';if(i%2===0||i===ds.length-1)sv+='<text x="'+(x+bw/2)+'" y="'+(Hh-4)+'" font-size="9" text-anchor="middle" fill="var(--muted)">'+JRS[new Date(r.d+'T00:00:00').getDay()]+'</text>'});
     const ty=6+ih-T.k/mk*ih;sv+='<line x1="'+pl+'" x2="'+(W-6)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--m-p)" stroke-dasharray="3 3" opacity=".7"/>';
     if(wv.length){const pts=ds.map((r,i)=>r.w?[pl+i*bw+bw/2,6+ih-(r.w-w0)/(w1-w0)*ih,r.w]:null).filter(Boolean);
-     sv+='<polyline points="'+pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')+'" fill="none" stroke="var(--m-g)" stroke-width="2.5" stroke-linejoin="round"/>';
-     pts.forEach(q=>{sv+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.5" fill="var(--m-g)"/>'});
+     const DT=x=>new Date(x+'T00:00:00').getTime(),W7=WT.filter(x=>!x.s&&x.w>0),av=ds.map((r,i)=>{const t=DT(r.d),a=W7.filter(x=>{const u=DT(x.d);return u<=t&&t-u<=6*864e5});return a.length?[pl+i*bw+bw/2,6+ih-(a.reduce((q,x)=>q+x.w,0)/a.length-w0)/(w1-w0)*ih]:null}).filter(Boolean);
+     sv+='<polyline points="'+pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')+'" fill="none" stroke="var(--m-g)" stroke-width="1.5" stroke-opacity=".45" stroke-linejoin="round"/>';
+     pts.forEach(q=>{sv+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="2.8" fill="var(--m-g)" opacity=".6"/>'});
+     if(av.length>1)sv+='<polyline points="'+av.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')+'" fill="none" stroke="var(--m-g)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>';
      sv+='<text x="2" y="14" font-size="9" fill="var(--m-g)">'+num(w1,1)+'</text><text x="2" y="'+(6+ih)+'" font-size="9" fill="var(--m-g)">'+num(w0,1)+'</text>'}
     sv+='</svg>';
-    h+=blk('h-wc','chart','Poids et calories','14 derniers jours',sv+'<p class="note" style="margin:6px 0 0"><b style="color:var(--m-g)">●</b> poids (kg) · <b style="color:var(--m-p)">▮</b> calories par jour · ligne pointillée = ton palier ('+fmtN(T.k)+' kcal)</p>',false)}}
+    h+=blk('h-wc','chart','Poids et calories','14 derniers jours',sv+'<p class="note" style="margin:6px 0 0"><b style="color:var(--m-g)">●</b> pesées du matin · <b style="color:var(--m-g)">━</b> moyenne glissante 7 jours (la vraie tendance) · <b style="color:var(--m-p)">▮</b> calories par jour · ligne pointillée = ton palier ('+fmtN(T.k)+' kcal)</p>',false)}}
   {const d60=lastDays(60).reverse(),cu=d60.slice(0,30),pv=d60.slice(30);
    const per=ds=>{const L=ds.map(d=>LOG[d]).filter(x=>x&&x.k>0),Wt=WT.filter(x=>!x.s&&x.w&&ds.includes(x.d)),av=(a,f)=>a.length?a.reduce((q,x)=>q+f(x),0)/a.length:0;return{n:L.length,k:av(L,x=>x.k),p:av(L,x=>x.p),f:av(L,x=>x.f),w:av(Wt,x=>x.w),nw:Wt.length}};
    const A=per(cu),B=per(pv);
@@ -5563,7 +5565,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 232 (repas types dans Semaine)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 233 (moyenne 7 jours)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
