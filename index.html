@@ -2502,6 +2502,7 @@ function card(r){
 
 /* ===== Recalcul avec mes marques ===== */
 const MCR=[[/boeuf hach/,"Bœuf haché 5 % cru","boeuf hach"],[/raclette/,"Fromage à raclette","raclette"],[/reblochon/,"Reblochon","reblochon"],[/lardons de dinde/,"Lardons de dinde fumés","lardons"],[/grisons/,"Viande des Grisons","grisons"],[/foie de lapin/,"Foie de lapin cru","foie de lapin"],[/foie de veau|foie de genisse/,"Foie de veau cru","foie de veau"],[/foie de boeuf/,"Foie de bœuf cru","foie de boeuf"],[/ml d.?eau/,"Eau","eau"],[/levure/,"Levure chimique","levure"],[/moutarde/,"Moutarde","moutarde"],[/semoule/,"Semoule complète crue","semoule"],[/jus de citron/,"Jus de citron","jus de citron"],[/concombre/,"Concombre","concombre"],[/chou-?fleur/,"Chou-fleur cru","chou-fleur"],[/choux de bruxelles/,"Choux de Bruxelles crus","bruxelles"],[/chou (rouge|vert|blanc)/,"Chou cru (rouge, vert, blanc)","chou "],[/aubergine/,"Aubergine crue","aubergine"],[/sardine/,"Sardines au naturel égouttées","sardine"],[/maquereau/,"Maquereau cru","maquereau"],[/rumsteck/,"Rumsteck cru","rumsteck"],[/bavette/,"Bavette crue","bavette"],[/veau/,"Veau cru","veau"],[/filet mignon/,"Filet mignon de porc cru","filet mignon"],[/lasagne/,"Feuilles de lasagne complètes sèches","lasagne"],[/parmesan/,"Grana Padano","parmesan"],[/curry/,"Curry en poudre","curry"],[/sauce soja/,"Sauce soja","soja"],[/cabillaud|colin|merlu|\blieu\b/,"Cabillaud cru","cabillaud"],[/saumon/,"Saumon cru","saumon"],[/haricots rouges/,"Haricots rouges (conserve égouttés)","haricots rouges"],[/jambon/,"Jambon de dinde","jambon"],[/blanc d.?oeuf/,"Blanc d'œuf","blanc d"],[/(^|[^b])oeuf/,"Œuf entier","oeuf"],[/poulet/,"Blanc de poulet cru","poulet"],[/dinde/,"Blanc de dinde cru","dinde"],[/steak/,"Steak haché 5 % cru","steak"],[/thon/,"Thon au naturel égoutté","thon"],[/crevette/,"Crevettes cuites","crevette"],[/skyr/,"Skyr nature","skyr"],[/fromage blanc/,"Fromage blanc 0 %","fromage blanc"],[/mozzarella/,"Mozzarella allégée","mozzarella"],[/grana/,"Grana Padano","grana"],[/emmental/,"Emmental râpé","emmental"],[/lait/,"Lait demi-écrémé","lait"],[/riz/,"Riz cru","riz"],[/pates completes/,"Pâtes complètes crues","pates"],[/pates/,"Pâtes crues","pates"],[/patate douce/,"Patate douce crue","patate"],[/pommes? de terre/,"Pomme de terre crue","pomme de terre"],[/flocons/,"Flocons d'avoine","flocons"],[/pain de mie/,"Pain de mie complet","pain"],[/pain/,"Pain complet","pain"],[/wrap/,"Wrap complet","wrap"],[/lentilles corail|corail/,"Lentilles corail crues","corail"],[/lentilles/,"Lentilles cuites (conserve égouttée)","lentilles"],[/pois chiches/,"Pois chiches (conserve égouttés)","pois chiches"],[/haricots blancs/,"Haricots blancs (conserve égouttés)","haricots blancs"],[/haricots verts/,"Haricots verts crus","haricots verts"],[/petits pois/,"Petits pois surgelés","petits pois"],[/pulpe/,"Pulpe de tomates","pulpe"],[/brocoli/,"Brocoli cru","brocoli"],[/carotte/,"Carotte crue","carotte"],[/courgette/,"Courgette crue","courgette"],[/tomate/,"Tomate","tomate"],[/poivron/,"Poivron","poivron"],[/epinards/,"Épinards crus","epinards"],[/oignon/,"Oignon","oignon"],[/banane/,"Banane","banane"],[/pomme/,"Pomme","pomme"],[/framboise|fruits rouges/,"Framboises","framboise"],[/huile/,"Huile d'olive","huile"],[/cacahuete/,"Beurre de cacahuète","cacahuete"],[/amande/,"Amandes","amande"],[/chocolat/,"Chocolat noir 70 %","chocolat"],[/chapelure/,"Chapelure","chapelure"],[/farine/,"Farine complète","farine"],[/miel/,"Miel","miel"],[/mais/,"Maïs égoutté (conserve)","mais"],[/salade/,"Salade verte","salade"],[/poireau/,"Poireau cru","poireau"],[/cacao/,"Cacao maigre en poudre","cacao"]];
+var PREF=(function(){try{const o=JSON.parse(localStorage.getItem('cp-pref')||'{}');return o&&typeof o==='object'?o:{}}catch(e){return {}}})();
 function mcParse(r){const rows=[];
   r.ing.forEach(line=>{String(line).split(/\s\+\s/).flatMap(pt=>{const w=(pt.match(/\d+(?:[.,]\d+)?\s*(?:g|ml)\b/g)||[]).length;return w>1?pt.split(/,\s+(?=[^,]*\d)/):[pt]}).forEach(part=>{
     const n=nrm(part),m=n.match(/(\d+(?:[.,]\d+)?)\s*(?:g|ml)\b/);let g=0;
@@ -2510,7 +2511,7 @@ function mcParse(r){const rows=[];
     if(!g){if(!/(^|[^a-z])(sel|poivre|epices?|paprika|curry|herbes?|persil|basilic|cumin|ail|origan|thym|cannelle|vanille|muscade|piment|coriandre|ciboulette|curcuma|romarin|laurier|citron|vinaigre|eau|facultatif|gout|assaisonnement|spray|ras el hanout|harissa|aneth|menthe|estragon|sauge)([^a-z]|$)/.test(n)&&n.length>2)rows.push({t:part.trim(),g:0,sel:'',u:1});return}
     const rule=MCR.find(x=>x[0].test(n));
     let sel='';
-    if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const mi=FOODS.findIndex(f=>f&&f.per===100&&nrm(String(f.n||'')).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
+    if(rule){const bi=F100.findIndex(f=>f[0]===rule[1]);const pn=(typeof PREF!=='undefined'&&PREF[rule[1]])||'',pi=pn?FOODS.findIndex(f=>f&&f.per===100&&f.n===pn):-1;const mi=pi>=0?pi:FOODS.findIndex(f=>f&&f.per===100&&nrm(String(f.n||'')).includes(rule[2]));sel=mi>=0?'m:'+mi:(bi>=0?'b:'+bi:'')}
     rows.push({t:part.trim(),g,sel})})});
   return rows}
 const VEGRX=/brocoli|courgette|aubergine|carotte|tomate|poivron|haricots verts|epinard|\bchou|salade|oignon|poireau|concombre|legume|petits pois|champignon/;
@@ -3727,40 +3728,53 @@ function adjRatio(e){
 const effQ=e=>(e.q||1)*adjRatio(e);
 function adjEntry(key){const [t,a,b]=key.split(':');return t==='d'?(DAY[a]||[])[+b]:(WEEK[+a]||[])[+b]}
 function adjBuild(key){return adjBuildE(adjEntry(key),key)}
-function adjBuildE(e,key){
+function adjBuildE(e,key,opt){opt=opt||{};
   if(!e||e.r===undefined||e.x!==undefined)return null;
   const r=R.find(x=>x.i===e.r);if(!r)return null;
   /* v244 : si « Mes marques » est enregistré pour cette recette, ses calories de base viennent déjà de ces produits : le point de départ du recalcul doit être ces produits, pas les valeurs génériques (sinon l'écart marque - générique était compté deux fois) */
-  const sv=(typeof MCS!=='undefined')?MCS[r.i]:null,useSaved=!!(sv&&!sv.__d);
+  const sv=(typeof MCS!=='undefined')?MCS[r.i]:null,useSaved=!!sv&&(opt.old?!sv.__d:true);
   const base=w=>{if(useSaved)return w.sel;const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
   const rows=mcParse(r).map(w=>({t:w.t,sel:w.sel,sel0:base(w),g0:w.g,g:w.g}));
   if(Array.isArray(e.gr)&&e.gr.length===rows.length)rows.forEach((w,i)=>{w.g=+e.gr[i]||0});
-  {const ps=Array.isArray(e.ps)?e.ps:(Array.isArray(e.sl)?e.sl:null);if(ps&&ps.length===rows.length)rows.forEach((w,i)=>{w.sel=ps[i]})}
-  return {key:key,r:r,rows:rows};
+  {const ps=Array.isArray(e.ps)?e.ps:(Array.isArray(e.sl)?e.sl:null);if(ps&&ps.length===rows.length)rows.forEach((w,i)=>{const v=ps[i];if(typeof v==='string'&&v.indexOf('|')>0){const rs=mcSelResolve(v);if(rs!==null)w.sel=rs}else w.sel=v})}
+  const A={key:key,r:r,rows:rows,extra:null};
+  /* v246 : ce qui est dans le repas mais pas expliqué par les quantités (aliment ajouté, valeurs modifiées à la main) est gardé */
+  if(e.o&&!opt.noExtra){const m=adjMac(A),x={k:e.o.k-m.k,p:e.o.p-m.p,g:e.o.g-m.g,l:e.o.l-m.l,f:e.o.f-m.f};
+    if(Math.abs(x.k)>=1||Math.abs(x.p)>=0.2||Math.abs(x.g)>=0.2||Math.abs(x.l)>=0.2||Math.abs(x.f)>=0.2)A.extra=x}
+  return A;
 }
 /* v244 : une seule fois, recalcule les repas déjà validés (aujourd'hui et semaines) qui avaient des calories en trop */
 function adjFixAll(){
   try{
-    if(ls('cp-fix245',0))return;
+    if(ls('cp-fix246',0))return;
     let n=0;
     const fx=en=>{if(!en||en.r===undefined||en.x!==undefined||!en.o||!Array.isArray(en.gr))return;
-      const A=adjBuildE(en,null);if(!A)return;const m=adjMac(A);
+      const A=adjBuildE(en,null,{noExtra:1});if(!A)return;
+      /* l'ancien calcul (générique, ou marques sauvegardées hors « Garder ») : si l'entrée y correspond, pas d'ajout réel */
+      const cmp=(a,b)=>Math.abs(a.k-b.k)<1.5&&Math.abs(a.p-b.p)<0.3&&Math.abs(a.g-b.g)<0.3&&Math.abs(a.l-b.l)<0.3&&Math.abs(a.f-b.f)<0.3;
+      const mNew=adjMac(A),mOld=adjMac(adjBuildE(en,null,{noExtra:1,old:1}));
+      let gen=null;{const A3=adjBuildE(en,null,{noExtra:1});A3.rows.forEach(w=>{w.sel0=(function(){const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel})()});gen=adjMac(A3)}
+      let m=mNew;if(!cmp(en.o,mNew)&&!cmp(en.o,mOld)&&!cmp(en.o,gen)){const x={k:en.o.k-mOld.k,p:en.o.p-mOld.p,g:en.o.g-mOld.g,l:en.o.l-mOld.l,f:en.o.f-mOld.f};const r1=v=>Math.round(v*10)/10;m={k:Math.max(0,Math.round(mNew.k+x.k)),p:Math.max(0,r1(mNew.p+x.p)),g:Math.max(0,r1(mNew.g+x.g)),l:Math.max(0,r1(mNew.l+x.l)),f:Math.max(0,r1(mNew.f+x.f))}}
       if(m.k!==en.o.k||m.p!==en.o.p||m.g!==en.o.g||m.l!==en.o.l||m.f!==en.o.f){en.o=m;n++}};
     SLOTS.forEach(([k])=>(DAY[k]||[]).forEach(fx));
     Object.keys(WEEKS).forEach(k=>(WEEKS[k]||[]).forEach(d=>(d||[]).forEach(fx)));
     if(n){rawSaveDay();const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}
     /* jours déjà archivés dans l'historique : on recalcule leurs repas puis leur total */
-    Object.keys(LOGD).forEach(d=>{let c=0;const f2=en=>{const b=n;fx(en);if(n>b)c++};
-      SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(f2));if(c)fxRecalc(d)});
-    lsw('cp-fix245',1);
+    Object.keys(LOGD).forEach(d=>{const dl={k:0,p:0,g:0,l:0,f:0};let c=0;
+      const f2=en=>{const o0=en&&en.o?Object.assign({},en.o):null,b=n;fx(en);if(n>b&&o0){const q=en.q||1;['k','p','g','l','f'].forEach(m=>{dl[m]+=(en.o[m]-o0[m])*q});c++}};
+      SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(f2));
+      if(c&&LOG[d]&&LOG[d].k>0){const r1=v=>Math.round(v*10)/10;LOG[d]={k:Math.max(0,Math.round(LOG[d].k+dl.k)),p:Math.max(0,r1((LOG[d].p||0)+dl.p)),g:Math.max(0,r1((LOG[d].g||0)+dl.g)),l:Math.max(0,r1((LOG[d].l||0)+dl.l)),f:Math.max(0,r1((LOG[d].f||0)+dl.f))};saveLog()}
+      if(c)lsw('cp-logd',LOGD)});
+    lsw('cp-fix246',1);
     if(n)setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' repas recalculé'+(n>1?'s':'')+' (calories en trop corrigées)')}catch(e){}},400)
   }catch(e){}
 }
 setTimeout(adjFixAll,0);
 function adjMac(A){
   const T0=mcTot(A.rows.map(w=>({sel:w.sel0,g:w.g0}))),T1=mcTot(A.rows);
-  const f=(b,i,d)=>Math.max(0,Math.round((b+T1[i]-T0[i])*Math.pow(10,d))/Math.pow(10,d));
-  return {k:f(A.r.k,0,0),p:f(A.r.p,1,1),g:f(A.r.g,2,1),l:f(A.r.l,3,1),f:f(A.r.f,4,1)};
+  const X=A.extra||{k:0,p:0,g:0,l:0,f:0};
+  const f=(b,i,d,x)=>Math.max(0,Math.round((b+T1[i]-T0[i]+x)*Math.pow(10,d))/Math.pow(10,d));
+  return {k:f(A.r.k,0,0,X.k),p:f(A.r.p,1,1,X.p),g:f(A.r.g,2,1,X.g),l:f(A.r.l,3,1,X.l),f:f(A.r.f,4,1,X.f)};
 }
 function adjFib(A){
   const nm=[];A.rows.forEach(w=>{const m=String(w.sel||'').match(/^m:(\d+)$/);if(m&&FOODS[+m[1]]&&FOODS[+m[1]].nf)nm.push(FOODS[+m[1]].n)});
@@ -3807,11 +3821,13 @@ document.addEventListener('click',e=>{
   if(b.dataset.adj){const k=b.dataset.adj;if(state.adj&&state.adj.key===k)state.adj=null;else state.adj=adjBuild(k);adjRender(k);return}
   if(b.dataset.adrs){const k=b.dataset.adrs,en=adjEntry(k);if(en){delete en.o;delete en.gr;delete en.ps;if(Array.isArray(en.sl))delete en.sl}state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Recette d\'origine rétablie');return}
   if(b.dataset.adok){const k=b.dataset.adok,en=adjEntry(k),A=state.adj;if(!en||!A||A.key!==k)return;
-    if(A.rows.every(w=>w.g===w.g0&&w.sel===w.sel0)){delete en.o;delete en.gr;delete en.ps;if(Array.isArray(en.sl))delete en.sl}
-    else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g);en.ps=A.rows.map(w=>w.sel);if(Array.isArray(en.sl))delete en.sl}
+    if(!A.extra&&A.rows.every(w=>w.g===w.g0&&w.sel===w.sel0)){delete en.o;delete en.gr;delete en.ps;if(Array.isArray(en.sl))delete en.sl}
+    else{en.o=adjMac(A);en.gr=A.rows.map(w=>w.g);en.ps=A.rows.map(w=>w.sel&&w.sel[0]==='m'?mcSelKey(w.sel):w.sel);if(Array.isArray(en.sl))delete en.sl}
     state.adj=null;if(k[0]==='d')saveDay();else saveWeek();adjRender(k);if(window.toast)toast('✓ Quantités enregistrées');return}
 });
-document.addEventListener('change',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.ads!==undefined)||!state.adj)return;state.adj.rows[+t.dataset.ads].sel=t.value;const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
+document.addEventListener('change',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.ads!==undefined)||!state.adj)return;state.adj.rows[+t.dataset.ads].sel=t.value;
+  /* v247 : retient la marque choisie pour cet ingrédient, elle sera proposée d'office la fois suivante */
+  try{const w=state.adj.rows[+t.dataset.ads],ru=MCR.find(x=>x[0].test(nrm(w.t)));if(ru){const m=/^m:(\d+)$/.exec(t.value||'');if(m&&FOODS[+m[1]])PREF[ru[1]]=FOODS[+m[1]].n;else delete PREF[ru[1]];localStorage.setItem('cp-pref',JSON.stringify(PREF))}}catch(x){}const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
 document.addEventListener('input',e=>{const t=e.target;if(!(t&&t.dataset&&t.dataset.adg!==undefined)||!state.adj)return;
   state.adj.rows[+t.dataset.adg].g=Math.max(0,parseFloat(String(t.value).replace(',','.'))||0);
   const el=$('adjt');if(el)el.innerHTML=adjTot(state.adj)});
@@ -3889,7 +3905,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=245;
+const APPV=248;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5773,7 +5789,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 245 (calcul des quantités)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 248 (marques par nom)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
