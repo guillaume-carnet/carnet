@@ -3770,19 +3770,20 @@ function adjFixAll(){
   }catch(e){}
 }
 setTimeout(adjFixAll,0);
-/* v251 : une recette dont les valeurs « gardées » sont devenues absurdes (ex. 46 kcal) est recalculée depuis la recette d'origine + tes produits */
+/* v252 : une recette « gardée » est toujours recalculée depuis la recette d'origine + tes produits (répare les valeurs abîmées par l'ancien bug) */
 function recHeal(){
   try{let n=0;
     Object.keys(MCS).forEach(id=>{const r=R.find(x=>String(x.i)===String(id)),sv=MCS[id];if(!r||!r.o||!sv||!(r.o.k>0))return;
-      const bad=r.k<r.o.k*0.4||r.k>r.o.k*2.5||(r.g<=0&&r.o.g>15)||(r.l<=0&&r.o.l>5)||(r.p<=0&&r.o.p>10);if(!bad)return;
+      if(!sv.__d)return;
       delete MCS[id];let rows0;try{rows0=mcParse(r)}finally{MCS[id]=sv}
       const gen=w=>{const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
       const T0=mcTot(rows0.map(w=>({sel:gen(w),g:w.g}))),T1=mcTot(mcParse(r));
       const m=[0,1,2,3,4].map(i=>r.o[['k','p','g','l','f'][i]]+T1[i]-T0[i]);
       if(!(m[0]>r.o.k*0.4&&m[0]<r.o.k*2.5))return;
       const v={k:Math.round(m[0]),p:Math.max(0,Math.round(m[1]*10)/10),g:Math.max(0,Math.round(m[2]*10)/10),l:Math.max(0,Math.round(m[3]*10)/10),f:Math.max(0,Math.round(m[4]*10)/10)};
+      if(Math.abs(v.k-r.k)<1&&Math.abs(v.p-r.p)<0.2&&Math.abs(v.g-r.g)<0.2&&Math.abs(v.l-r.l)<0.2)return;
       MAC[r.i]=v;Object.assign(r,v);n++});
-    if(n){lsw('cp-mac',MAC);setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' recette'+(n>1?'s':'')+' recalculée'+(n>1?'s':'')+' (valeurs absurdes corrigées)')}catch(e){}},500)}
+    if(n){lsw('cp-mac',MAC);setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' recette'+(n>1?'s':'')+' recalculée'+(n>1?'s':'')+' (valeurs corrigées)')}catch(e){}},500)}
   }catch(e){}
 }
 setTimeout(recHeal,50);
@@ -3926,7 +3927,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=251;
+const APPV=252;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5812,7 +5813,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 251 (réparation recettes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 252 (réparation recettes)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
