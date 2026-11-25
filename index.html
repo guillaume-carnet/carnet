@@ -1111,8 +1111,8 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}body{height:100%;min-h
 .hhead .hlogo{position:absolute;right:16px;top:14px;width:58px;height:58px;border-radius:15px;z-index:2;box-shadow:0 6px 16px rgba(10,10,60,.35)}
 .hhead h2{max-width:calc(100% - 78px)}
 
-#dsum .rj{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
-#dsum .rj1{background:color-mix(in srgb,var(--accent) 9%,var(--surface));border-radius:14px;padding:8px 10px;display:grid;gap:1px}
+#dsum .rj{display:flex;flex-wrap:wrap;gap:8px}
+#dsum .rj1{flex:1 1 92px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));border-radius:14px;padding:8px 10px;display:grid;gap:1px}
 #dsum .rj1 small{font-size:11px;color:var(--muted);font-weight:600}
 #dsum .rj1 b{font-family:var(--f-display);font-size:16px;line-height:1.2}
 #dsum .rj1.ov b{color:#D6336C}
@@ -3765,7 +3765,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=238;
+const APPV=239;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5376,7 +5376,8 @@ function renderHome(){
     let t1=tl('g',fmtN(t.g)+' / '+T.g+' g','Glucides')+tl('l',fmtN(t.l)+' / '+T.l+' g','Lipides')+tl('f',num(t.f,1)+' / '+T.f+' g','Fibres');
     const s1=sec('Alimentation',fa?'FatSecret · '+esc(fa):'',heroH+'<div class="kv">'+t1+'</div>','jr');
     const rt=(v,u,lab,min)=>{const f=x=>lab==='Fibres'?num(x,1):fmtN(x),un=u==='g'?' g':' kcal',ov=v<0;
-      return '<div class="rj1'+(ov&&!min?' ov':'')+'"><small>'+lab+'</small><b>'+(ov?(min?'✓':'+'+f(-v)):f(v))+un+'</b></div>'};
+      const big=ov&&!min&&(-v)>(u==='g'?3:30);
+      return '<div class="rj1'+(big?' ov':'')+'"><small>'+lab+'</small><b>'+(ov?(min?'✓':'+'+f(-v)+un):f(v)+un)+'</b></div>'};
     const s1b=sec('Reste du jour','','<div class="rj">'+rt(T.k-t.k,'kcal','Calories')+rt(T.p-t.p,'g','Protéines',1)+rt(T.g-t.g,'g','Glucides')+rt(T.l-t.l,'g','Lipides')+rt(T.f-t.f,'g','Fibres',1)+'</div>','jr');
     let tiles='';
     tiles+=tl('st',fmtN(a.st)+' pas','Objectif '+fmtN(GOAL));
@@ -5392,8 +5393,8 @@ function renderHome(){
     try{if(S&&S.am&&S.am.length>1){const am=S.am,lt=dms(S.last.d),pts=am.filter(x=>(lt-dms(x.d))/DAYMS<=6);
       if(pts.length>1){const mv=pts.map(x=>{const t0=dms(x.d),ws=am.filter(y=>{const dd=(t0-dms(y.d))/DAYMS;return dd>=0&&dd<=6});return ws.reduce((q,y)=>q+y.w,0)/ws.length});
         const all=pts.map(x=>x.w).concat(mv),mn=Math.min(...all),mx=Math.max(...all),rg=Math.max(mx-mn,.4),n=pts.length;
-        const X=k=>12+k*(276/(n-1)),Y=v=>8+(1-(v-mn)/rg)*46,pa=arr=>arr.map((v,k)=>(k?'L':'M')+X(k).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
-        spk='<div class="spk"><svg viewBox="0 0 300 62" role="img" aria-label="Poids des 7 derniers jours"><path d="'+pa(pts.map(x=>x.w))+'" fill="none" stroke="#5B8DEF" stroke-opacity=".55" stroke-width="1.6"/>'+pts.map((x,k)=>'<circle cx="'+X(k).toFixed(1)+'" cy="'+Y(x.w).toFixed(1)+'" r="3" fill="#5B8DEF"/>').join('')+'<path d="'+pa(mv)+'" fill="none" stroke="#A66BF0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>7 derniers jours · points = pesées, trait épais = moyenne 7 j</small></div>'}}}catch(e){}
+        const X=k=>12+k*(276/(n-1)),Y=v=>20+(1-(v-mn)/rg)*36,pa=arr=>arr.map((v,k)=>(k?'L':'M')+X(k).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+        spk='<div class="spk"><svg viewBox="0 0 300 70" role="img" aria-label="Poids des 7 derniers jours"><path d="'+pa(pts.map(x=>x.w))+'" fill="none" stroke="#5B8DEF" stroke-opacity=".55" stroke-width="1.6"/>'+pts.map((x,k)=>'<circle cx="'+X(k).toFixed(1)+'" cy="'+Y(x.w).toFixed(1)+'" r="3" fill="#5B8DEF"/>').join('')+'<path d="'+pa(mv)+'" fill="none" stroke="#A66BF0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><text x="'+X(0).toFixed(1)+'" y="'+(Y(pts[0].w)-8).toFixed(1)+'" text-anchor="start" style="font-size:11px;font-weight:700;fill:var(--muted)">'+num(pts[0].w,1)+'</text><text x="'+X(n-1).toFixed(1)+'" y="'+(Y(pts[n-1].w)+17).toFixed(1)+'" text-anchor="end" style="font-size:11px;font-weight:700;fill:var(--ink,currentColor)">'+num(pts[n-1].w,1)+'</text></svg><small>7 derniers jours · points = pesées, trait épais = moyenne 7 j</small></div>'}}}catch(e){}
     const s3=sec('Corps',cb&&cb.d!==td?'impédancemètre du '+fdate(cb.d):'','<div class="kv">'+tb+'</div>'+spk,'poids');
     h+='<div id="dsum">'+s1+s1b+s3+s2+'</div>';
   }
@@ -5589,7 +5590,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 238 (Accueil compact)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 239 (Accueil affiné)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
