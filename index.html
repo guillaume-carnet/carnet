@@ -3938,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=272;
+const APPV=273;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4666,8 +4666,7 @@ function mcShowLine(r,x){
   const au=adjUI;
   adjUI=function(kind,a,b,e){
     let h=au(kind,a,b,e);const key=kind+':'+a+':'+b;
-    if(state.adj&&state.adj.key===key&&h.indexOf('data-adok')>=0)
-      h=h.replace('>Valider les quantités</button>','>Valider les quantités</button><button type="button" class="adjrs" data-adkeep="'+key+'">Garder pour la recette</button>');
+    /* v273 : « Garder pour la recette » n'est plus dans « Ajuster » (risque de modifier la recette sans le vouloir) ; il reste dans Avancé > Mes marques */
     return h};
   document.addEventListener('click',e=>{
     const b=e.target.closest&&e.target.closest('[data-adkeep]');if(!b)return;
@@ -5883,7 +5882,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 272 (retour recette de base)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 273 (Ajuster ne touche plus la recette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
