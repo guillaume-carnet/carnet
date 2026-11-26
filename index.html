@@ -3930,7 +3930,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=253;
+const APPV=254;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5692,9 +5692,9 @@ function renderHist(){
   const v=k=>last7.map(r=>r[k]).filter(x=>x>0),m=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
   let h='<h2>Historique et récap</h2><p class="note">Chaque journée est enregistrée ici automatiquement à minuit.</p>';
   h+='<div class="sum" id="hcal" style="margin:0 0 12px"><h3 style="margin:0;font-family:var(--f-display)">Calendrier</h3>'+calHTML()+'</div>';
-  {const T7=(c,val,lab)=>'<div class="ht '+c+'"><b>'+val+'</b><span>'+lab+'</span></div>',ok7=last7.filter(r=>r.k&&Math.abs(r.k-T.k)<=100).length;
+  {const T7=(c,val,lab)=>'<div class="ht '+c+'"><b>'+val+'</b><span>'+lab+'</span></div>',ok7=last7.filter(r=>r.k&&Math.abs(r.k-targets(r.d).k)<=100).length;
    h+=secT('7 derniers jours','moyennes par jour')+'<div class="sum hsum"><div class="htg">'+T7('t-k wide',v('k').length?fmtN(m(v('k'))):'—','kcal / jour · palier '+T.k)+T7('t-p',v('p').length?fmtN(m(v('p')))+' g':'—','protéines')+T7('t-g',v('g').length?fmtN(m(v('g')))+' g':'—','glucides')+T7('t-l',v('l').length?fmtN(m(v('l')))+' g':'—','lipides')+T7('t-f',v('f').length?num(m(v('f')),1)+' g':'—','fibres')+T7('t-s',v('st').length?fmtN(m(v('st'))):'—','pas / jour')+T7('t-w',v('w').length?num(m(v('w')),1)+' kg':'—','poids moyen')+T7('t-d wide',ok7+' / 7','jours à ±100 kcal du palier')+'</div></div>';}
-  const bars=(key,unit,target,cap)=>{const ds=rows.slice(0,7).reverse(),vs=ds.map(r=>r[key]),mx=Math.max(target,...vs,1);return '<div class="abars">'+ds.map((r,i)=>{const vv=vs[i];return '<div class="b'+((cap?(vv>0&&vv<=target):vv>=target)?' ok':'')+'"><b>'+(vv?fmtN(vv):'')+'</b><i style="height:'+Math.round(vv/mx*80)+'px"></i>'+JRS[new Date(r.d+'T00:00:00').getDay()]+'</div>'}).join('')+'</div><p class="note" style="margin:0">'+(cap?'À ne pas dépasser : '+fmtN(target)+' '+unit+' (barre claire = sous la limite)':'Objectif : '+fmtN(target)+' '+unit+' (barre pleine = atteint)')+'</p>'};
+  const bars=(key,unit,target0,cap)=>{const ds=rows.slice(0,7).reverse(),vs=ds.map(r=>r[key]),tg=ds.map(r=>{const t=targets(r.d)[key];return t>0?t:target0}),target=target0,mx=Math.max(...tg,...vs,1);return '<div class="abars">'+ds.map((r,i)=>{const vv=vs[i],tt=tg[i];return '<div class="b'+((cap?(vv>0&&vv<=tt):vv>=tt*0.995)?' ok':'')+'" title="objectif du jour : '+tt+'"><b>'+(vv?fmtN(vv):'')+'</b><i style="height:'+Math.round(vv/mx*80)+'px"></i>'+JRS[new Date(r.d+'T00:00:00').getDay()]+'</div>'}).join('')+'</div><p class="note" style="margin:0">'+(cap?'À ne pas dépasser : '+fmtN(target)+' '+unit+' aujourd\'hui (chaque barre est comparée à la limite de son jour ; claire = sous la limite)':'Objectif d\'aujourd\'hui : '+fmtN(target)+' '+unit+' (chaque barre est comparée à l\'objectif de son jour ; pleine = atteint)')+'</p>'};
   h+=secT('Tendances','objectif en barre pleine');
   h+=blk('h-kc','chart','Calories','7 derniers jours',bars('k','kcal',T.k),true);
   h+=blk('h-pr','chart','Protéines','7 derniers jours',bars('p','g',T.p),false);
@@ -5816,7 +5816,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 253 (réparation repas)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 254 (objectifs par jour)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
