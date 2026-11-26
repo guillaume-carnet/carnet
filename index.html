@@ -2491,7 +2491,6 @@ function card(r){
     '<h3>'+esc(r.n)+'</h3>'+
     '<div class="macros"><div class="kcal"><b>'+Math.round(r.k*f)+'</b><span>kcal</span></div><div><b>'+V(r.p)+'</b><span>Prot</span></div><div><b>'+V(r.g)+'</b><span>Gluc</span></div><div><b>'+V(r.l)+'</b><span>Lip</span></div><div><b>'+V(r.f)+'</b><span>Fibres</span></div></div>'+
     (pers?'<p class="mnote">Macros modifiées par toi</p>':'')+
-    '<div class="por"><span>Portion</span>'+[0.75,1,1.25,1.5].map(x=>'<button type="button" data-por="'+r.i+':'+x+'" aria-pressed="'+(f===x)+'">×'+String(x).replace('.',',')+'</button>').join('')+'</div>'+
     '<div class="brow"><button type="button" class="cbtn2" data-cook="'+r.i+'">Cuisiner</button><button type="button" class="cbtn2" data-radd="'+r.i+'">⚖ Ajouter et ajuster</button></div>'+
     '<details class="advd"'+((ed||state.mcalc===r.i)?' open':'')+'><summary>Avancé</summary><div class="brow"><button type="button" class="cbtn'+(SEL.has(r.i)?' on':'')+'" data-i="'+r.i+'">'+(SEL.has(r.i)?'Dans ma liste de courses ✓':'+ Ajouter aux courses')+'</button>'+((pers&&MAC[r.i]&&!MAC[r.i].__auto&&!(typeof MCS!=='undefined'&&MCS[r.i]))?'<button type="button" class="gbtn" data-mreset="'+r.i+'">↺ Remettre les macros d\'origine</button>':'')+'<button type="button" class="gbtn" data-mcalc="'+r.i+'">'+(state.mcalc===r.i?'Fermer':'⚖ Mes marques')+'</button>'+(r.cu?'<button type="button" class="gbtn" data-cdel="'+r.i+'">Supprimer ma recette</button>':'')+'</div>'+recNotes(r.i)+'</details>'+
     (state.mcalc===r.i?mcPanel(r):'')+
@@ -3407,7 +3406,7 @@ R.forEach(r=>{r.par=[];r.ing.forEach(l=>parseIng(l).forEach(x=>r.par.push(x)))})
 const ls=(k,d)=>{try{const s=localStorage.getItem(k);if(!s)return d;const v=JSON.parse(s);if(v===null||v===undefined)return d;if(Array.isArray(d))return Array.isArray(v)?v.filter(x=>x!==null&&x!==undefined):d;if(d&&typeof d==='object')return(typeof v==='object'&&!Array.isArray(v))?v:d;if(d!==null&&typeof d!==typeof v)return d;return v}catch(e){return d}};
 const lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const FAV=new Set(ls('cp-fav',[]));
-let VID=ls('cp-vid',{}),NOTES=ls('cp-notes',{}),POR2=ls('cp-por2',{}),MAC=ls('cp-mac',{}),CR=ls('cp-cr',[]),SVD=ls('cp-days',[]),WT=ls('cp-w',[]),WEEK=ls('cp-week',[[],[],[],[],[],[],[]]);
+let VID=ls('cp-vid',{}),NOTES=ls('cp-notes',{}),POR2=(function(){/* v268 : les recettes sont toujours à ×1 ; la portion se règle sur le repas */try{if(ls('cp-por2',{})&&Object.keys(ls('cp-por2',{})).length)lsw('cp-por2',{})}catch(e){}return {}})(),MAC=ls('cp-mac',{}),CR=ls('cp-cr',[]),SVD=ls('cp-days',[]),WT=ls('cp-w',[]),WEEK=ls('cp-week',[[],[],[],[],[],[],[]]);
 if(!Array.isArray(WEEK)||WEEK.length!==7)WEEK=[[],[],[],[],[],[],[]];
 let WOFF=0;
 const wMonISO=off=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*off);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -3939,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=267;
+const APPV=271;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4870,6 +4869,20 @@ function rawSaveDay(){try{localStorage.setItem('cp-day',JSON.stringify(DAY))}cat
     }catch(err){}
   });
 })();
+/* v269 : boutons de portion sur le repas */
+function advMv(key,inner){if(!inner)return '';const open=state.mv===key||state.med===key;return '<details class="advd"'+(open?' open':'')+'><summary>Avancé</summary>'+inner+'</details>'}
+function qpUI(kind,a,b,e){const q=e.q||1;
+  if(e.r===undefined||e.x!==undefined){const ia=kind==='d'?'data-dq="'+a+':'+b+':':'data-wq="'+a+':'+b+':';
+    return '<div class="stp"><button type="button" '+ia+'-1" aria-label="Moins">−</button><span>×'+num(q,2)+'</span><button type="button" '+ia+'1" aria-label="Plus">+</button></div>'}
+  return '<div class="por"><span>Portion</span>'+[0.75,1,1.25,1.5].map(x=>'<button type="button" data-qp="'+kind+':'+a+':'+b+':'+x+'" aria-pressed="'+(q===x)+'">×'+String(x).replace('.',',')+'</button>').join('')+'</div>'}
+document.addEventListener('click',ev=>{const t=ev.target.closest&&ev.target.closest('[data-qp]');if(!t)return;ev.preventDefault();
+  const [k,a,b,x]=t.dataset.qp.split(':'),v=+x;if(!(v>0))return;
+  const en=k==='d'?(DAY[a]||[])[+b]:(WEEK[+a]||[])[+b];if(!en)return;
+  /* v271 : si « Ajuster » est ouvert, il reste ouvert : les grammes suivent la nouvelle portion */
+  const A=state.adj;if(A&&A.key===k+':'+a+':'+b){const old=A.q||1,ra=v/old,r2=z=>Math.round(z*100)/100;
+    A.rows.forEach(w=>{w.g=r2(w.g*ra);w.g0=r2(w.g0*ra)});if(A.extra)for(const c in A.extra)A.extra[c]*=ra;A.q=v}
+  en.q=v;if(k==='d'){saveDay();renderDay()}else{saveWeek();renderWeek()}
+});
 function saveDay(){rawSaveDay();dayToWeek()}
 /* Journée et Semaine (aujourd'hui) partagent les mêmes repas */
 function dayToWeek(){try{const fl=SLOTS.reduce((a,[k])=>a.concat((DAY[k]||[]).map(e=>Object.assign({},e,{sl:k}))),[]);
@@ -4944,7 +4957,7 @@ function renderDay(){
     const es=DAY[s];
     h+='<div class="slot"><div class="sh"><i class="sic s-'+s+'">'+SLI[s]+'</i><div class="sht"><h3>'+l+'</h3><small>'+SLS[s]+'</small></div><span>'+num(es.reduce((a,e)=>a+ent(e).k,0),0)+' kcal</span></div>';
     es.forEach((e,j)=>{const x=ent(e);const fs=/^FatSecret/i.test(x.n)||/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      let stp=(fs?'':'<div class="stp"><button type="button" data-dq="'+s+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-dq="'+s+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('d',s,j,e));stp+=mvUI('d',s,j)+medUI('d',s,j,e);
+      let stp=(fs?'':qpUI('d',s,j,e,true)+adjUI('d',s,j,e));stp+=advMv('d:'+s+':'+j,mvUI('d',s,j)+medUI('d',s,j,e));
       h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+entBtn('d:'+s+':'+j)+'<button type="button" class="ex" data-dx="'+s+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+(entOpen('d:'+s+':'+j)?stp:'')+'</div>'});
     h+='<div class="sa"><button type="button" data-pick="'+s+'">+ Recette</button><button type="button" data-free="'+s+'">+ Aliment</button><button type="button" data-meal="'+s+'">★ Repas type</button></div>';
     if(state.meal===s){h+='<div class="pf">'+(MEALS.length?MEALS.map((m,i)=>state.delc==='M'+i?'<div class="mealrow"><span style="flex:1;font-size:13.5px">Supprimer « '+esc(m.n)+' » ?</span><button type="button" data-mdelok="'+i+'">Oui</button><button type="button" data-mdelno="1">Non</button></div>':'<div class="mealrow"><button type="button" class="mb2" data-muse="'+s+':'+i+'"><b>'+esc(m.n)+'</b> <small>'+Math.round(m.e.reduce((a,e)=>a+ent(e).k,0))+' kcal · '+m.e.length+' élément'+(m.e.length>1?'s':'')+'</small></button><button type="button" data-mdel="'+i+'" aria-label="Supprimer">✕</button></div>').join(''):'<p class="note" style="margin:0">Aucun repas type pour l\'instant.</p>')+(es.length?'<div class="mealrow"><input id="mname" type="text" placeholder="Nom du repas type" style="flex:1;font:inherit;min-height:44px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0"><button type="button" data-msave="'+s+'">Enregistrer ce repas</button></div>':'<p class="note" style="margin:6px 0 0">Compose d\'abord un repas pour pouvoir l\'enregistrer.</p>')+'</div>'}
@@ -5142,7 +5155,7 @@ function renderWeek(){
     const es=day.map((e,j)=>[e,j]).filter(x=>wsl(x[0])===sk);
     h+='<div class="slot"><div class="sh"><i class="sic s-'+sk+'">'+SLI[sk]+'</i><div class="sht"><h3>'+sl+'</h3><small>'+SLS[sk]+'</small></div><span>'+num(es.reduce((a,x)=>a+ent(x[0]).k,0),0)+' kcal</span></div>';
     es.forEach(([e,j])=>{const x=ent(e);const fs=/FatSecret/i.test(x.n);const nm=esc(String(x.n).replace(/^FatSecret\s*·\s*/i,'').replace(/^Journal FatSecret/i,'Total du jour'));
-      let stp=(fs?'':'<div class="stp"><button type="button" data-wq="'+di+':'+j+':-1" aria-label="Moins">−</button><span>×'+num(e.q||1,2)+'</span><button type="button" data-wq="'+di+':'+j+':1" aria-label="Plus">+</button></div>'+adjUI('w',di,j,e));stp+=mvUI('w',di,j)+medUI('w',di,j,e);
+      let stp=(fs?'':qpUI('w',di,j,e,true)+adjUI('w',di,j,e));stp+=advMv('w:'+di+':'+j,mvUI('w',di,j)+medUI('w',di,j,e));
       h+='<div class="ent ent2"><div class="eh"><b>'+nm+'</b>'+(fs?'<em class="tg">FatSecret</em>':(e.o?'<em class="tg">Ajusté</em>':''))+entBtn('w:'+di+':'+j)+'<button type="button" class="ex" data-wx="'+di+':'+j+'" aria-label="Retirer">✕</button></div><div class="em"><i class="mk">'+num(x.k,0)+' kcal</i><i><u>P</u>'+num(x.p)+'</i><i><u>G</u>'+num(x.g)+'</i><i><u>L</u>'+num(x.l)+'</i><i><u>F</u>'+num(x.f)+'</i></div>'+(entOpen('w:'+di+':'+j)?stp:'')+'</div>'});
     h+='<div class="sa"><button type="button" data-wpick="'+sk+'">+ Recette</button><button type="button" data-wfree="'+sk+'">+ Aliment</button><button type="button" data-wmeal="'+sk+'">★ Repas type</button></div>';
     if(state.wpick===sk)h+='<div class="pk"><input id="wqs" type="search" placeholder="Chercher une recette ou un ingrédient" value="'+esc(state.wq)+'" aria-label="Chercher une recette"><div id="wl"></div></div>';
@@ -5870,7 +5883,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 267 (ajouter et ajuster)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 271 (portion sans fermer Ajuster)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
@@ -5958,7 +5971,7 @@ window.toast=toast;
 const snap=()=>{let a='';try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('cp-')&&k!=='cp-open')a+=k+'='+localStorage.getItem(k)+'\u0001'}}catch(e){}return a};
 const KEYS=['addr','waddr','wsug','wfadd','muse','wmuse','msave','fadd','mact','bset'];
 function kind(b){const t=(b.textContent||'').trim(),d=b.dataset;
-  if(d.dq!==undefined||d.wq!==undefined||d.pick!==undefined||d.free!==undefined||d.rsave!==undefined)return null;
+  if(d.dq!==undefined||d.wq!==undefined||d.qp!==undefined||d.pick!==undefined||d.free!==undefined||d.rsave!==undefined)return null;
   if(d.mact&&d.mact!=='save'&&d.mact!=='fsfill')return null;
   if(/^(Enregistrer|Mettre à jour)/i.test(t)||d.mact==='save'||d.act==='dsave'||d.act==='hlog'||['psave','pfix'].includes(d.aact))return['✓ Enregistré',1];
   if(d.bset||d.aact==='gsave')return null;
