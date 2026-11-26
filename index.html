@@ -3938,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=273;
+const APPV=274;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4851,8 +4851,8 @@ function rawSaveDay(){try{localStorage.setItem('cp-day',JSON.stringify(DAY))}cat
   document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-radd]');if(!a)return;e.preventDefault();
     const i=+a.dataset.radd;state.qadd=i;state.qadj=1;render();
     setTimeout(()=>{const b=document.querySelector('.qadd .qab');if(b&&b.scrollIntoView)b.scrollIntoView({block:'center',behavior:'smooth'})},50)},true);
-  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-qa]');pend=null;if(!b||!state.qadj)return;
-    const v=b.dataset.qa;if(v==='x'){state.qadj=0;return}const [id,sl]=v.split(':');if(sl==='?'||!SLOTS.some(x=>x[0]===sl))return;
+  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-qa]');pend=null;if(!b)return;if(!state.qadj){return}
+    const v=b.dataset.qa;if(v==='x'){state.qadj=0;return}const [id,sl]=v.split(':');if(sl==='?'){state.qadj=0;return}if(!SLOTS.some(x=>x[0]===sl))return;
     pend={sl:sl,qk:state.qday||0,n:(state.qday||0)===0?(DAY[sl]||[]).length:-1}},true);
   document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-qa]');if(!b||!pend)return;const P=pend;pend=null;state.qadj=0;
     try{
@@ -5882,7 +5882,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 273 (Ajuster ne touche plus la recette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 274 (contrôle complet)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
