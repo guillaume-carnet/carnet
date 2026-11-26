@@ -2492,7 +2492,7 @@ function card(r){
     '<div class="macros"><div class="kcal"><b>'+Math.round(r.k*f)+'</b><span>kcal</span></div><div><b>'+V(r.p)+'</b><span>Prot</span></div><div><b>'+V(r.g)+'</b><span>Gluc</span></div><div><b>'+V(r.l)+'</b><span>Lip</span></div><div><b>'+V(r.f)+'</b><span>Fibres</span></div></div>'+
     (pers?'<p class="mnote">Macros modifiées par toi</p>':'')+
     '<div class="brow"><button type="button" class="cbtn2" data-cook="'+r.i+'">Cuisiner</button><button type="button" class="cbtn2" data-radd="'+r.i+'">⚖ Ajouter et ajuster</button></div>'+
-    '<details class="advd"'+((ed||state.mcalc===r.i)?' open':'')+'><summary>Avancé</summary><div class="brow"><button type="button" class="cbtn'+(SEL.has(r.i)?' on':'')+'" data-i="'+r.i+'">'+(SEL.has(r.i)?'Dans ma liste de courses ✓':'+ Ajouter aux courses')+'</button>'+((pers&&MAC[r.i]&&!MAC[r.i].__auto&&!(typeof MCS!=='undefined'&&MCS[r.i]))?'<button type="button" class="gbtn" data-mreset="'+r.i+'">↺ Remettre les macros d\'origine</button>':'')+'<button type="button" class="gbtn" data-mcalc="'+r.i+'">'+(state.mcalc===r.i?'Fermer':'⚖ Mes marques')+'</button>'+(r.cu?'<button type="button" class="gbtn" data-cdel="'+r.i+'">Supprimer ma recette</button>':'')+'</div>'+recNotes(r.i)+'</details>'+
+    '<details class="advd"'+((ed||state.mcalc===r.i)?' open':'')+'><summary>Avancé</summary><div class="brow"><button type="button" class="cbtn'+(SEL.has(r.i)?' on':'')+'" data-i="'+r.i+'">'+(SEL.has(r.i)?'Dans ma liste de courses ✓':'+ Ajouter aux courses')+'</button>'+(((typeof MCS!=='undefined'&&MCS[r.i])||(MAC[r.i]&&!MAC[r.i].__auto))?'<button type="button" class="gbtn" data-mreset="'+r.i+'">↺ Revenir à la recette de base</button>':'')+'<button type="button" class="gbtn" data-mcalc="'+r.i+'">'+(state.mcalc===r.i?'Fermer':'⚖ Mes marques')+'</button>'+(r.cu?'<button type="button" class="gbtn" data-cdel="'+r.i+'">Supprimer ma recette</button>':'')+'</div>'+recNotes(r.i)+'</details>'+
     (state.mcalc===r.i?mcPanel(r):'')+
     (ed?'<div class="pf"><p class="note">Saisis les valeurs réelles (FatSecret) pour une portion.</p><div class="pfg"><label>kcal<input id="mk" inputmode="decimal" value="'+r.k+'"></label><label>Prot<input id="mp" inputmode="decimal" value="'+r.p+'"></label><label>Gluc<input id="mg" inputmode="decimal" value="'+r.g+'"></label><label>Lip<input id="ml" inputmode="decimal" value="'+r.l+'"></label><label>Fibres<input id="mf" inputmode="decimal" value="'+r.f+'"></label></div><div class="brow"><button type="button" data-msave="'+r.i+'">Enregistrer</button>'+(pers?'<button type="button" data-mreset="'+r.i+'">Rétablir mes valeurs d\'origine</button>':'')+'</div></div>':'')+
     '<details data-i="'+r.i+'"><summary>Voir la recette</summary><div class="rec"><h4>Ingrédients'+(f!==1?' (portion ×'+String(f).replace('.',',')+')':'')+'</h4><ul>'+r.ing.map(x=>'<li>'+esc(scaleLine(mcShowLine(r,x),f))+'</li>').join('')+'</ul><h4>Étapes</h4><ol>'+r.st.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'+(r.tip?'<p class="tip">💡 '+esc(r.tip)+'</p>':'')+subsHTML(r)+recMedia(r.i)+'<h4>Batch cooking</h4><div class="seg bseg" data-bi="'+r.i+'">'+[2,3,4,5,6].map(n=>'<button type="button" data-bn="'+n+'" aria-pressed="false">×'+n+'</button>').join('')+'</div><div class="bout" data-bo="'+r.i+'" hidden></div></div></details>'+
@@ -3938,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=271;
+const APPV=272;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5098,7 +5098,7 @@ $('grid').addEventListener('click',e=>{
   if(d.mcalc){const i=+d.mcalc;state.mcalc=state.mcalc===i?null:i;if(state.mcalc===null)state.mcrows=null;try{render()}catch(err){state.mcalc=null;state.mcrows=null;try{render()}catch(e2){}if(window.toast)toast('Mes marques ne s\'ouvre pas : '+(err&&err.message),true)}return}
   if(d.mcok){const i=+d.mcok,r=R.find(x=>x.i===i),T=mcTot(state.mcrows.rows),m={k:Math.round(T[0]),p:Math.round(T[1]*10)/10,g:Math.round(T[2]*10)/10,l:Math.round(T[3]*10)/10,f:Math.round(T[4]*10)/10};MAC[i]=m;Object.assign(r,m);lsw('cp-mac',MAC);state.mcalc=null;state.mcrows=null;render();return}
   if(d.msave){const i=+d.msave,r=R.find(x=>x.i===i);const m={k:pnum($('mk').value),p:pnum($('mp').value),g:pnum($('mg').value),l:pnum($('ml').value),f:pnum($('mf').value)};MAC[i]=m;Object.assign(r,m);lsw('cp-mac',MAC);state.medit=null;render();return}
-  if(d.mreset){const i=+d.mreset,r=R.find(x=>x.i===i);delete MAC[i];Object.assign(r,r.o);lsw('cp-mac',MAC);state.medit=null;render();return}
+  if(d.mreset){const i=+d.mreset,r=R.find(x=>x.i===i);delete MAC[i];if(typeof MCS!=='undefined'&&MCS[i]){delete MCS[i];lsw('cp-mcsel',MCS)}Object.assign(r,r.o);lsw('cp-mac',MAC);state.medit=null;state.mcalc=null;state.mcrows=null;render();if(window.toast)toast('✓ Recette de base rétablie');return}
   if(d.cdel){const i=+d.cdel;const j=R.findIndex(x=>x.i===i);if(j>=0)R.splice(j,1);CR=CR.filter(c=>1000+c.id!==i);lsw('cp-cr',CR);purge(i);renderChips();render();renderViews();return}
 });
 /* Filtres combinés */
@@ -5883,7 +5883,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 271 (portion sans fermer Ajuster)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 272 (retour recette de base)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
