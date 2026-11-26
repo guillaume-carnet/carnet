@@ -3770,7 +3770,8 @@ function adjFixAll(){
     if(n)setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' repas recalculé'+(n>1?'s':'')+' (calories en trop corrigées)')}catch(e){}},400)
   }catch(e){}
 }
-setTimeout(()=>{try{recHeal()}catch(e){}adjFixAll()},0);
+setTimeout(()=>{try{recHeal()}catch(e){}adjFixAll();
+  try{if(!ls('cp-sync255',0)){const ch=syncPast();lsw('cp-sync255',1);if(ch.length)setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ Historique aligné sur la Semaine : '+ch.map(c=>c[0].slice(8)+'/'+c[0].slice(5,7)+' '+c[1]+'→'+c[2]).join(', '))}catch(e){}},700)}}catch(e){}},0);
 /* v252 : une recette « gardée » est toujours recalculée depuis la recette d'origine + tes produits (répare les valeurs abîmées par l'ancien bug) */
 function recHeal(){
   try{let n=0;
@@ -3930,7 +3931,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=254;
+const APPV=256;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5068,7 +5069,21 @@ $('grid').addEventListener('click',e=>{
 /* ===== Semaine ===== */
 const DN=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 state.wpick=null;state.wq='';state.wconf=false;
-function saveWeek(){WEEKS[wMonISO(WOFF)]=WEEK;const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o);if(WOFF===0)weekToDay()}
+/* v255 : un jour passé modifié dans la Semaine met aussi à jour l'Historique (sinon les deux se contredisent) */
+function syncPast(){
+  try{const td=today(),ch=[];
+    Object.keys(WEEKS).forEach(k=>{const p=k.split('-').map(Number);
+      (WEEKS[k]||[]).forEach((arr,i)=>{if(!arr||!arr.length)return;const dt=new Date(p[0],p[1]-1,p[2]+i),ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+        if(ds>=td)return;
+        const D={pdj:[],dej:[],col:[],din:[]},t={k:0,p:0,g:0,l:0,f:0};
+        arr.forEach(e=>{const c=JSON.parse(JSON.stringify(e)),sl=wsl(c);delete c.sl;D[sl].push(c);const x=ent(c);['k','p','g','l','f'].forEach(m=>t[m]+=x[m])});
+        const r1=v=>Math.round(v*10)/10,l=LOG[ds];
+        if(l&&Math.abs((l.k||0)-t.k)<1&&Math.abs((l.p||0)-t.p)<0.5&&Math.abs((l.g||0)-t.g)<0.5)return;
+        ch.push([ds,l?l.k:0,Math.round(t.k)]);
+        LOG[ds]={k:Math.round(t.k),p:r1(t.p),g:r1(t.g),l:r1(t.l),f:r1(t.f)};LOGD[ds]=D})});
+    if(ch.length){saveLog();lsw('cp-logd',LOGD)}
+    return ch}catch(e){return []}}
+function saveWeek(){WEEKS[wMonISO(WOFF)]=WEEK;const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(d=>d.length))o[k]=WEEKS[k]});lsw('cp-weeks',o);if(WOFF===0)weekToDay();syncPast()}
 const DS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const wToday=()=>(new Date().getDay()+6)%7;
 const wDate=i=>{const d=new Date();d.setDate(d.getDate()+i-wToday()+7*WOFF);return d};
@@ -5193,6 +5208,8 @@ function chartSvg(pts,opt){
   return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbe">'+g+'</svg>'+leg;
 }
 let BODY=Object.assign({h:169,zmin:67,zmax:69,act:1.55,kc:0},ls('cp-body',{}));
+/* v256 : niveau d'activité réglé une fois à 1,55 (actif, 3 à 5 séances) au lieu de 1,725 ; modifiable ensuite dans Corps */
+try{if(!ls('cp-act256',0)){if(BODY.act===1.725){BODY.act=1.55;lsw('cp-body',BODY)}lsw('cp-act256',1)}}catch(e){}
 const wkey=x=>x.d+(x.s?'s':'');
 const DAYMS=864e5,dms=d=>Date.parse(d+'T00:00:00');
 const mean=(arr,f)=>{const v=arr.map(f).filter(x=>x>0);return v.length?v.reduce((s,x)=>s+x,0)/v.length:0};
@@ -5816,7 +5833,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 254 (objectifs par jour)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 256 (activité réglée)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
