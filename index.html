@@ -3732,7 +3732,7 @@ function adjBuildE(e,key,opt){opt=opt||{};
   if(!e||e.r===undefined||e.x!==undefined)return null;
   const r=R.find(x=>x.i===e.r);if(!r)return null;
   /* v244 : si « Mes marques » est enregistré pour cette recette, ses calories de base viennent déjà de ces produits : le point de départ du recalcul doit être ces produits, pas les valeurs génériques (sinon l'écart marque - générique était compté deux fois) */
-  const sv=(typeof MCS!=='undefined')?MCS[r.i]:null,useSaved=!!sv&&(opt.old?!sv.__d:true);
+  const sv=(typeof MCS!=='undefined')?MCS[r.i]:null,useSaved=(!!sv&&(opt.old?!sv.__d:true))||(!opt.old&&!!(typeof MAC!=='undefined'&&MAC[r.i]&&MAC[r.i].__auto));
   const base=w=>{if(useSaved)return w.sel;const ru=MCR.find(x=>x[0].test(nrm(w.t)));if(!ru)return w.sel;const bi=F100.findIndex(f=>f[0]===ru[1]);return bi>=0?'b:'+bi:w.sel};
   const rows=mcParse(r).map(w=>({t:w.t,sel:w.sel,sel0:base(w),g0:w.g,g:w.g}));
   if(Array.isArray(e.gr)&&e.gr.length===rows.length)rows.forEach((w,i)=>{w.g=+e.gr[i]||0});
@@ -3746,7 +3746,7 @@ function adjBuildE(e,key,opt){opt=opt||{};
 /* v244 : une seule fois, recalcule les repas déjà validés (aujourd'hui et semaines) qui avaient des calories en trop */
 function adjFixAll(){
   try{
-    const done=ls('cp-fix253',0);
+    const done=ls('cp-fix257',0);
     let n=0;
     const fx=en=>{if(!en||en.r===undefined||en.x!==undefined||!en.o||!Array.isArray(en.gr))return;
       const A=adjBuildE(en,null,{noExtra:1});if(!A)return;
@@ -3766,7 +3766,7 @@ function adjFixAll(){
       SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(f2));
       if(c&&LOG[d]&&LOG[d].k>0){const r1=v=>Math.round(v*10)/10;LOG[d]={k:Math.max(0,Math.round(LOG[d].k+dl.k)),p:Math.max(0,r1((LOG[d].p||0)+dl.p)),g:Math.max(0,r1((LOG[d].g||0)+dl.g)),l:Math.max(0,r1((LOG[d].l||0)+dl.l)),f:Math.max(0,r1((LOG[d].f||0)+dl.f))};saveLog()}
       if(c)lsw('cp-logd',LOGD)});
-    lsw('cp-fix253',1);
+    lsw('cp-fix257',1);
     if(n)setTimeout(()=>{try{renderViews();if(window.toast)toast('✓ '+n+' repas recalculé'+(n>1?'s':'')+' (calories en trop corrigées)')}catch(e){}},400)
   }catch(e){}
 }
@@ -3931,7 +3931,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=256;
+const APPV=258;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4022,12 +4022,18 @@ document.addEventListener('change',e=>{if(e.target&&e.target.dataset&&e.target.d
 
 /* ===== Corriger un jour : pas, poids, séances, repas (v161) ===== */
 function fxYest(){const y=new Date();y.setDate(y.getDate()-1);return y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0')}
+/* v257 : une correction faite sur un jour passé est aussi écrite dans la Semaine, pour que les deux restent d'accord */
+function fxWeekPush(d){try{const dt=new Date(d+'T00:00:00'),dw=(dt.getDay()+6)%7,m=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()-dw),key=m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'-'+String(m.getDate()).padStart(2,'0');
+  if(!WEEKS[key])WEEKS[key]=[[],[],[],[],[],[],[]];
+  const arr=[];if(LOGD[d])SLOTS.forEach(([k])=>(LOGD[d][k]||[]).forEach(e=>{const c=JSON.parse(JSON.stringify(e));c.sl=k;arr.push(c)}));
+  WEEKS[key][dw]=arr;if(typeof WEEK!=='undefined'&&typeof WOFF!=='undefined'&&key===wMonISO(WOFF))WEEK[dw]=arr;
+  const o={};Object.keys(WEEKS).forEach(k=>{if(WEEKS[k].some(x=>x.length))o[k]=WEEKS[k]});lsw('cp-weeks',o)}catch(e){}}
 function fxRecalc(d){
   const t={k:0,p:0,g:0,l:0,f:0};
   SLOTS.forEach(([k])=>((LOGD[d]||{})[k]||[]).forEach(e=>{try{const x=ent(e);t.k+=x.k;t.p+=x.p;t.g+=x.g;t.l+=x.l;t.f+=x.f}catch(er){}}));
   const r=v=>Math.round(v*10)/10;
   if(t.k>0)LOG[d]={k:Math.round(t.k),p:r(t.p),g:r(t.g),l:r(t.l),f:r(t.f)};else delete LOG[d];
-  saveLog();lsw('cp-logd',LOGD);
+  saveLog();lsw('cp-logd',LOGD);fxWeekPush(d);
 }
 function fxEnsureD(d){
   if(LOGD[d])return;
@@ -4097,7 +4103,7 @@ document.addEventListener('click',e=>{
     const est=p*4+g*4+l*9;if(est>0&&Math.abs(est-k)>k*0.35&&!fxGuard(b,'Les macros donnent environ '+Math.round(est)+' kcal, pas '+Math.round(k)+'. Appuie encore pour confirmer.'))return;
     fxSnap('repas du '+jd);fxEnsureD(d);const sl=$('fxsl').value;LOGD[d][sl].push({x:($('fxmn').value||'Repas ajouté').trim(),k:k,p:p,g:g,l:l,f:n('fxf'),q:1});fxRecalc(d);renderFix();return ok('Repas ajouté au '+jd)}
   if(a==='mdel'){if(!fxGuard(b,'Appuie encore pour supprimer ce repas.'))return;fxSnap('repas du '+jd);fxEnsureD(d);LOGD[d][b.dataset.s].splice(+b.dataset.i,1);fxRecalc(d);renderFix();return ok('Repas supprimé')}
-  if(a==='ddel'){if(!fxGuard(b,'Appuie encore pour vider tous les repas du '+jd+'.'))return;fxSnap('repas vidés du '+jd);delete LOG[d];delete LOGD[d];saveLog();lsw('cp-logd',LOGD);renderFix();return ok('Repas du '+jd+' vidés')}
+  if(a==='ddel'){if(!fxGuard(b,'Appuie encore pour vider tous les repas du '+jd+'.'))return;fxSnap('repas vidés du '+jd);delete LOG[d];delete LOGD[d];saveLog();lsw('cp-logd',LOGD);fxWeekPush(d);renderFix();return ok('Repas du '+jd+' vidés')}
 });
 
 /* ===== v163 (test) : ajouter à la journée depuis la carte + « ce qu'il me reste » ===== */
@@ -5833,7 +5839,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 256 (activité réglée)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 258 (recettes au foie)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
