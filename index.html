@@ -3938,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=276;
+const APPV=278;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4270,10 +4270,10 @@ function fzOk(r,q){
   renderHist=function(){
     const r=rh.apply(this,arguments);
     try{
-      const root=$('history'),T=targets();if(!root)return r;const o=root.querySelector('#wbil');if(o)o.remove();
-      const ds=lastDays(7).filter(d=>LOG[d]&&LOG[d].k>0);const n=ds.length;
+      const root=$('history'),W=wkWin(),T={p:W.tp,f:W.tf};if(!root)return r;const o=root.querySelector('#wbil');if(o)o.remove();
+      const ds=W.days.filter(d=>LOG[d]&&LOG[d].k>0);const n=ds.length;
       let b='<div class="sum" id="wbil"><h3 style="margin:0 0 6px;font-family:var(--f-display)">Bilan de la semaine</h3>';
-      if(n<2)b+='<p class="note" style="margin:0">Il faut au moins 2 jours enregistrés sur les 7 derniers pour faire un bilan.</p>';
+      if(n<2)b+='<p class="note" style="margin:0">Il faut au moins 2 jours enregistrés cette semaine (lundi au dimanche) pour faire un bilan.</p>';
       else{
         const P=ds.map(d=>LOG[d].p||0),F=ds.map(d=>LOG[d].f||0),av=a=>a.reduce((x,y)=>x+y,0)/a.length;
         const okP=P.filter(x=>x>=T.p-5).length,okF=F.filter(x=>x>=T.f).length;
@@ -4284,6 +4284,49 @@ function fzOk(r,q){
       }
       b+='</div>';
       const h=root.querySelector('.hsum');if(h)h.insertAdjacentHTML('afterend',b);
+    }catch(e){}
+    return r};
+})();
+
+/* ===== v278 : semaine après semaine (Historique) ===== */
+(function(){
+  const rh=renderHist;
+  const pd=n=>String(n).padStart(2,'0'),iso=d=>d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate());
+  function weeks(){
+    const n=new Date(),td=iso(n),dw=(n.getDay()+6)%7,o=[];
+    for(let i=0;i<5;i++){
+      const all=[];for(let j=0;j<7;j++)all.push(iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw-7*i+j)));
+      const days=all.filter(d=>d<td&&LOG[d]&&LOG[d].k>0),av=k=>days.length?days.reduce((s,d)=>s+(LOG[d][k]||0),0)/days.length:null;
+      const sd=all.filter(d=>d<td).map(d=>(ACT[d]||{}).st||0).filter(x=>x>0);
+      const ws=WT.filter(x=>!x.s&&x.w>0&&all.indexOf(x.d)>=0&&x.d<=td),wa=f=>{const a=ws.filter(x=>x[f]>0);return a.length?a.reduce((s,x)=>s+x[f],0)/a.length:null};
+      const t0=targets(all[0]);
+      o.push({all,cur:i===0,n:days.length,k:av('k'),p:av('p'),g:av('g'),l:av('l'),f:av('f'),st:sd.length?sd.reduce((a,b)=>a+b,0)/sd.length:null,w:wa('w'),nw:ws.length,b:wa('b'),m:wa('m'),tk:t0.k,tp:t0.p});
+    }
+    return o;
+  }
+  renderHist=function(){
+    const r=rh.apply(this,arguments);
+    try{
+      const root=$('history');if(!root)return r;
+      const old=root.querySelector('[data-k="h-wkcmp"]');if(old)old.remove();
+      const W=weeks(),jn=d=>fdate(d).slice(0,5);
+      const line=(lab,v,unit,dec,pv,pre)=>{
+        if(v===null)return '';
+        const f10=Math.pow(10,dec),q=pv===null||pv===undefined?null:Math.round((v-pv)*f10)/f10,txt=q===null?'':' <small>('+(q>0?'+':q<0?'−':'±')+(dec?num(Math.abs(q),dec):fmtN(Math.abs(q)))+')</small>';
+        return '<div class="rl"><span><b>'+lab+'</b> · '+(pre||'')+(dec?num(v,dec):fmtN(Math.round(v)))+unit+txt+'</span></div>';};
+      let body='<p class="note" style="margin:0 0 8px">Chaque semaine va du lundi au dimanche. Entre parenthèses : l\'écart avec la semaine d\'avant. La semaine en cours ne compte que les jours déjà passés.</p>';
+      for(let i=0;i<4;i++){
+        const w=W[i],pv=W[i+1],P=k=>pv&&pv[k]!==null?pv[k]:null;
+        body+='<h4 style="margin:12px 0 4px;font-family:var(--f-display)">'+jn(w.all[0])+' → '+jn(w.all[6])+(w.cur?' · en cours':'')+'</h4><div class="crs">';
+        if(!w.n&&w.w===null)body+='<div class="rl"><span>Rien d\'enregistré cette semaine-là.</span></div>';
+        else body+=line('Calories',w.k,' kcal/jour',0,P('k'),'')+(w.k!==null?'<div class="rl"><span><b>Palier</b> · '+fmtN(w.tk)+' kcal · '+w.n+' jour'+(w.n>1?'s':'')+' enregistré'+(w.n>1?'s':'')+'</span></div>':'')
+          +line('Protéines',w.p,' g/jour',0,P('p'))+line('Glucides',w.g,' g/jour',0,P('g'))+line('Lipides',w.l,' g/jour',0,P('l'))+line('Fibres',w.f,' g/jour',1,P('f'))
+          +line('Pas',w.st,'/jour',0,P('st'))+line('Poids moyen',w.w,' kg',1,P('w'))+(w.w!==null?'<div class="rl"><span><b>Pesées</b> · '+w.nw+' matin'+(w.nw>1?'s':'')+'</span></div>':'')
+          +line('Gras',w.b,' %',1,P('b'))+line('Muscle',w.m,' kg',1,P('m'));
+        body+='</div>';
+      }
+      const h=blk('h-wkcmp','chart','Semaine après semaine','4 dernières semaines',body,false);
+      const o=root.querySelector('#wbil');if(o)o.insertAdjacentHTML('afterend',h);
     }catch(e){}
     return r};
 })();
@@ -4380,15 +4423,15 @@ if(typeof WAT!=='object'||Array.isArray(WAT))WAT={};
   renderHist=function(){
     const r=rh.apply(this,arguments);
     try{
-      const T=targets(),td=today(),days=lastDays(7).filter(d=>d!==td);
+      const T=Object.assign({},targets(),{k:wkWin().tk,p:wkWin().tp}),td=today(),W=wkWin(),days=W.days;
       const ld=days.filter(d=>LOG[d]&&LOG[d].k>0),n=ld.length;
       const L2=[];
       if(n){
         const ak=Math.round(ld.reduce((t,d)=>t+LOG[d].k,0)/n),ap=Math.round(ld.reduce((t,d)=>t+LOG[d].p,0)/n),pd=ld.filter(d=>LOG[d].p>=T.p*0.95).length;
         L2.push(['Calories','moyenne '+fmtN(ak)+' kcal par jour, palier '+T.k+' ('+(ak-T.k>0?'+':'')+fmtN(ak-T.k)+')']);
         L2.push(['Protéines',pd+' jour'+(pd>1?'s':'')+' sur '+n+' à '+Math.round(T.p*0.95)+' g ou plus, moyenne '+ap+' g']);
-      }else L2.push(['Repas','pas encore de journée enregistrée sur la semaine']);
-      const ws=WT.filter(x=>!x.s&&x.w&&days.includes(x.d)).sort((a,b)=>a.d<b.d?-1:1);
+      }else L2.push(['Repas','pas encore de journée enregistrée cette semaine']);
+      const ws=WT.filter(x=>!x.s&&x.w&&W.all.includes(x.d)).sort((a,b)=>a.d<b.d?-1:1);
       if(ws.length>=2){const dl=ws[ws.length-1].w-ws[0].w;L2.push(['Poids',(dl>0?'+':'')+num(dl,1)+' kg ('+num(ws[0].w,1)+' → '+num(ws[ws.length-1].w,1)+')'])}
       else L2.push(['Poids','pas assez de pesées pour comparer']);
       const st=days.map(d=>(ACT[d]||{}).st||0).filter(x=>x>0);
@@ -4398,8 +4441,8 @@ if(typeof WAT!=='object'||Array.isArray(WAT))WAT={};
       const wd=days.map(d=>WAT[d]||0).filter(x=>x>0);
       if(wd.length)L2.push(['Eau','moyenne '+L(Math.round(wd.reduce((a,b)=>a+b,0)/wd.length))+' L par jour']);
       const ok=n>=4&&ld.filter(d=>LOG[d].p>=T.p*0.95).length>=Math.ceil(n*0.7);
-      const verdict=!n?'':ok?'Bon rythme : tes protéines sont tenues la plupart des jours.':'À surveiller : les protéines sont atteintes moins de 7 jours sur 10.';
-      const h=blk('h-week','chart','Bilan de la semaine','7 derniers jours',(verdict?'<p style="margin:0 0 8px"><b>'+verdict+'</b></p>':'')+'<div class="crs">'+L2.map(x=>'<div class="rl"><span><b>'+x[0]+'</b> · '+x[1]+'</span></div>').join('')+'</div>',true);
+      const verdict=n<4?'':ok?'Bon rythme : tes protéines sont tenues la plupart des jours.':'À surveiller : les protéines sont atteintes moins de 7 jours sur 10.';
+      const h=blk('h-week','chart','Bilan de la semaine',W.last?'semaine dernière':'depuis lundi',(verdict?'<p style="margin:0 0 8px"><b>'+verdict+'</b></p>':'')+'<div class="crs">'+L2.map(x=>'<div class="rl"><span><b>'+x[0]+'</b> · '+x[1]+'</span></div>').join('')+'</div>',true);
       const hc=document.querySelector('#history [data-k="h-ctl"]');
       if(hc)hc.insertAdjacentHTML('beforebegin',h);
     }catch(e){}
@@ -5415,6 +5458,9 @@ function actCalc(d){
   const bmr=(S&&S.bmr)||22*kg,base=bmr+kPas+kSes;
   return{kg,km:a.st*stepM/1000,kPas,kSes,bmr,tot:base*1.08,min:a.ses.reduce((t,x)=>t+x.min,0)};
 }
+function wkWin(){const pd=n=>String(n).padStart(2,'0'),iso=d=>d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate()),n=new Date(),td=iso(n),dw=(n.getDay()+6)%7,last=dw===0,m0=new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw-(last?7:0)),all=[];
+  for(let i=0;i<7;i++)all.push(iso(new Date(m0.getFullYear(),m0.getMonth(),m0.getDate()+i)));
+  const t0=targets(all[0]);return{td,last,all:all.filter(d=>d<=td),days:all.filter(d=>d<td),lbl:last?'semaine dernière':'cette semaine',tk:t0.k,tp:t0.p,tf:t0.f}}
 function lastDays(n){const o=[];for(let i=n-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);o.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))}return o}
 const JRS=['dim','lun','mar','mer','jeu','ven','sam'];
 function palHome(){const pal=$('palier'),bar=document.querySelector('.bar');if(pal&&bar&&pal.parentNode!==bar.parentNode)bar.parentNode.insertBefore(pal,bar)}
@@ -5896,7 +5942,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 276 (récap par semaine)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 278 (semaine après semaine)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
