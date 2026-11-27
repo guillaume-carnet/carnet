@@ -3938,7 +3938,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=274;
+const APPV=275;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -5768,13 +5768,24 @@ function renderHist(){
   h+=blk('h-li','chart','Lipides','7 derniers jours',bars('l','g',T.l,true),false);
   h+=blk('h-fi','chart','Fibres','7 derniers jours',bars('f','g',T.f),false);
   {/* conseil de la semaine */
-   const S=bodyStats(),r7=rows.slice(0,7),kd=r7.filter(r=>r.k>0),av=kd.length?kd.reduce((q,r)=>q+r.k,0)/kd.length:0,nx=PALIERS[state.pal+1];
+   const pad=n=>String(n).padStart(2,'0'),isoD=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),
+    nowD=new Date(),tdIso=isoD(nowD),mo=new Date(nowD.getFullYear(),nowD.getMonth(),nowD.getDate()-((nowD.getDay()+6)%7)),
+    wk=(m0)=>{const o=[];for(let i=0;i<7;i++)o.push(isoD(new Date(m0.getFullYear(),m0.getMonth(),m0.getDate()+i)));return o},
+    lastWeek=(nowD.getDay()+6)%7===0,
+    m0=lastWeek?new Date(mo.getFullYear(),mo.getMonth(),mo.getDate()-7):mo,
+    m1=new Date(m0.getFullYear(),m0.getMonth(),m0.getDate()-7),
+    cw=wk(m0).filter(d=>d<tdIso),pw=wk(m1),
+    kd=cw.map(d=>({d,k:(LOG[d]||{}).k||0})).filter(r=>r.k>0),av=kd.length?kd.reduce((q,r)=>q+r.k,0)/kd.length:0,
+    amW=WT.filter(x=>!x.s&&x.w),wm=(ds)=>{const a=amW.filter(x=>ds.indexOf(x.d)>=0);return{n:a.length,m:a.length?a.reduce((q,x)=>q+x.w,0)/a.length:0}},
+    wc=wm(wk(m0).filter(d=>d<=tdIso)),wp=wm(pw),
+    S=wc.n>=2&&wp.n>=2?{a7:wc.m,rate:wc.m-wp.m}:null,
+    lbl=lastWeek?'Semaine dernière (lundi au dimanche)':'Cette semaine (depuis lundi)',tk=targets(wk(m0)[0]).k,pi=PALIERS.findIndex(q=>q.k===tk),nx=PALIERS[(pi>=0?pi:state.pal)+1];
    let tx='',cl='';
-   if(kd.length<4||!S||S.rate===null){tx='Pas encore assez de données. Pour un conseil fiable, enregistre tes repas au moins 4 jours par semaine et pèse-toi au moins 2 matins par semaine, sur 2 semaines.';cl='info'}
-   else{const rt=S.rate,dv=av-T.k;
-    const ev='Cette semaine : '+fmtN(av)+' kcal en moyenne (palier '+fmtN(T.k)+'), poids moyen '+num(S.a7,1)+' kg ('+(rt>0?'+':'')+num(rt,2)+' kg par rapport à la semaine d\'avant). ';
+   if(kd.length<4||!S){tx='Pas encore assez de données. Le conseil compte la semaine du lundi au dimanche : il faut au moins 4 jours enregistrés cette semaine, et 2 pesées le matin cette semaine et la semaine d\'avant.';cl='info'}
+   else{const rt=S.rate,dv=av-tk;
+    const ev=lbl+' : '+fmtN(av)+' kcal en moyenne (palier '+fmtN(tk)+'), poids moyen '+num(S.a7,1)+' kg ('+(rt>0?'+':'')+num(rt,2)+' kg par rapport à la semaine d\'avant). ';
     if(S.a7>BODY.zmax){tx=ev+'Ton poids dépasse ton plafond de '+num(BODY.zmax,1)+' kg : reste sur ton palier actuel et ne monte pas.';cl='warn'}
-    else if(Math.abs(dv)>150){tx=ev+'Tu es loin de ton palier : le poids ne dit pas grand-chose tant que tu ne manges pas autour de '+fmtN(T.k)+' kcal. Vise ce chiffre avant de changer de palier.';cl='info'}
+    else if(Math.abs(dv)>150){tx=ev+'Tu es loin de ton palier : le poids ne dit pas grand-chose tant que tu ne manges pas autour de '+fmtN(tk)+' kcal. Vise ce chiffre avant de changer de palier.';cl='info'}
     else if(PU&&PU.on&&PU.goal==='perte'){tx=ev+(rt<-0.8?'Tu perds vite. '+(nx?'Passe au palier suivant ('+nx.k+' kcal) pour garder du muscle.':'Ajoute environ 100 kcal par jour.'):rt>0.4?'Le poids monte alors que tu veux perdre. '+(state.pal>0?'Redescends d\'un palier.':'Vérifie tes quantités et tes pesées, puis garde ce palier.'):rt>-0.1?'Le poids stagne. Garde ce palier une semaine de plus avant de changer.':'Bon rythme de perte. Garde ton palier.');cl='ok'}
     else if(PU&&PU.on&&PU.goal==='muscle'){tx=ev+(rt<0.1?'Le poids ne monte pas. '+(nx?'Passe au palier suivant ('+nx.k+' kcal).':'Ajoute environ 100 kcal par jour.'):rt>0.5?'Tu prends vite : une partie sera du gras. Garde ou redescends d\'un palier.':'Bon rythme de prise. Garde ton palier.');cl='ok'}
     else if(rt<-0.5){tx=ev+'Le poids baisse vite. '+(nx?'Tu peux passer au palier suivant ('+nx.k+' kcal).':'Ajoute environ 100 kcal par jour.');cl='ok'}
@@ -5882,7 +5893,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 274 (contrôle complet)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 275 (conseil par semaine)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
