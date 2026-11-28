@@ -808,6 +808,15 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;bac
 .wkdots u{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-size:9px;font-weight:700;text-decoration:none;background:rgba(120,130,170,.22);color:var(--muted)}
 .wkdots u.on{background:var(--bc,var(--m-p));color:#fff}
 .wkdots u.nil{background:transparent;border:1.5px dashed rgba(120,130,170,.4)}
+.wkmini{display:flex;gap:8px;align-items:flex-end;height:78px;margin-top:8px}
+.wkc{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px;min-width:0}
+.wkc b{font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+.wkc i{display:block;width:100%;border-radius:8px 8px 3px 3px;background:var(--bc,var(--m-p));min-height:4px}
+.wkc.cur i{background:transparent;border:2px dashed var(--bc,var(--m-p))}
+.wkmlab{display:flex;gap:8px;margin:-2px 0 12px;padding:0 14px}.wkmlab span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.wksel{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.wksel button{padding:7px 12px;border-radius:99px;border:1.5px solid rgba(120,130,170,.4);background:transparent;color:var(--ink);font-size:12.5px;font-weight:700}
+.wksel button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .htg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ht{display:grid;gap:2px;padding:14px;border-radius:20px;color:#fff;box-shadow:0 8px 16px rgba(20,26,60,.14)}
 .ht.wide{grid-column:span 2}
@@ -3952,7 +3961,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=282;
+const APPV=283;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4302,47 +4311,39 @@ function fzOk(r,q){
     return r};
 })();
 
-/* ===== v278 : semaine après semaine (Historique) ===== */
+/* ===== v283 : semaine après semaine (Historique) ===== */
 (function(){
   const rh=renderHist;
   const pd=n=>String(n).padStart(2,'0'),iso=d=>d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate());
-  function weeks(){
+  function weeksList(){
     const n=new Date(),td=iso(n),dw=(n.getDay()+6)%7,o=[];
-    for(let i=0;i<5;i++){
-      const all=[];for(let j=0;j<7;j++)all.push(iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw-7*i+j)));
-      const days=all.filter(d=>d<td&&LOG[d]&&LOG[d].k>0),av=k=>days.length?days.reduce((s,d)=>s+(LOG[d][k]||0),0)/days.length:null;
-      const sd=all.filter(d=>d<td).map(d=>(ACT[d]||{}).st||0).filter(x=>x>0);
-      const ws=WT.filter(x=>!x.s&&x.w>0&&all.indexOf(x.d)>=0&&x.d<=td),wa=f=>{const a=ws.filter(x=>x[f]>0);return a.length?a.reduce((s,x)=>s+x[f],0)/a.length:null};
-      const t0=targets(all[0]);
-      o.push({all,cur:i===0,n:days.length,k:av('k'),p:av('p'),g:av('g'),l:av('l'),f:av('f'),st:sd.length?sd.reduce((a,b)=>a+b,0)/sd.length:null,w:wa('w'),nw:ws.length,b:wa('b'),m:wa('m'),tk:t0.k,tp:t0.p});
-    }
+    for(let i=0;i<4;i++){const all=[];for(let j=0;j<7;j++)all.push(iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()-dw-7*i+j)));o.push({all,td,cur:i===0,st:wkStat(all,td)})}
     return o;
   }
+  const lab=w=>fdate(w.all[0]).slice(0,5)+' → '+fdate(w.all[6]).slice(0,5);
   renderHist=function(){
     const r=rh.apply(this,arguments);
     try{
       const root=$('history');if(!root)return r;
       const old=root.querySelector('[data-k="h-wkcmp"]');if(old)old.remove();
-      const W=weeks(),jn=d=>fdate(d).slice(0,5);
-      const line=(lab,v,unit,dec,pv,pre)=>{
-        if(v===null)return '';
-        const f10=Math.pow(10,dec),q=pv===null||pv===undefined?null:Math.round((v-pv)*f10)/f10,txt=q===null?'':' <small>('+(q>0?'+':q<0?'−':'±')+(dec?num(Math.abs(q),dec):fmtN(Math.abs(q)))+')</small>';
-        return '<div class="rl"><span><b>'+lab+'</b> · '+(pre||'')+(dec?num(v,dec):fmtN(Math.round(v)))+unit+txt+'</span></div>';};
-      let body='<p class="note" style="margin:0 0 8px">Chaque semaine va du lundi au dimanche. Entre parenthèses : l\'écart avec la semaine d\'avant. La semaine en cours ne compte que les jours déjà passés.</p>';
-      for(let i=0;i<4;i++){
-        const w=W[i],pv=W[i+1],P=k=>pv&&pv[k]!==null?pv[k]:null;
-        body+='<h4 style="margin:12px 0 4px;font-family:var(--f-display)">'+jn(w.all[0])+' → '+jn(w.all[6])+(w.cur?' · en cours':'')+'</h4><div class="crs">';
-        if(!w.n&&w.w===null)body+='<div class="rl"><span>Rien d\'enregistré cette semaine-là.</span></div>';
-        else body+=line('Calories',w.k,' kcal/jour',0,P('k'),'')+(w.k!==null?'<div class="rl"><span><b>Palier</b> · '+fmtN(w.tk)+' kcal · '+w.n+' jour'+(w.n>1?'s':'')+' enregistré'+(w.n>1?'s':'')+'</span></div>':'')
-          +line('Protéines',w.p,' g/jour',0,P('p'))+line('Glucides',w.g,' g/jour',0,P('g'))+line('Lipides',w.l,' g/jour',0,P('l'))+line('Fibres',w.f,' g/jour',1,P('f'))
-          +line('Pas',w.st,'/jour',0,P('st'))+line('Poids moyen',w.w,' kg',1,P('w'))+(w.w!==null?'<div class="rl"><span><b>Pesées</b> · '+w.nw+' matin'+(w.nw>1?'s':'')+'</span></div>':'')
-          +line('Gras',w.b,' %',1,P('b'))+line('Muscle',w.m,' kg',1,P('m'));
-        body+='</div>';
-      }
+      const W=weeksList(),sel=Math.min(3,Math.max(0,+state.wkSel||0)),ord=W.slice().reverse();
+      const M=[['Calories','k',0,' kcal','var(--accent)'],['Protéines','p',0,' g','var(--m-p)'],['Fibres','f',1,' g','var(--m-f)'],['Poids','w',1,' kg','var(--m-g)'],['Gras','b',1,' %','var(--m-l)'],['Muscle','m',1,' kg','#E08A2E']];
+      let body='<p class="note" style="margin:0 0 10px">Du lundi au dimanche, de la plus ancienne (à gauche) à la semaine en cours (à droite). La barre en pointillés = semaine en cours, pas finie.</p>';
+      M.forEach(([name,k,dec,unit,bc])=>{
+        const vs=ord.map(w=>w.st[k]),ok=vs.filter(v=>v!==null&&v!==undefined);
+        if(!ok.length)return;
+        const mn=Math.min(...ok),mx=Math.max(...ok);
+        body+='<div class="wkr" style="--bc:'+bc+'"><div class="wkh"><span class="wkl">'+name+'</span><span class="wkd">'+(ok.length>1&&vs[3]!=null&&vs[2]!=null?((vs[3]-vs[2]>0?'↑ +':vs[3]-vs[2]<0?'↓ −':'= ')+(dec?num(Math.abs(vs[3]-vs[2]),dec):fmtN(Math.round(Math.abs(vs[3]-vs[2]))))+unit):'—')+'</span></div><div class="wkmini">'
+          +vs.map((v,i)=>{const h=v==null?0:(mx===mn?60:Math.round(22+78*(v-mn)/(mx-mn)));return '<div class="wkc'+(i===3?' cur':'')+'"><b>'+(v==null?'':(dec?num(v,dec):fmtN(Math.round(v))))+'</b><i style="height:'+h+'%"></i></div>'}).join('')+'</div></div>';
+      });
+      body+='<div class="wkmlab">'+ord.map(w=>'<span>'+fdate(w.all[0]).slice(0,5)+'</span>').join('')+'</div>';
+      body+='<div class="wksel">'+W.map((w,i)=>'<button type="button" data-wksel="'+i+'"'+(i===sel?' class="on"':'')+'>'+lab(w)+(w.cur?' · en cours':'')+'</button>').join('')+'</div>';
+      body+=wkVisual({full:W[sel].all,td:W[sel].td,last:!W[sel].cur});
       const h=blk('h-wkcmp','chart','Semaine après semaine','4 dernières semaines',body,false);
       const o=root.querySelector('#wbil');if(o)o.insertAdjacentHTML('afterend',h);
     }catch(e){}
     return r};
+  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#history [data-wksel]');if(!b)return;state.wkSel=+b.dataset.wksel;OPEN['h-wkcmp']=true;renderHist()});
 })();
 
 /* ===== v172 : copier le repas d'hier + repas habituels ===== */
@@ -5476,7 +5477,7 @@ function wkStat(all,td){
   const dd=all.filter(d=>d<td),dn=dd.filter(d=>LOG[d]&&LOG[d].k>0),av=k=>dn.length?dn.reduce((q,d)=>q+(LOG[d][k]||0),0)/dn.length:null;
   const sd=dd.map(d=>(ACT[d]||{}).st||0).filter(x=>x>0),ws=WT.filter(x=>!x.s&&x.w>0&&all.indexOf(x.d)>=0&&x.d<=td),wt=dd.map(d=>(typeof WAT!=='undefined'&&WAT[d])||0).filter(x=>x>0);
   return{n:dn.length,k:av('k'),p:av('p'),g:av('g'),l:av('l'),f:av('f'),st:sd.length?sd.reduce((a,b)=>a+b,0)/sd.length:null,
-    w:ws.length?ws.reduce((q,x)=>q+x.w,0)/ws.length:null,nw:ws.length,ses:dd.reduce((t,d)=>t+(((ACT[d]||{}).ses)||[]).length,0),wat:wt.length?wt.reduce((a,b)=>a+b,0)/wt.length:null,nwat:wt.length}
+    w:ws.length?ws.reduce((q,x)=>q+x.w,0)/ws.length:null,nw:ws.length,b:((a)=>a.length?a.reduce((q,x)=>q+x.b,0)/a.length:null)(ws.filter(x=>x.b>0)),m:((a)=>a.length?a.reduce((q,x)=>q+x.m,0)/a.length:null)(ws.filter(x=>x.m>0)),ses:dd.reduce((t,d)=>t+(((ACT[d]||{}).ses)||[]).length,0),wat:wt.length?wt.reduce((a,b)=>a+b,0)/wt.length:null,nwat:wt.length}
 }
 function wkVisual(W){
   const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),
@@ -5486,7 +5487,7 @@ function wkVisual(W){
   const dots=(fn,bc)=>'<span class="wkdots" style="--bc:'+bc+'">'+W.full.map((d,i)=>{if(d>=W.td)return '<u class="nil">'+JL[i]+'</u>';const l=LOG[d];if(!l||!(l.k>0))return '<u class="nil">'+JL[i]+'</u>';return '<u'+(fn(d,l)?' class="on"':'')+'>'+JL[i]+'</u>'}).join('')+'</span>';
   const pc=(v,t)=>Math.max(0,Math.min(100,Math.round(v/t*100)));
   const row=(lab,val,unit,bar,bc,foot,ex)=>'<div class="wkr" style="--bc:'+bc+'"><div class="wkh"><span class="wkl">'+lab+'</span><span class="wkv">'+val+' <small>'+unit+'</small></span></div>'+(bar===null?'':'<div class="wkb"><i style="width:'+bar+'%"></i></div>')+'<div class="wkf">'+foot+'</div>'+(ex||'')+'</div>';
-  if(!C.n&&C.w===null)return '<p class="note" style="margin:0">Rien d\'enregistré '+(W.last?'la semaine dernière':'depuis lundi')+'.</p>';
+  if(!C.n&&C.w===null)return '<p class="note" style="margin:0">Rien d\'enregistré cette semaine-là.</p>';
   let h='';
   if(C.k!==null){
     const nOk=W.full.filter(d=>d<W.td&&LOG[d]&&LOG[d].k>0&&Math.abs(LOG[d].k-targets(d).k)<=100).length,gap=Math.round(C.k-T0.k);
@@ -5497,6 +5498,8 @@ function wkVisual(W){
     h+=row('Lipides',fmtN(Math.round(C.l)),'g / jour',pc(C.l,T0.l),'var(--m-l)','<span>à ne pas dépasser : '+fmtN(T0.l)+' g</span>'+dl(C.l,P.l,0,' g'));
   }
   if(C.w!==null)h+=row('Poids moyen',num(C.w,1),'kg',null,'var(--m-g)','<span>'+C.nw+' pesée'+(C.nw>1?'s':'')+' du matin</span>'+dl(C.w,P.w,1,' kg'));
+  if(C.b!==null)h+=row('Gras',num(C.b,1),'%',null,'var(--m-l)','<span>moyenne des pesées</span>'+dl(C.b,P.b,1,' pt'));
+  if(C.m!==null)h+=row('Muscle',num(C.m,1),'kg',null,'#E08A2E','<span>moyenne des pesées</span>'+dl(C.m,P.m,1,' kg'));
   if(C.st!==null)h+=row('Pas',fmtN(Math.round(C.st)),'/ jour',(typeof GOAL!=='undefined'&&GOAL>0)?pc(C.st,GOAL):null,'#E08A2E','<span>'+(typeof GOAL!=='undefined'&&GOAL>0?'objectif '+fmtN(GOAL):'')+'</span>'+dl(C.st,P.st,0,' pas'));
   if(C.ses>0||P.ses>0)h+=row('Séances',String(C.ses),C.ses>1?'cette semaine':'cette semaine',null,'#E08A2E','<span>semaine d\'avant : '+P.ses+'</span>');
   if(C.wat!==null)h+=row('Eau',num(C.wat/1000,1),'L / jour',(typeof WGOAL!=='undefined'&&WGOAL>0)?pc(C.wat,WGOAL):null,'var(--m-f)','<span>moyenne sur '+C.nwat+' jour'+(C.nwat>1?'s':'')+' où tu l\'as notée</span>');
@@ -5989,7 +5992,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 282 (bilan visuel)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 283 (semaines en graphique)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
