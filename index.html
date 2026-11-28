@@ -3859,7 +3859,7 @@ function adjUI(kind,a,b,e){
   if(e.x!==undefined)return qtyUI(kind,a,b,e);
   if(e.r===undefined)return '';
   const key=kind+':'+a+':'+b,open=state.adj&&state.adj.key===key;
-  let h='<button type="button" class="adjb" data-adj="'+key+'">'+(open?'Fermer':'⚖ Ajuster les quantités')+'</button>';
+  let h='<button type="button" class="adjb" data-adj="'+key+'">'+(open?'Fermer':'⚖ Ajuster les quantités')+'</button><button type="button" class="adjb" data-seerec="'+e.r+'">📖 Voir la recette</button>';
   if(open){
     const A=state.adj;
     h+='<div class="adjp"><p class="note" style="margin:0 0 6px">Mets les grammes que tu as vraiment utilisés. Les calories et macros se recalculent.</p>'
@@ -3961,7 +3961,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ===== v153 : bandeau « nouvelle version » + historique du programme ===== */
-const APPV=283;
+const APPV=284;
 let NEWV=false;
 function updInject(){
   const old=document.getElementById('updq');if(old)old.remove();
@@ -4345,6 +4345,18 @@ function fzOk(r,q){
     return r};
   document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#history [data-wksel]');if(!b)return;state.wkSel=+b.dataset.wksel;OPEN['h-wkcmp']=true;renderHist()});
 })();
+
+/* ===== v284 : « Voir la recette » depuis un repas (Journée / Semaine) ===== */
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-seerec]');if(!b)return;
+  e.preventDefault();e.stopPropagation();
+  const r=R.find(x=>x.i===+b.dataset.seerec);if(!r)return;
+  state.med=null;state.q=r.n;$('q').value=r.n;state.cat='tous';state.view='rec';$('more').hidden=true;
+  try{renderChips()}catch(x){}
+  render();try{renderViews()}catch(x){}
+  window.scrollTo(0,0);
+  setTimeout(()=>{const d=document.querySelector('details[data-i="'+r.i+'"]');if(d){d.open=true;d.scrollIntoView({block:'start'})}},60);
+},true);
 
 /* ===== v172 : copier le repas d'hier + repas habituels ===== */
 let TPL=ls('cp-tpl',[]);if(!Array.isArray(TPL))TPL=[];
@@ -5992,7 +6004,7 @@ function renderBak(){
   h+='<button type="button" class="pri" data-bkq style="margin:0 0 12px;min-height:50px;width:100%">Sauvegarder maintenant</button>';
   const old=!lb||dAgo(lb)>=7;
   if(old)h+='<div class="al al-warn"><p style="margin:0"><b>Pense à sauvegarder :</b> '+(lb?'ta dernière sauvegarde date de '+dAgo(lb)+' jours.':'tu n\'as encore jamais fait de sauvegarde.')+' Une par semaine suffit.</p></div>';
-  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 283 (semaines en graphique)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
+  h+='<p class="note" style="margin:0 0 6px">Version du carnet : 284 (voir la recette)<button type="button" class="nretry" data-refresh style="margin:0 0 0 8px">↻ Actualiser</button></p>';
   h+='<div class="sum"><p style="margin:0"><b>Protection du stockage :</b> '+(state.pers===1?'activée ✓ (l\'appareil évite d\'effacer tes données automatiquement)':state.pers===2?'non accordée par ce navigateur : la sauvegarde manuelle est ta sécurité':'vérification…')+'</p></div>';
   h+='<div class="sum"><p style="margin:0"><b>Dernière sauvegarde copiée :</b> '+(lb?'il y a '+dAgo(lb)+' jour'+(dAgo(lb)>1?'s':'')+' ('+bdt(lb)+')':'jamais')+'</p></div>';
   const cur=bObj(false),emp=!(cur.d['cp-w']||[]).length&&!Object.keys(cur.d['cp-log']||{}).length&&!(cur.d['cp-foods']||[]).length&&!(cur.d['cp-cr']||[]).length&&!(cur.d['cp-fav']||[]).length;
